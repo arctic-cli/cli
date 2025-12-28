@@ -100,7 +100,37 @@ arctic debug file read <path>
 arctic debug snapshot diff <hash>
 ```
 
-## Custom commands
+## Slash Commands (TUI)
+
+In the TUI, you can use slash commands for quick actions. Type `/` in the input to see autocomplete suggestions.
+
+### Built-in slash commands
+
+- `/status` - Show system status
+- `/usage` - View usage and rate limits
+- `/models` - Model picker
+- `/agents` - Agent picker
+- `/session` - Session list
+- `/new` - New session
+- `/mcp` - MCP server status
+- `/theme` - Theme picker
+- `/undo` - Undo last message
+- `/redo` - Redo message
+- `/compact` - Compact session history
+- `/rename` - Rename session
+- `/copy` - Copy session
+- `/export` - Export session
+- `/timeline` - View session timeline
+- `/thinking` - Toggle thinking mode
+- `/benchmark` - Run benchmark
+- `/connect` - Connect to provider
+- `/help` - Show help
+- `/commands` - List all commands
+- `/exit` - Exit Arctic
+
+Custom commands (defined in `.arctic/command/`) also appear in slash command autocomplete.
+
+## Custom Commands
 
 Commands are defined as markdown templates in:
 
@@ -126,3 +156,14 @@ Invoke with:
 ```bash
 arctic run --command review
 ```
+
+Or in the TUI with `/review`.
+
+### Import from Claude Code
+
+Arctic can import commands from Claude Code on first launch:
+
+- Project commands: `.claude/commands/` → `.arctic/command/claude/`
+- Global commands: `~/.claude/commands/` → `~/.config/arctic/command/claude/`
+
+You'll be prompted once. Imported commands work immediately as slash commands in the TUI.

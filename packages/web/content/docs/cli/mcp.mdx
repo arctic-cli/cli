@@ -5,6 +5,16 @@ description: Manage MCP servers and tools.
 
 MCP lets Arctic connect to external tool servers.
 
+## Import from Claude Code
+
+When you first launch Arctic, it will automatically prompt you to import MCP servers from Claude Code if you have any configured in `~/.claude.json`. This includes:
+
+- **Project-specific MCPs**: Configured in `.mcp.json` files
+- **Directory-specific MCPs**: Configured in `~/.claude.json` under the `projects` key for the current directory
+- **Global MCPs**: Configured at the root level of `~/.claude.json`
+
+Arctic will ask you once per type (project/directory/global), and you can choose to import or skip. Imported servers are added to your Arctic config (`.arctic/arctic.jsonc` for projects or `~/.config/arctic/arctic.jsonc` globally).
+
 ## Add an MCP server
 
 MCP servers are configured in your Arctic config file (`~/.config/arctic/arctic.json` or `.jsonc`).

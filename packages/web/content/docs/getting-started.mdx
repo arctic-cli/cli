@@ -33,6 +33,16 @@ arctic
 
 This opens the TUI (Terminal User Interface). Press `Ctrl+X` then `Q` to exit.
 
+### Claude Code Migration
+
+If you're coming from Claude Code, Arctic will automatically detect and offer to import:
+
+- **Commands**: From `~/.claude/commands` or `.claude/commands`
+- **Agents**: From `~/.claude/agents` or `.claude/agents`
+- **MCP Servers**: From `~/.claude.json` or `.mcp.json`
+
+You'll be prompted once for each category. Choose "Yes" to import or "No" to skip. Imported items are copied to Arctic's directories (`.arctic/command/claude/`, `.arctic/agent/claude/`, etc.).
+
 ## Authentication (quick)
 
 Start the auth flow:

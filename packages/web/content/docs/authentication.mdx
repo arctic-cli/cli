@@ -35,9 +35,18 @@ Arctic handles token refresh automatically.
 
 ## Import Existing Credentials
 
-If you already used the Codex CLI, Arctic can import:
+Arctic automatically detects and offers to import credentials from:
 
-- `~/.codex/auth.json`
+- **Codex CLI**: `~/.codex/auth.json`
+- **Claude Code**: Imported automatically on first launch if configured
+
+When you first launch Arctic, it will scan for existing auth files and prompt you to import them. You can also manually trigger imports by running:
+
+```bash
+arctic auth login
+```
+
+And selecting the import option if available.
 
 ## Manage Credentials
 

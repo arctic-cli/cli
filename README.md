@@ -8,7 +8,7 @@ Arctic is a high-performance, keyboard-driven terminal interface for AI coding. 
 
 ## Features
 
-- **Multi-Provider Support**: Switch seamlessly between Claude (Anthropic), GPT-4 (OpenAI/Copilot), Gemini (Google), and more without changing tools.
+- **Multi-Provider Support**: Switch seamlessly between Claude (Anthropic), Codex (OpenAI), Gemini (Google), GitHub Copilot, Z.ai, Kimi, and more without changing tools.
 - **Unified Usage Tracking**: View rate limits, token usage, and costs across all providers in one place.
 - **Git-Based Snapshots**: Automatic undo/redo for AI changes. Revert any session or tool execution safely.
 - **Rich TUI**: A beautiful, low-latency terminal user interface built with SolidJS and OpenTUI.

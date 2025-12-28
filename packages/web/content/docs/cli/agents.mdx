@@ -16,6 +16,15 @@ Agents are stored as markdown files with frontmatter in:
 - Project: `.arctic/agent/*.md`
 - Global: `~/.config/arctic/agent/*.md`
 
+### Import from Claude Code
+
+Arctic can import agents from Claude Code on first launch:
+
+- Project agents: `.claude/agents/` → `.arctic/agent/claude/`
+- Global agents: `~/.claude/agents/` → `~/.config/arctic/agent/claude/`
+
+You'll be prompted once. Imported agents work immediately and can be selected via `Ctrl+X A` or `@agent-name` in prompts.
+
 ## Agent file format
 
 ```md
