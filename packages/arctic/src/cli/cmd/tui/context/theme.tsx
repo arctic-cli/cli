@@ -7,6 +7,7 @@ import aura from "./theme/aura.json" with { type: "json" }
 import ayu from "./theme/ayu.json" with { type: "json" }
 import catppuccin from "./theme/catppuccin.json" with { type: "json" }
 import catppuccinMacchiato from "./theme/catppuccin-macchiato.json" with { type: "json" }
+import claude from "./theme/claude.json" with { type: "json" }
 import cobalt2 from "./theme/cobalt2.json" with { type: "json" }
 import dracula from "./theme/dracula.json" with { type: "json" }
 import everforest from "./theme/everforest.json" with { type: "json" }
@@ -136,6 +137,7 @@ export const DEFAULT_THEMES: Record<string, ThemeJson> = {
   ayu,
   catppuccin,
   ["catppuccin-macchiato"]: catppuccinMacchiato,
+  claude,
   cobalt2,
   dracula,
   everforest,
@@ -603,8 +605,8 @@ function getSyntaxRules(theme: Theme) {
     {
       scope: ["extmark.paste"],
       style: {
-        foreground: theme.background,
-        background: theme.warning,
+        foreground: theme.warning,
+        background: RGBA.fromInts(0, 0, 0, 0),
         bold: true,
       },
     },

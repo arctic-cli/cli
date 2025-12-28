@@ -1,0 +1,226 @@
+{
+  "$schema": "https://arcticli.com/theme.json",
+  "defs": {
+    "ink0": "#0b0b0b",
+    "ink1": "#121212",
+    "ink2": "#1a1a1a",
+    "ink3": "#242424",
+    "ink4": "#2e2e2e",
+    "fog0": "#e8e8e8",
+    "fog1": "#bfbfbf",
+    "fog2": "#9c9c9c",
+    "ember": "#d46f4c",
+    "emberSoft": "#c56447",
+    "amber": "#f0b35e",
+    "mint": "#79d4a6",
+    "sky": "#7fb3ff",
+    "rose": "#e06b6b",
+    "violet": "#b59bff"
+  },
+  "theme": {
+    "primary": {
+      "dark": "ember",
+      "light": "#c25f42"
+    },
+    "secondary": {
+      "dark": "emberSoft",
+      "light": "#b4573d"
+    },
+    "accent": {
+      "dark": "amber",
+      "light": "#d7933e"
+    },
+    "error": {
+      "dark": "rose",
+      "light": "#c94f4f"
+    },
+    "warning": {
+      "dark": "amber",
+      "light": "#d7933e"
+    },
+    "success": {
+      "dark": "mint",
+      "light": "#44a97d"
+    },
+    "info": {
+      "dark": "emberSoft",
+      "light": "#b4573d"
+    },
+    "text": {
+      "dark": "fog0",
+      "light": "#1b1b1b"
+    },
+    "textMuted": {
+      "dark": "fog2",
+      "light": "#5d5d5d"
+    },
+    "background": {
+      "dark": "ink0",
+      "light": "#f6f3ef"
+    },
+    "backgroundPanel": {
+      "dark": "ink1",
+      "light": "#efe9e2"
+    },
+    "backgroundElement": {
+      "dark": "ink2",
+      "light": "#e6ded4"
+    },
+    "backgroundMenu": {
+      "dark": "ink3",
+      "light": "#e0d6cc"
+    },
+    "border": {
+      "dark": "ink4",
+      "light": "#d2c6ba"
+    },
+    "borderActive": {
+      "dark": "ember",
+      "light": "#c25f42"
+    },
+    "borderSubtle": {
+      "dark": "ink3",
+      "light": "#e1d7cc"
+    },
+    "diffAdded": {
+      "dark": "mint",
+      "light": "#2f8f68"
+    },
+    "diffRemoved": {
+      "dark": "rose",
+      "light": "#c94f4f"
+    },
+    "diffContext": {
+      "dark": "fog2",
+      "light": "#7a7a7a"
+    },
+    "diffHunkHeader": {
+      "dark": "emberSoft",
+      "light": "#c25f42"
+    },
+    "diffHighlightAdded": {
+      "dark": "#6ccf9b",
+      "light": "#2f8f68"
+    },
+    "diffHighlightRemoved": {
+      "dark": "#e68484",
+      "light": "#c94f4f"
+    },
+    "diffAddedBg": {
+      "dark": "#0f2219",
+      "light": "#dff3ea"
+    },
+    "diffRemovedBg": {
+      "dark": "#2a1616",
+      "light": "#f4dddd"
+    },
+    "diffContextBg": {
+      "dark": "ink1",
+      "light": "#ede6de"
+    },
+    "diffLineNumber": {
+      "dark": "fog2",
+      "light": "#7a7a7a"
+    },
+    "diffAddedLineNumberBg": {
+      "dark": "#0f2219",
+      "light": "#d6eee2"
+    },
+    "diffRemovedLineNumberBg": {
+      "dark": "#2a1616",
+      "light": "#f0d6d6"
+    },
+    "markdownText": {
+      "dark": "fog0",
+      "light": "#1b1b1b"
+    },
+    "markdownHeading": {
+      "dark": "ember",
+      "light": "#c25f42"
+    },
+    "markdownLink": {
+      "dark": "sky",
+      "light": "#3a79d6"
+    },
+    "markdownLinkText": {
+      "dark": "amber",
+      "light": "#d7933e"
+    },
+    "markdownCode": {
+      "dark": "mint",
+      "light": "#2f8f68"
+    },
+    "markdownBlockQuote": {
+      "dark": "fog1",
+      "light": "#6b6b6b"
+    },
+    "markdownEmph": {
+      "dark": "rose",
+      "light": "#c94f4f"
+    },
+    "markdownStrong": {
+      "dark": "amber",
+      "light": "#d7933e"
+    },
+    "markdownHorizontalRule": {
+      "dark": "ink4",
+      "light": "#d2c6ba"
+    },
+    "markdownListItem": {
+      "dark": "ember",
+      "light": "#c25f42"
+    },
+    "markdownListEnumeration": {
+      "dark": "amber",
+      "light": "#d7933e"
+    },
+    "markdownImage": {
+      "dark": "sky",
+      "light": "#3a79d6"
+    },
+    "markdownImageText": {
+      "dark": "amber",
+      "light": "#d7933e"
+    },
+    "markdownCodeBlock": {
+      "dark": "fog0",
+      "light": "#1b1b1b"
+    },
+    "syntaxComment": {
+      "dark": "fog2",
+      "light": "#7a7a7a"
+    },
+    "syntaxKeyword": {
+      "dark": "ember",
+      "light": "#c25f42"
+    },
+    "syntaxFunction": {
+      "dark": "amber",
+      "light": "#d7933e"
+    },
+    "syntaxVariable": {
+      "dark": "sky",
+      "light": "#3a79d6"
+    },
+    "syntaxString": {
+      "dark": "mint",
+      "light": "#2f8f68"
+    },
+    "syntaxNumber": {
+      "dark": "violet",
+      "light": "#7a61d6"
+    },
+    "syntaxType": {
+      "dark": "sky",
+      "light": "#3a79d6"
+    },
+    "syntaxOperator": {
+      "dark": "fog1",
+      "light": "#5d5d5d"
+    },
+    "syntaxPunctuation": {
+      "dark": "fog0",
+      "light": "#1b1b1b"
+    }
+  }
+}

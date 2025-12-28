@@ -113,6 +113,17 @@ export namespace Auth {
     expiry_date?: number | null
   }
 
+  interface ClaudeOauthFile {
+    claudeAiOauth?: {
+      accessToken?: string | null
+      refreshToken?: string | null
+      expiresAt?: number | null
+      scopes?: string[] | null
+      subscriptionType?: string | null
+      rateLimitTier?: string | null
+    } | null
+  }
+
   function resolveCodexHome(): string {
     const envPath = process.env.CODEX_HOME?.trim()
     if (envPath) return path.resolve(envPath)
@@ -210,6 +221,24 @@ export namespace Auth {
     }
   }
 
+  async function loadClaudeAuth(): Promise<Info | null> {
+    const authFile = await readJsonFile<ClaudeOauthFile>(path.join(os.homedir(), ".claude", ".credentials.json"))
+    if (!authFile?.claudeAiOauth) return null
+
+    const { accessToken, refreshToken, expiresAt } = authFile.claudeAiOauth
+    if (!accessToken || !refreshToken) return null
+
+    const expires =
+      typeof expiresAt === "number" && Number.isFinite(expiresAt) ? expiresAt : Date.now() + 3600 * 1000
+
+    return {
+      type: "oauth",
+      access: accessToken,
+      refresh: refreshToken,
+      expires,
+    }
+  }
+
   async function loadExternalAuth(): Promise<Record<string, Info>> {
     const entries: Record<string, Info> = {}
 
@@ -223,6 +252,12 @@ export namespace Auth {
     if (google) {
       const parsed = Info.safeParse(google)
       if (parsed.success) entries.google = parsed.data
+    }
+
+    const claude = await loadClaudeAuth()
+    if (claude) {
+      const parsed = Info.safeParse(claude)
+      if (parsed.success) entries.anthropic = parsed.data
     }
 
     return entries

@@ -20,7 +20,7 @@ import { ImportCommand } from "./cli/cmd/import"
 import { TuiThreadCommand } from "./cli/cmd/tui/thread"
 import { EOL } from "os"
 import { SessionCommand } from "./cli/cmd/session"
-import { maybeImportClaudeCommands } from "./cli/claude-import"
+import { maybeImportClaudeAgents, maybeImportClaudeCommands, maybeImportClaudeMcp } from "./cli/claude-import"
 import { maybeImportExternalAuth } from "./cli/external-auth-import"
 
 process.on("unhandledRejection", (e) => {
@@ -79,6 +79,8 @@ const cli = yargs(hideBin(process.argv))
     })
 
     await maybeImportClaudeCommands()
+    await maybeImportClaudeAgents()
+    await maybeImportClaudeMcp()
     await maybeImportExternalAuth()
   })
   .usage("\n" + UI.logo())

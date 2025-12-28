@@ -641,6 +641,7 @@ function App() {
     <box
       width={dimensions().width}
       height={dimensions().height}
+      backgroundColor={theme.background}
       onMouseMove={(evt) => {
         lastMousePos = { x: evt.x, y: evt.y }
       }}

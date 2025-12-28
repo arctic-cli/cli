@@ -248,11 +248,11 @@ export namespace Config {
         agentName = pathParts.slice(0, -1).join("/") + "/" + pathParts[pathParts.length - 1]
       }
 
-      const config = {
+      const config = normalizeClaudeAgentFrontmatter({
         name: agentName,
         ...md.data,
         prompt: md.content.trim(),
-      }
+      })
       const parsed = Agent.safeParse(config)
       if (parsed.success) {
         result[config.name] = parsed.data
@@ -434,6 +434,137 @@ export namespace Config {
       doom_loop: "ask",
       external_directory: "ask",
     },
+  }
+
+  function normalizeClaudeAgentFrontmatter(input: Record<string, any>) {
+    const output: Record<string, any> = { ...input }
+
+    output.color = normalizeAgentColor(output.color)
+    output.tools = normalizeAgentTools(output.tools)
+    output.model = normalizeAgentModel(output.model)
+
+    if (!output.permission && typeof output.permissionMode === "string") {
+      const mode = output.permissionMode.trim().toLowerCase()
+      const mapped =
+        mode === "cautious" || mode === "safe"
+          ? "safe"
+          : mode === "trusted" || mode === "allow"
+            ? "trusted"
+            : mode === "readonly" || mode === "read-only" || mode === "read_only"
+              ? "readonly"
+              : mode === "git-only" || mode === "git_only"
+                ? "git-only"
+                : undefined
+
+      if (mapped && DEFAULT_PERMISSION_PROFILES[mapped]) {
+        output.permission = DEFAULT_PERMISSION_PROFILES[mapped]
+      }
+    }
+
+    return output
+  }
+
+  function normalizeAgentTools(value: unknown) {
+    if (!value) return value
+    if (Array.isArray(value)) {
+      const record: Record<string, boolean> = {}
+      for (const item of value) {
+        if (typeof item !== "string") continue
+        const tool = normalizeToolName(item)
+        record[tool] = true
+      }
+      return record
+    }
+    if (typeof value === "string") {
+      const record: Record<string, boolean> = {}
+      for (const item of value.split(",").map((x) => x.trim()).filter(Boolean)) {
+        const tool = normalizeToolName(item)
+        record[tool] = true
+      }
+      return record
+    }
+    if (typeof value === "object") return value
+    return value
+  }
+
+  function normalizeToolName(value: string) {
+    const key = value.trim().toLowerCase().replace(/\s+/g, "_")
+    const aliases: Record<string, string> = {
+      ls: "list",
+      list: "list",
+      read: "read",
+      edit: "edit",
+      write: "write",
+      bash: "bash",
+      grep: "grep",
+      glob: "glob",
+      webfetch: "webfetch",
+      web_fetch: "webfetch",
+      websearch: "websearch",
+      web_search: "websearch",
+      codesearch: "codesearch",
+      code_search: "codesearch",
+    }
+    return aliases[key] ?? key
+  }
+
+  function normalizeAgentColor(value: unknown) {
+    if (typeof value !== "string") return value
+    const trimmed = value.trim()
+    if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) return trimmed
+    if (/^#[0-9a-fA-F]{3}$/.test(trimmed)) {
+      return (
+        "#" +
+        trimmed
+          .slice(1)
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      )
+    }
+
+    const named = trimmed.toLowerCase()
+    const namedColors: Record<string, string> = {
+      black: "#000000",
+      white: "#ffffff",
+      gray: "#808080",
+      grey: "#808080",
+      red: "#ff5c5c",
+      orange: "#ff9800",
+      yellow: "#f5a524",
+      green: "#4caf50",
+      cyan: "#22d3ee",
+      blue: "#2196f3",
+      purple: "#8b5cf6",
+      magenta: "#e91e63",
+      pink: "#ec4899",
+    }
+    return namedColors[named] ?? value
+  }
+
+  function normalizeAgentModel(value: unknown) {
+    if (typeof value !== "string") return value
+    const trimmed = value.trim()
+    if (!trimmed) return value
+    if (trimmed.includes("/")) return trimmed
+
+    const key = trimmed.toLowerCase()
+    const aliases: Record<string, string> = {
+      haiku: "anthropic/claude-haiku-4-5",
+      "claude-haiku": "anthropic/claude-haiku-4-5",
+      "claude-4-5-haiku": "anthropic/claude-haiku-4-5",
+      "claude-4.5-haiku": "anthropic/claude-haiku-4-5",
+      sonnet: "anthropic/claude-sonnet-4-5",
+      "claude-sonnet": "anthropic/claude-sonnet-4-5",
+      "claude-4-5-sonnet": "anthropic/claude-sonnet-4-5",
+      "claude-4.5-sonnet": "anthropic/claude-sonnet-4-5",
+      opus: "anthropic/claude-opus-4-5",
+      "claude-opus": "anthropic/claude-opus-4-5",
+      "claude-4-5-opus": "anthropic/claude-opus-4-5",
+      "claude-4.5-opus": "anthropic/claude-opus-4-5",
+    }
+
+    return aliases[key] ?? value
   }
 
   export const Command = z.object({

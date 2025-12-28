@@ -13,6 +13,7 @@ const STATE_KEY = ["cli", "external-auth-import"]
 const PROVIDER_LABELS: Record<string, string> = {
   codex: "OpenAI Codex",
   google: "Google (Gemini)",
+  anthropic: "Anthropic (Claude)",
 }
 
 async function readState() {

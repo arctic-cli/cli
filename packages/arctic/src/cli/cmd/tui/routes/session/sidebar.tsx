@@ -172,6 +172,7 @@ export function Sidebar(props: { sessionID: string; onHide?: () => void }) {
 
   const SUPPORTED_USAGE_PROVIDERS = [
     "codex",
+    "zai-coding-plan",
     "anthropic",
     "@ai-sdk/anthropic",
     "google",

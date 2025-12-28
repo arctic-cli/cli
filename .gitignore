@@ -10,6 +10,7 @@ playground
 tmp
 dist
 .claude
+.arctic
 ts-dist
 .turbo
 **/.serena

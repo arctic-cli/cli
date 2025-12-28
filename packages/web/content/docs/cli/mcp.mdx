@@ -5,6 +5,84 @@ description: Manage MCP servers and tools.
 
 MCP lets Arctic connect to external tool servers.
 
+## Add an MCP server
+
+MCP servers are configured in your Arctic config file (`~/.config/arctic/arctic.json` or `.jsonc`).
+After updating the config, restart Arctic (or reopen the TUI) to load the server.
+
+### Remote MCP (Context7 example)
+
+```jsonc
+{
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "ctx7sk-REPLACE_ME"
+      }
+    }
+  }
+}
+```
+
+### Remote MCP with OAuth
+
+Use OAuth when the server requires it. If you have a client ID, add it; otherwise, `{}` enables dynamic
+client registration.
+
+```jsonc
+{
+  "mcp": {
+    "my-oauth-server": {
+      "type": "remote",
+      "url": "https://example.com/mcp",
+      "oauth": {
+        "clientId": "your-client-id",
+        "clientSecret": "optional-secret",
+        "scope": "optional scopes"
+      }
+    }
+  }
+}
+```
+
+Then run:
+
+```bash
+arctic mcp auth
+```
+
+### Local MCP
+
+```jsonc
+{
+  "mcp": {
+    "filesystem": {
+      "type": "local",
+      "command": ["arctic", "x", "@modelcontextprotocol/server-filesystem"],
+      "environment": {
+        "MCP_ROOT": "/path/to/scan"
+      }
+    }
+  }
+}
+```
+
+### Optional fields
+
+- `enabled`: disable a server on startup by setting `false`
+- `headers`: add custom headers for remote servers
+- `timeout`: tool discovery timeout in milliseconds (defaults to 5000)
+
+### Interactive helper
+
+```bash
+arctic mcp add
+```
+
+This walks you through a setup and prints a config snippet you can paste into your config file.
+
 ## Commands
 
 ```bash
