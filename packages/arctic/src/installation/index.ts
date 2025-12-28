@@ -3,7 +3,7 @@ import { Bus } from "@/bus"
 import path from "path"
 import { $ } from "bun"
 import z from "zod"
-import { NamedError } from "@arctic-ai/util/error"
+import { NamedError } from "@arctic-cli/util/error"
 import { Log } from "../util/log"
 import { iife } from "@/util/iife"
 import { Flag } from "../flag/flag"
@@ -96,7 +96,7 @@ export namespace Installation {
 
     for (const check of checks) {
       const output = await check.command()
-      if (output.includes(check.name === "brew" ? "arctic" : "arctic-ai")) {
+      if (output.includes(check.name === "brew" ? "arctic" : "@arctic-cli/arctic")) {
         return check.name
       }
     }
@@ -129,13 +129,13 @@ export namespace Installation {
         })
         break
       case "npm":
-        cmd = $`npm install -g arctic-ai@${target}`
+        cmd = $`npm install -g @arctic-cli/arctic@${target}`
         break
       case "pnpm":
-        cmd = $`pnpm install -g arctic-ai@${target}`
+        cmd = $`pnpm install -g @arctic-cli/arctic@${target}`
         break
       case "bun":
-        cmd = $`bun install -g arctic-ai@${target}`
+        cmd = $`bun install -g @arctic-cli/arctic@${target}`
         break
       case "brew": {
         const formula = await getBrewFormula()
@@ -187,7 +187,7 @@ export namespace Installation {
     const [major] = VERSION.split(".").map((x) => Number(x))
     // const channel = CHANNEL === "latest" ? `latest-${major}` : CHANNEL
     const channel = CHANNEL
-    return fetch(`${registry}/arctic-ai/${channel}`)
+    return fetch(`${registry}/@arctic-cli/arctic/${channel}`)
       .then((res) => {
         if (!res.ok) throw new Error(res.statusText)
         return res.json()

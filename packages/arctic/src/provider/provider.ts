@@ -1,5 +1,5 @@
 import { iife } from "@/util/iife"
-import { NamedError } from "@arctic-ai/util/error"
+import { NamedError } from "@arctic-cli/util/error"
 import { NoSuchModelError, type Provider as SDK } from "ai"
 import fuzzysort from "fuzzysort"
 import { mapValues, mergeDeep, sortBy } from "remeda"

@@ -14,7 +14,7 @@ import type { WebFetchTool } from "@/tool/webfetch"
 import type { WriteTool } from "@/tool/write"
 import { iife } from "@/util/iife"
 import { Locale } from "@/util/locale"
-import type { AssistantMessage, Part, ReasoningPart, TextPart, ToolPart, UserMessage } from "@arctic-ai/sdk/v2"
+import type { AssistantMessage, Part, ReasoningPart, TextPart, ToolPart, UserMessage } from "@arctic-cli/sdk/v2"
 import {
   addDefaultParsers,
   BoxRenderable,
@@ -158,7 +158,7 @@ export function Session() {
   const [showTimestamps, setShowTimestamps] = createSignal(kv.get("timestamps", "hide") === "show")
   const [usernameVisible, setUsernameVisible] = createSignal(kv.get("username_visible", true))
   const [showDetails, setShowDetails] = createSignal(kv.get("tool_details_visibility", true))
-  const [showScrollbar, setShowScrollbar] = createSignal(kv.get("scrollbar_visible", false))
+  const [showScrollbar, setShowScrollbar] = createSignal(kv.get("scrollbar_visible", true))
   const [showSidebar, setShowSidebar] = createSignal(kv.get("sidebar_visible", false))
   const [diffWrapMode, setDiffWrapMode] = createSignal<"word" | "none">("word")
 
@@ -1159,8 +1159,8 @@ export function Session() {
                 paddingLeft: 1,
                 visible: showScrollbar(),
                 trackOptions: {
-                  backgroundColor: theme.backgroundElement,
-                  foregroundColor: theme.border,
+                  backgroundColor: theme.backgroundPanel,
+                  foregroundColor: theme.borderActive,
                 },
               }}
               stickyScroll={true}
@@ -1292,7 +1292,13 @@ export function Session() {
           <Toast />
         </box>
         <Show when={showSidebar() && session()}>
-          <Sidebar sessionID={route.sessionID} />
+          <Sidebar
+            sessionID={route.sessionID}
+            onHide={() => {
+              setShowSidebar(false)
+              kv.set("sidebar_visible", false)
+            }}
+          />
         </Show>
       </box>
     </context.Provider>

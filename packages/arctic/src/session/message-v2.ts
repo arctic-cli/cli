@@ -1,7 +1,7 @@
 import { BusEvent } from "@/bus/bus-event"
 import { Bus } from "@/bus"
 import z from "zod"
-import { NamedError } from "@arctic-ai/util/error"
+import { NamedError } from "@arctic-cli/util/error"
 import { Message } from "./message"
 import { APICallError, convertToModelMessages, LoadAPIKeyError, type ModelMessage, type UIMessage } from "ai"
 import { Identifier } from "../id/id"

@@ -10,7 +10,7 @@ import type {
   Part,
   Auth,
   Config,
-} from "@arctic-ai/sdk"
+} from "@arctic-cli/sdk"
 
 import type { BunShell } from "./shell"
 import { type ToolDefinition } from "./tool"

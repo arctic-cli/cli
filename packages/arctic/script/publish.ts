@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { Script } from "@arctic-ai/script"
+import { Script } from "@arctic-cli/script"
 import { $ } from "bun"
 import { fileURLToPath } from "url"
 import pkg from "../package.json"
@@ -8,22 +8,31 @@ const dir = fileURLToPath(new URL("..", import.meta.url))
 process.chdir(dir)
 
 const { binaries } = await import("./build.ts")
+const baseName = pkg.name.includes("/") ? pkg.name.split("/")[1] : pkg.name
+const shouldPublish = process.argv.includes("--publish")
+const tagIndex = process.argv.findIndex((arg) => arg === "--tag")
+const publishTag = tagIndex >= 0 ? process.argv[tagIndex + 1] : undefined
+const otpIndex = process.argv.findIndex((arg) => arg === "--otp")
+const otpValue =
+  otpIndex >= 0
+    ? process.argv[otpIndex + 1]
+    : process.argv.find((arg) => arg.startsWith("--otp="))?.slice("--otp=".length)
 {
-  const name = `${pkg.name}-${process.platform}-${process.arch}`
+  const name = `@arctic-cli/${baseName}-${process.platform}-${process.arch}`
   console.log(`smoke test: running dist/${name}/bin/arctic --version`)
   await $`./dist/${name}/bin/arctic --version`
 }
 
-await $`mkdir -p ./dist/${pkg.name}`
-await $`cp -r ./bin ./dist/${pkg.name}/bin`
-await $`cp ./script/postinstall.mjs ./dist/${pkg.name}/postinstall.mjs`
+await $`mkdir -p ./dist/${baseName}`
+await $`cp -r ./bin ./dist/${baseName}/bin`
+await $`cp ./script/postinstall.mjs ./dist/${baseName}/postinstall.mjs`
 
-await Bun.file(`./dist/${pkg.name}/package.json`).write(
+await Bun.file(`./dist/${baseName}/package.json`).write(
   JSON.stringify(
     {
-      name: pkg.name + "-ai",
+      name: "@arctic-cli/arctic",
       bin: {
-        [pkg.name]: `./bin/${pkg.name}`,
+        [baseName]: `./bin/${baseName}`,
       },
       scripts: {
         postinstall: "bun ./postinstall.mjs || node ./postinstall.mjs",
@@ -47,4 +56,16 @@ if (!Script.preview) {
     }
   }
   console.log("Archives ready for GitHub release uploads")
+}
+
+if (shouldPublish) {
+  const platformPackages = Object.keys(binaries)
+  const tagArgs = publishTag ? ["--tag", publishTag] : []
+  const otpArgs = otpValue ? ["--otp", otpValue] : []
+  for (const name of platformPackages) {
+    console.log(`publishing ${name}`)
+    await $`cd dist/${name} && npm publish --access public ${tagArgs} ${otpArgs}`
+  }
+  console.log(`publishing @arctic-cli/${baseName}`)
+  await $`cd dist/${baseName} && npm publish --access public ${tagArgs} ${otpArgs}`
 }

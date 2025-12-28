@@ -5,13 +5,13 @@ import { FileIcon } from "./file-icon"
 import { Icon } from "./icon"
 import { StickyAccordionHeader } from "./sticky-accordion-header"
 import { useDiffComponent } from "../context/diff"
-import { getDirectory, getFilename } from "@arctic-ai/util/path"
+import { getDirectory, getFilename } from "@arctic-cli/util/path"
 import { For, Match, Show, Switch, type JSX } from "solid-js"
 import { createStore } from "solid-js/store"
-import { type FileDiff } from "@arctic-ai/sdk/v2"
+import { type FileDiff } from "@arctic-cli/sdk/v2"
 import { PreloadMultiFileDiffResult } from "@pierre/precision-diffs/ssr"
 import { Dynamic } from "solid-js/web"
-import { checksum } from "@arctic-ai/util/encode"
+import { checksum } from "@arctic-cli/util/encode"
 
 export interface SessionReviewProps {
   split?: boolean

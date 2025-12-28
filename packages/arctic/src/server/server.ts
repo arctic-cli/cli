@@ -12,7 +12,7 @@ import z from "zod"
 import { Provider } from "../provider/provider"
 import { ProviderUsage } from "../provider/usage"
 import { filter, mapValues, sortBy, pipe } from "remeda"
-import { NamedError } from "@arctic-ai/util/error"
+import { NamedError } from "@arctic-cli/util/error"
 import { ModelsDev } from "../provider/models"
 import { Ripgrep } from "../file/ripgrep"
 import { Config } from "../config/config"
@@ -1657,6 +1657,48 @@ export namespace Server {
             timePeriod: timePeriod ?? "session",
           })
           return c.json(usage)
+        },
+      )
+      .get(
+        "/usage/providers/:providerID",
+        describeRoute({
+          summary: "Get provider usage (single)",
+          description: "Fetch usage information for a single configured provider.",
+          operationId: "usage.provider",
+          responses: {
+            200: {
+              description: "Provider usage record",
+              content: {
+                "application/json": {
+                  schema: resolver(ProviderUsage.Record),
+                },
+              },
+            },
+          },
+        }),
+        validator(
+          "param",
+          z.object({
+            providerID: z.string(),
+          }),
+        ),
+        async (c) => {
+          const providerID = c.req.valid("param").providerID
+          const sessionID = c.req.header("x-arctic-session-id")?.trim()
+          const timePeriod = c.req.header("x-arctic-time-period")?.trim() as ProviderUsage.TimePeriod | undefined
+          const usage = await ProviderUsage.fetch(providerID, {
+            sessionID: sessionID?.length ? sessionID : undefined,
+            timePeriod: timePeriod ?? "session",
+          })
+          if (usage.length > 0) {
+            return c.json(usage[0])
+          }
+          return c.json({
+            providerID,
+            providerName: providerID,
+            fetchedAt: Date.now(),
+            error: "Provider not configured",
+          })
         },
       )
       .post(

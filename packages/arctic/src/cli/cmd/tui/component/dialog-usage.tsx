@@ -3,7 +3,8 @@ import { Locale } from "@/util/locale"
 import { ScrollBoxRenderable, TextAttributes } from "@opentui/core"
 import { useKeyboard, useTerminalDimensions } from "@opentui/solid"
 import { useSync } from "@tui/context/sync"
-import { For, Show, createMemo, createResource, createSignal, onMount } from "solid-js"
+import { For, Show, createEffect, createMemo, createSignal, onMount } from "solid-js"
+import { createStore } from "solid-js/store"
 import { useSDK } from "../context/sdk"
 import { useTheme } from "../context/theme"
 import { useDialog } from "../ui/dialog"
@@ -12,23 +13,29 @@ import { useRoute } from "../context/route"
 const BAR_SEGMENTS = 20
 const BAR_FILLED = "█"
 const BAR_EMPTY = "░"
+const CODING_PLAN_PROVIDERS = new Set([
+  "codex",
+  "zai-coding-plan",
+  "anthropic",
+  "@ai-sdk/anthropic",
+  "github-copilot",
+  "google",
+  "kimi-for-coding",
+])
 
-async function fetchUsageRecords(input: {
+async function fetchUsageRecord(input: {
   baseUrl?: string
   directory?: string
   sessionID?: string
-  timePeriod?: ProviderUsage.TimePeriod
+  providerID: string
 }) {
-  if (!input.baseUrl) return []
-  const url = new URL("/usage/providers", input.baseUrl)
-  const params = new URLSearchParams()
-  if (input.timePeriod) params.set("timePeriod", input.timePeriod)
-
-  const res = await fetch(`${url}?${params}`, {
+  if (!input.baseUrl) return undefined
+  const url = new URL(`/usage/providers/${encodeURIComponent(input.providerID)}`, input.baseUrl)
+  const res = await fetch(`${url}`, {
     headers: {
       ...(input.directory ? { "x-arctic-directory": input.directory } : {}),
       ...(input.sessionID ? { "x-arctic-session-id": input.sessionID } : {}),
-      ...(input.timePeriod ? { "x-arctic-time-period": input.timePeriod } : {}),
+      "x-arctic-time-period": "session",
     },
     credentials: "include",
   })
@@ -36,7 +43,7 @@ async function fetchUsageRecords(input: {
     const body = await res.text()
     throw new Error(`Request failed (${res.status}): ${body || res.statusText}`)
   }
-  return (await res.json()) as ProviderUsage.Record[]
+  return (await res.json()) as ProviderUsage.Record
 }
 
 export function DialogUsage() {
@@ -48,7 +55,15 @@ export function DialogUsage() {
   const dimensions = useTerminalDimensions()
 
   const [selectedProvider, setSelectedProvider] = createSignal<string | null>(null)
-  const [timePeriod, setTimePeriod] = createSignal<ProviderUsage.TimePeriod>("session")
+  const [usageState, setUsageState] = createStore<{
+    records: Record<string, ProviderUsage.Record>
+    loading: Record<string, boolean>
+  }>({
+    records: {},
+    loading: {},
+  })
+  const inFlight = new Map<string, Promise<void>>()
+  let prefetchSeq = 0
 
   let scroll: ScrollBoxRenderable
 
@@ -89,30 +104,6 @@ export function DialogUsage() {
       return
     }
 
-    // Number keys for time period selection (only for z.ai and anthropic)
-    const provider = selectedProvider()
-    if (provider === "zai-coding-plan" || provider === "anthropic" || provider === "@ai-sdk/anthropic") {
-      if (evt.name === "1" && !evt.ctrl && !evt.meta && !evt.shift) {
-        evt.preventDefault()
-        setTimePeriod("session")
-        return
-      }
-      if (evt.name === "2" && !evt.ctrl && !evt.meta && !evt.shift) {
-        evt.preventDefault()
-        setTimePeriod("daily")
-        return
-      }
-      if (evt.name === "3" && !evt.ctrl && !evt.meta && !evt.shift) {
-        evt.preventDefault()
-        setTimePeriod("weekly")
-        return
-      }
-      if (evt.name === "4" && !evt.ctrl && !evt.meta && !evt.shift) {
-        evt.preventDefault()
-        setTimePeriod("monthly")
-        return
-      }
-    }
   })
 
   onMount(() => {
@@ -121,19 +112,21 @@ export function DialogUsage() {
 
   const sessionID = createMemo(() => (route.data.type === "session" ? route.data.sessionID : undefined))
 
-  const [records] = createResource(
-    () => ({
-      baseUrl: sdk.url,
-      directory: sync.data.path.directory,
-      sessionID: sessionID(),
-      timePeriod: timePeriod(),
-    }),
-    fetchUsageRecords,
-  )
-
   const providerTabs = createMemo(() => {
-    const allRecords = records() ?? []
-    return allRecords.map((r) => r.providerID)
+    const coding: string[] = []
+    const api: string[] = []
+    for (const provider of sync.data.provider) {
+      if (CODING_PLAN_PROVIDERS.has(provider.id)) {
+        coding.push(provider.id)
+      } else {
+        api.push(provider.id)
+      }
+    }
+    return [...coding, ...api]
+  })
+
+  const providerById = createMemo(() => {
+    return Object.fromEntries(sync.data.provider.map((provider) => [provider.id, provider]))
   })
 
   // Auto-select first provider
@@ -144,21 +137,75 @@ export function DialogUsage() {
     }
   })
 
-  const filteredRecords = createMemo(() => {
-    const allRecords = records() ?? []
+  const selectedRecord = createMemo(() => {
     const selected = selectedProvider()
-    if (!selected) return allRecords
-    return allRecords.filter((r) => r.providerID === selected)
+    if (!selected) return undefined
+    return usageState.records[selected]
   })
-
-  const hasEntries = createMemo(() => filteredRecords().length > 0)
+  const selectedLoading = createMemo(() => {
+    const selected = selectedProvider()
+    if (!selected) return false
+    return Boolean(usageState.loading[selected])
+  })
+  const visibleRecords = createMemo(() => (selectedRecord() ? [selectedRecord()!] : []))
+  const hasEntries = createMemo(() => visibleRecords().length > 0)
   const height = createMemo(() => {
     return Math.min(20, Math.floor(dimensions().height * 0.7))
   })
 
-  const showTimePeriodTabs = createMemo(() => {
-    const provider = selectedProvider()
-    return provider === "zai-coding-plan" || provider === "anthropic" || provider === "@ai-sdk/anthropic"
+  const loadProviderUsage = (providerID: string) => {
+    if (!providerID || !sdk.url) return Promise.resolve()
+    if (usageState.records[providerID]) return Promise.resolve()
+    const existing = inFlight.get(providerID)
+    if (existing) return existing
+
+    const promise = (async () => {
+      setUsageState("loading", providerID, true)
+      try {
+        const record = await fetchUsageRecord({
+          baseUrl: sdk.url,
+          directory: sync.data.path.directory,
+          sessionID: sessionID(),
+          providerID,
+        })
+        if (record) {
+          setUsageState("records", providerID, record)
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        setUsageState("records", providerID, {
+          providerID,
+          providerName: providerById()[providerID]?.name ?? providerID,
+          fetchedAt: Date.now(),
+          error: message,
+        })
+      } finally {
+        setUsageState("loading", providerID, false)
+        inFlight.delete(providerID)
+      }
+    })()
+
+    inFlight.set(providerID, promise)
+    return promise
+  }
+
+  createEffect(() => {
+    const selected = selectedProvider()
+    if (!selected) return
+    void loadProviderUsage(selected)
+  })
+
+  createEffect(() => {
+    const tabs = providerTabs()
+    if (tabs.length === 0) return
+    prefetchSeq += 1
+    const seq = prefetchSeq
+    void (async () => {
+      for (const providerID of tabs) {
+        if (prefetchSeq !== seq) return
+        await loadProviderUsage(providerID)
+      }
+    })()
   })
 
   return (
@@ -174,7 +221,8 @@ export function DialogUsage() {
       <box flexDirection="row" gap={1} paddingBottom={1}>
         <For each={providerTabs()}>
           {(providerID) => {
-            const record = records()?.find((r) => r.providerID === providerID)
+            const record = () => usageState.records[providerID]
+            const name = () => record()?.providerName ?? providerById()[providerID]?.name ?? providerID
             return (
               <box
                 paddingLeft={2}
@@ -189,7 +237,7 @@ export function DialogUsage() {
                     fg: selectedProvider() === providerID ? "#ffffff" : theme.textMuted,
                   }}
                 >
-                  {record?.providerName ?? providerID}
+                  {name()}
                 </text>
               </box>
             )
@@ -197,36 +245,11 @@ export function DialogUsage() {
         </For>
       </box>
 
-      {/* Time Period Tabs (for Z.ai and Anthropic only) */}
-      <Show when={showTimePeriodTabs()}>
-        <box flexDirection="row" gap={1} paddingBottom={1}>
-          <For each={["session", "daily", "weekly", "monthly"] as ProviderUsage.TimePeriod[]}>
-            {(period) => {
-              return (
-                <box
-                  paddingLeft={2}
-                  paddingRight={2}
-                >
-                  <text
-                    attributes={timePeriod() === period ? TextAttributes.BOLD : undefined}
-                    style={{
-                      bg: timePeriod() === period ? "#16a34a" : undefined,
-                      fg: timePeriod() === period ? "#ffffff" : theme.textMuted,
-                    }}
-                  >
-                    {period.charAt(0).toUpperCase() + period.slice(1)} ({getPeriodKey(period)})
-                  </text>
-                </box>
-              )
-            }}
-          </For>
-        </box>
-      </Show>
-
-      {records.error && <text fg={theme.error}>Failed to load usage: {String(records.error)}</text>}
-      {!records.error && records.loading && <text fg={theme.textMuted}>Loading usage…</text>}
-      {!records.error && !records.loading && !hasEntries() && <text fg={theme.textMuted}>No providers available.</text>}
-      {!records.error && !records.loading && hasEntries() && (
+      {!selectedProvider() && <text fg={theme.textMuted}>No providers available.</text>}
+      {selectedProvider() && selectedLoading() && !hasEntries() && (
+        <text fg={theme.textMuted}>Loading usage…</text>
+      )}
+      {selectedProvider() && hasEntries() && (
         <scrollbox
           ref={(r: ScrollBoxRenderable) => (scroll = r)}
           height={height()}
@@ -236,71 +259,25 @@ export function DialogUsage() {
             visible: false,
           }}
         >
-          <For each={filteredRecords()}>{(record) => <UsageCard record={record} timePeriod={timePeriod()} />}</For>
+          <For each={visibleRecords()}>{(record) => <UsageCard record={record} />}</For>
         </scrollbox>
       )}
     </box>
   )
 }
 
-function getPeriodKey(period: ProviderUsage.TimePeriod): string {
-  switch (period) {
-    case "session":
-      return "1"
-    case "daily":
-      return "2"
-    case "weekly":
-      return "3"
-    case "monthly":
-      return "4"
-    default:
-      return ""
-  }
-}
-
-function UsageCard(props: { record: ProviderUsage.Record; timePeriod: ProviderUsage.TimePeriod }) {
+function UsageCard(props: { record: ProviderUsage.Record }) {
   const { theme } = useTheme()
   const status = createMemo(() => describeStatus(props.record))
   const limits = createMemo(() => describeLimits(props.record.limits))
 
-  const periodLabel = createMemo(() => {
-    switch (props.timePeriod) {
-      case "session":
-        return "This Session"
-      case "daily":
-        return "Today"
-      case "weekly":
-        return "This Week"
-      case "monthly":
-        return "This Month"
-      default:
-        return ""
-    }
-  })
-
-  const costLabel = createMemo(() => {
-    switch (props.timePeriod) {
-      case "session":
-        return "Session Cost"
-      case "daily":
-        return "Daily Cost"
-      case "weekly":
-        return "Weekly Cost"
-      case "monthly":
-        return "Monthly Cost"
-      default:
-        return "Cost"
-    }
-  })
+  const costLabel = "Session Cost"
 
   return (
     <box border={["left"]} borderColor={status().color} paddingLeft={2} paddingBottom={1}>
       <text fg={theme.text} attributes={TextAttributes.BOLD}>
         {props.record.providerName}
       </text>
-      <Show when={props.timePeriod !== "session"}>
-        <text fg={theme.textMuted}>Period: {periodLabel()}</text>
-      </Show>
       <Show when={props.record.planType}>{(plan) => <text fg={theme.textMuted}>Plan · {plan()}</text>}</Show>
       <Show when={props.record.fetchedAt}>
         {(time) => <text fg={theme.textMuted}>Updated {Locale.todayTimeOrDateTime(time())}</text>}
@@ -343,7 +320,7 @@ function UsageCard(props: { record: ProviderUsage.Record; timePeriod: ProviderUs
       <Show when={props.record.costSummary}>
         {(cost) => (
           <box>
-            <text fg={theme.textMuted}>{costLabel()}</text>
+            <text fg={theme.textMuted}>{costLabel}</text>
             <box marginLeft={2} flexDirection="column">
               <Show when={cost().totalCost !== undefined}>
                 <text fg={theme.text}>

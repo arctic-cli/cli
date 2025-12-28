@@ -1,5 +1,5 @@
 {
-  "name": "@arctic-ai/util",
+  "name": "@arctic-cli/util",
   "version": "0.0.4-beta",
   "private": true,
   "type": "module",

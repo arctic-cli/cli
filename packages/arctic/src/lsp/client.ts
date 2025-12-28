@@ -8,7 +8,7 @@ import { Log } from "../util/log"
 import { LANGUAGE_EXTENSIONS } from "./language"
 import z from "zod"
 import type { LSPServer } from "./server"
-import { NamedError } from "@arctic-ai/util/error"
+import { NamedError } from "@arctic-cli/util/error"
 import { withTimeout } from "../util/timeout"
 import { Instance } from "../project/instance"
 

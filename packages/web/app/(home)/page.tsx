@@ -5,7 +5,7 @@ import { Book, Github } from "lucide-react"
 import Link from "next/link"
 
 export default function HomePage() {
-  const installCommand = "curl -fsSL https://arcticli.com/install | sh"
+  const installCommand = "curl -fsSL https://arcticli.com/install | bash"
 
   return (
     <div className="relative min-h-screen w-full">

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@arctic-ai/sdk",
+  "name": "@arctic-cli/sdk",
   "version": "0.0.4-beta",
   "type": "module",
   "scripts": {

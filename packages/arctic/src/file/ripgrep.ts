@@ -3,7 +3,7 @@ import path from "path"
 import { Global } from "../global"
 import fs from "fs/promises"
 import z from "zod"
-import { NamedError } from "@arctic-ai/util/error"
+import { NamedError } from "@arctic-cli/util/error"
 import { lazy } from "../util/lazy"
 import { $ } from "bun"
 

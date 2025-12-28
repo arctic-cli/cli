@@ -10,7 +10,7 @@ import { UninstallCommand } from "./cli/cmd/uninstall"
 import { ModelsCommand } from "./cli/cmd/models"
 import { UI } from "./cli/ui"
 import { Installation } from "./installation"
-import { NamedError } from "@arctic-ai/util/error"
+import { NamedError } from "@arctic-cli/util/error"
 import { FormatError } from "./cli/error"
 import { DebugCommand } from "./cli/cmd/debug"
 import { StatsCommand } from "./cli/cmd/stats"
@@ -52,7 +52,14 @@ const cli = yargs(hideBin(process.argv))
     type: "string",
     choices: ["DEBUG", "INFO", "WARN", "ERROR"],
   })
+  .option("profile", {
+    describe: "permission profile (readonly, git-only, trusted, safe, or custom)",
+    type: "string",
+  })
   .middleware(async (opts) => {
+    if (opts.profile) {
+      process.env.ARCTIC_PERMISSION_PROFILE = opts.profile
+    }
     await Log.init({
       print: process.argv.includes("--print-logs"),
       dev: Installation.isLocal(),

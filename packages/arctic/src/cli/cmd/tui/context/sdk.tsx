@@ -1,4 +1,4 @@
-import { createArcticClient, type Event } from "@arctic-ai/sdk/v2"
+import { createArcticClient, type Event } from "@arctic-cli/sdk/v2"
 import { createSimpleContext } from "./helper"
 import { createGlobalEmitter } from "@solid-primitives/event-bus"
 import { batch, onCleanup, onMount } from "solid-js"

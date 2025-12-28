@@ -22,7 +22,7 @@
  * @repository https://github.com/numman-ali/opencode-openai-codex-auth
  */
 
-import type { Plugin, PluginInput } from "@arctic-ai/plugin";
+import type { Plugin, PluginInput } from "@arctic-cli/plugin";
 import { Auth } from "../index";
 import {
 	createAuthorizationFlow,

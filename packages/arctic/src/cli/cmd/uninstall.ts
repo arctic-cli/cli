@@ -128,10 +128,10 @@ async function showRemovalSummary(targets: RemovalTargets, method: Installation.
 
   if (method !== "curl" && method !== "unknown") {
     const cmds: Record<string, string> = {
-      npm: "npm uninstall -g arctic-ai",
-      pnpm: "pnpm uninstall -g arctic-ai",
-      bun: "bun remove -g arctic-ai",
-      yarn: "yarn global remove arctic-ai",
+      npm: "npm uninstall -g @arctic-cli/arctic",
+      pnpm: "pnpm uninstall -g @arctic-cli/arctic",
+      bun: "bun remove -g @arctic-cli/arctic",
+      yarn: "yarn global remove @arctic-cli/arctic",
       brew: "brew uninstall arctic",
     }
     prompts.log.info(`  ✓ Package: ${cmds[method] || method}`)
@@ -177,10 +177,10 @@ async function executeUninstall(method: Installation.Method, targets: RemovalTar
 
   if (method !== "curl" && method !== "unknown") {
     const cmds: Record<string, string[]> = {
-      npm: ["npm", "uninstall", "-g", "arctic-ai"],
-      pnpm: ["pnpm", "uninstall", "-g", "arctic-ai"],
-      bun: ["bun", "remove", "-g", "arctic-ai"],
-      yarn: ["yarn", "global", "remove", "arctic-ai"],
+      npm: ["npm", "uninstall", "-g", "@arctic-cli/arctic"],
+      pnpm: ["pnpm", "uninstall", "-g", "@arctic-cli/arctic"],
+      bun: ["bun", "remove", "-g", "@arctic-cli/arctic"],
+      yarn: ["yarn", "global", "remove", "@arctic-cli/arctic"],
       brew: ["brew", "uninstall", "arctic"],
     }
 

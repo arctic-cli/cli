@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package",
-  "name": "@arctic-ai/script",
+  "name": "@arctic-cli/script",
   "devDependencies": {
     "@types/bun": "catalog:"
   },

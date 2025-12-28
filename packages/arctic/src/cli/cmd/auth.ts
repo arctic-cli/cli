@@ -11,7 +11,7 @@ import { Config } from "../../config/config"
 import { Global } from "../../global"
 import { Plugin } from "../../plugin"
 import { Instance } from "../../project/instance"
-import type { Hooks } from "@arctic-ai/plugin"
+import type { Hooks } from "@arctic-cli/plugin"
 
 type PluginAuth = NonNullable<Hooks["auth"]>
 

@@ -4,16 +4,28 @@ import { createStore } from "solid-js/store"
 import { useTheme } from "../../context/theme"
 import { Locale } from "@/util/locale"
 import path from "path"
-import type { AssistantMessage } from "@arctic-ai/sdk/v2"
+import type { AssistantMessage } from "@arctic-cli/sdk/v2"
 import { Global } from "@/global"
 import { Installation } from "@/installation"
 import { useKeybind } from "../../context/keybind"
+import { useLocal } from "../../context/local"
+import { useSDK } from "../../context/sdk"
 import { SplitBorder } from "../../component/border"
 import { Pricing } from "@/provider/pricing"
+import { useToast } from "../../ui/toast"
+import { ProviderUsage } from "@/provider/usage"
 
-export function Sidebar(props: { sessionID: string }) {
+const USAGE_BAR_SEGMENTS = 16
+const USAGE_BAR_FILLED = "█"
+const USAGE_BAR_EMPTY = "░"
+
+export function Sidebar(props: { sessionID: string; onHide?: () => void }) {
   const sync = useSync()
+  const local = useLocal()
+  const sdk = useSDK()
   const { theme } = useTheme()
+  const toast = useToast()
+  const keybind = useKeybind()
   const session = createMemo(() => sync.session.get(props.sessionID)!)
   const diff = createMemo(() => sync.data.session_diff[props.sessionID] ?? [])
   const todo = createMemo(() => sync.data.todo[props.sessionID] ?? [])
@@ -25,7 +37,14 @@ export function Sidebar(props: { sessionID: string }) {
     todo: true,
     lsp: true,
     benchmark: true,
+    usage: true,
   })
+
+  const [usageData, setUsageData] = createSignal<ProviderUsage.Record | null>(null)
+  const [usageLoading, setUsageLoading] = createSignal(false)
+  const [usageMeta, setUsageMeta] = createSignal<{ providerID: string; fetchedAt: number; errored?: boolean } | null>(
+    null,
+  )
 
   // Sort MCP servers alphabetically for consistent display order
   const mcpEntries = createMemo(() => Object.entries(sync.data.mcp).sort(([a], [b]) => a.localeCompare(b)))
@@ -140,11 +159,102 @@ export function Sidebar(props: { sessionID: string }) {
     }
   })
 
-  const keybind = useKeybind()
-
   const hasProviders = createMemo(() =>
     sync.data.provider.some((x) => x.id !== "arctic" || Object.values(x.models).some((y) => y.cost?.input !== 0)),
   )
+
+  const currentProvider = createMemo(() => {
+    const benchmark = session()?.benchmark
+    const sessionModel = benchmark?.type === "child" ? benchmark.model : undefined
+    const model = sessionModel ?? local.model.current()
+    return model?.providerID
+  })
+
+  const SUPPORTED_USAGE_PROVIDERS = [
+    "codex",
+    "anthropic",
+    "@ai-sdk/anthropic",
+    "google",
+    "kimi-for-coding",
+    "github-copilot",
+  ]
+
+  const showUsageLimits = createMemo(() => {
+    const provider = currentProvider()
+    return provider && SUPPORTED_USAGE_PROVIDERS.includes(provider)
+  })
+
+  const usageBar = (percent: number | null | undefined) => {
+    const safe = Math.max(0, Math.min(100, percent ?? 0))
+    const filled = Math.round((safe / 100) * USAGE_BAR_SEGMENTS)
+    return `${USAGE_BAR_FILLED.repeat(filled)}${USAGE_BAR_EMPTY.repeat(USAGE_BAR_SEGMENTS - filled)}`
+  }
+
+  createEffect(() => {
+    if (!expanded.usage || !showUsageLimits()) return
+    const provider = currentProvider()
+    if (!provider || usageLoading()) return
+
+    const meta = usageMeta()
+    const isSameProvider = meta?.providerID === provider
+    const isFresh = meta ? Date.now() - meta.fetchedAt < 60_000 : false
+    if (isSameProvider && isFresh) return
+
+    setUsageLoading(true)
+    const directory = sync.data.path.directory
+    const baseUrl = sdk.url
+    const providerName = sync.data.provider.find((item) => item.id === provider)?.name ?? provider
+    const url = baseUrl ? new URL(`/usage/providers/${encodeURIComponent(provider)}`, baseUrl) : null
+
+    const run = async () => {
+      if (!url) {
+        throw new Error("Usage server unavailable")
+      }
+      const res = await fetch(`${url}`, {
+        headers: {
+          ...(directory ? { "x-arctic-directory": directory } : {}),
+          ...(props.sessionID ? { "x-arctic-session-id": props.sessionID } : {}),
+          "x-arctic-time-period": "session",
+        },
+        credentials: "include",
+      })
+      if (!res.ok) {
+        const body = await res.text()
+        throw new Error(`Request failed (${res.status}): ${body || res.statusText}`)
+      }
+      return (await res.json()) as ProviderUsage.Record
+    }
+
+    run()
+      .then((record) => {
+        if (record) {
+          setUsageData(record)
+          setUsageMeta({ providerID: provider, fetchedAt: Date.now(), errored: !!record.error })
+        } else {
+          setUsageData({
+            providerID: provider,
+            providerName,
+            fetchedAt: Date.now(),
+            error: "No usage data returned",
+          })
+          setUsageMeta({ providerID: provider, fetchedAt: Date.now(), errored: true })
+        }
+      })
+      .catch((err) => {
+        const message = err instanceof Error ? err.message : String(err)
+        console.error("Failed to fetch usage:", err)
+        setUsageData({
+          providerID: provider,
+          providerName,
+          fetchedAt: Date.now(),
+          error: message,
+        })
+        setUsageMeta({ providerID: provider, fetchedAt: Date.now(), errored: true })
+      })
+      .finally(() => {
+        setUsageLoading(false)
+      })
+  })
 
   return (
     <Show when={session()}>
@@ -165,9 +275,24 @@ export function Sidebar(props: { sessionID: string }) {
       >
         <scrollbox flexGrow={1}>
           <box flexShrink={0} gap={1} paddingRight={1}>
-            <box>
+            <box flexDirection="row" justifyContent="space-between" alignItems="center">
               <text fg={theme.text}>
                 <b>{session().title}</b>
+              </text>
+              <text
+                fg={theme.textMuted}
+                onMouseDown={() => {
+                  if (props.onHide) {
+                    props.onHide()
+                    toast.show({
+                      variant: "info",
+                      message: `Press ${keybind.print("sidebar_toggle")} to show sidebar again`,
+                      duration: 3000,
+                    })
+                  }
+                }}
+              >
+                ✕
               </text>
             </box>
             <box>
@@ -393,6 +518,55 @@ export function Sidebar(props: { sessionID: string }) {
         </scrollbox>
 
         <box flexShrink={0} gap={1} paddingTop={1}>
+          <Show when={showUsageLimits()}>
+            <box>
+              <box flexDirection="row" gap={1} onMouseDown={() => setExpanded("usage", !expanded.usage)}>
+                <text fg={theme.text}>{expanded.usage ? "▼" : "▶"}</text>
+                <text fg={theme.text}>
+                  <b>Usage Limits</b>
+                </text>
+              </box>
+              <Show when={expanded.usage}>
+                <Show when={!usageLoading()} fallback={<text fg={theme.textMuted}>Loading...</text>}>
+                  <Show
+                    when={usageData() && !usageData()?.error}
+                    fallback={<text fg={theme.error}>{usageData()?.error ?? "Failed to load"}</text>}
+                  >
+                    <box gap={0}>
+                      <Show when={usageData()?.planType}>
+                        <text fg={theme.textMuted}>{usageData()!.planType}</text>
+                      </Show>
+                      <Show when={usageData()?.limits?.primary}>
+                        <text fg={theme.textMuted}>
+                          Primary: {usageData()!.limits!.primary!.usedPercent?.toFixed(0) ?? 0}% {usageBar(
+                            usageData()!.limits!.primary!.usedPercent,
+                          )}
+                        </text>
+                      </Show>
+                      <Show when={usageData()?.limits?.secondary}>
+                        <text fg={theme.textMuted}>
+                          Secondary: {usageData()!.limits!.secondary!.usedPercent?.toFixed(0) ?? 0}% {usageBar(
+                            usageData()!.limits!.secondary!.usedPercent,
+                          )}
+                        </text>
+                      </Show>
+                      <Show when={usageData()?.credits?.unlimited}>
+                        <text fg={theme.success}>Unlimited credits</text>
+                      </Show>
+                      <Show
+                        when={usageData()?.credits && !usageData()!.credits!.unlimited && usageData()!.credits!.balance}
+                      >
+                        <text fg={theme.textMuted}>Balance: {usageData()!.credits!.balance}</text>
+                      </Show>
+                      <Show when={usageData()?.limitReached}>
+                        <text fg={theme.error}>⚠ Limit reached</text>
+                      </Show>
+                    </box>
+                  </Show>
+                </Show>
+              </Show>
+            </box>
+          </Show>
           <Show when={!hasProviders()}>
             <box
               backgroundColor={theme.backgroundElement}
@@ -420,15 +594,15 @@ export function Sidebar(props: { sessionID: string }) {
                 </box>
               </box>
             </box>
-        </Show>
-        <text fg={theme.textMuted}>
-          <span style={{ fg: theme.success }}>•</span>{" "}
-          <span style={{ fg: theme.text }}>
-            <b>Arctic</b>
-          </span>{" "}
-          <span>{Installation.VERSION}</span>
-        </text>
-      </box>
+          </Show>
+          <text fg={theme.textMuted}>
+            <span style={{ fg: theme.success }}>•</span>{" "}
+            <span style={{ fg: theme.text }}>
+              <b>Arctic</b>
+            </span>{" "}
+            <span>{Installation.VERSION}</span>
+          </text>
+        </box>
       </box>
     </Show>
   )

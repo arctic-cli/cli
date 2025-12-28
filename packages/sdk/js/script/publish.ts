@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { Script } from "@arctic-ai/script"
+import { Script } from "@arctic-cli/script"
 import { $ } from "bun"
 
 const dir = new URL("..", import.meta.url).pathname

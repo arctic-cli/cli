@@ -1,6 +1,6 @@
 import z from "zod"
 import { EOL } from "os"
-import { NamedError } from "@arctic-ai/util/error"
+import { NamedError } from "@arctic-cli/util/error"
 import { Installation } from "../installation"
 import { Locale } from "../util/locale"
 import { loadRecentSessions } from "./recent-sessions"

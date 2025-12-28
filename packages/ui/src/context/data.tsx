@@ -1,4 +1,4 @@
-import type { Message, Session, Part, FileDiff, SessionStatus } from "@arctic-ai/sdk/v2"
+import type { Message, Session, Part, FileDiff, SessionStatus } from "@arctic-cli/sdk/v2"
 import { createSimpleContext } from "./helper"
 import { PreloadMultiFileDiffResult } from "@pierre/precision-diffs/ssr"
 

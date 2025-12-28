@@ -1,4 +1,4 @@
-import { UserMessage } from "@arctic-ai/sdk/v2"
+import { UserMessage } from "@arctic-cli/sdk/v2"
 import { ComponentProps, Show, splitProps } from "solid-js"
 import { MessageNav } from "./message-nav"
 import "./session-message-rail.css"

@@ -6,7 +6,7 @@
  * a unified gateway with multi-account support and rate limiting.
  */
 
-import type { Plugin, PluginInput } from "@arctic-ai/plugin"
+import type { Plugin, PluginInput } from "@arctic-cli/plugin"
 import { openBrowserUrl } from "../codex-oauth/auth/browser"
 import { Auth } from "../index"
 import { AccountManager } from "./accounts"

@@ -3,7 +3,7 @@ title: Usage Limits
 description: View usage and rate limits across providers.
 ---
 
-Arctic aggregates usage and limits across providers in one place.
+Arctic aggregates usage, costs, and (when available) provider limits in one place.
 
 ## Command
 
@@ -29,15 +29,23 @@ This opens the Usage dialog.
 - **Updated time**
 - **Token usage**: total/input/output/cached
 - **Cost summary**: total + breakdown (if available)
-- **Limits**: primary/secondary windows with % remaining + reset time
+- **Limits**: primary/secondary windows with % remaining + reset time (when available)
 
-### Time periods (Anthropic + Z.ai)
+## How limits work
 
-For Anthropic and Z.ai coding plans, you can switch the time window in the dialog:
+Usage data comes from two sources:
 
-- `1` Session
-- `2` Daily
-- `3` Weekly
-- `4` Monthly
+1) **Session usage (tokens + cost)**  
+   Arctic computes this from the local message log and model pricing. This is available for all providers that report token counts in messages and have pricing data (via models.dev or provider pricing).
 
-If a provider doesn’t expose limits, it will show “unknown.”
+2) **Provider limits (quota/rate limits)**  
+   Only some providers expose account limits via an API. Arctic currently fetches limits for:
+   - Codex
+   - Z.ai coding plan
+   - Anthropic (Claude subscription)
+   - OpenRouter
+   - GitHub Copilot
+   - Google (Gemini Code Assist)
+   - Kimi for Coding
+
+If a provider doesn’t expose limits, you’ll still see session token usage and cost, but the limits section may be empty.

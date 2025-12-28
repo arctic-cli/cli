@@ -1,4 +1,4 @@
-import type { NamedError } from "@arctic-ai/util/error"
+import type { NamedError } from "@arctic-cli/util/error"
 import { MessageV2 } from "./message-v2"
 
 export namespace SessionRetry {

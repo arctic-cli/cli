@@ -1,5 +1,5 @@
 import z from "zod"
-import { NamedError } from "@arctic-ai/util/error"
+import { NamedError } from "@arctic-cli/util/error"
 
 export namespace Message {
   export const OutputLengthError = NamedError.create("MessageOutputLengthError", z.object({}))

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@arctic-ai/plugin",
+  "name": "@arctic-cli/plugin",
   "version": "0.0.4-beta",
   "type": "module",
   "scripts": {
@@ -15,7 +15,7 @@
     "dist"
   ],
   "dependencies": {
-    "@arctic-ai/sdk": "workspace:*",
+    "@arctic-cli/sdk": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -7,7 +7,7 @@ import {
   TextPart,
   ToolPart,
   UserMessage,
-} from "@arctic-ai/sdk/v2"
+} from "@arctic-cli/sdk/v2"
 import { useData } from "../context"
 import { useDiffComponent } from "../context/diff"
 import { BasicTool } from "./basic-tool"
@@ -17,7 +17,7 @@ import { Icon } from "./icon"
 import { Checkbox } from "./checkbox"
 import { DiffChanges } from "./diff-changes"
 import { Markdown } from "./markdown"
-import { getDirectory as _getDirectory, getFilename } from "@arctic-ai/util/path"
+import { getDirectory as _getDirectory, getFilename } from "@arctic-cli/util/path"
 
 export interface MessageProps {
   message: MessageType

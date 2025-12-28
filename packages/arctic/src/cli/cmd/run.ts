@@ -6,7 +6,7 @@ import { bootstrap } from "../bootstrap"
 import { Command } from "../../command"
 import { EOL } from "os"
 import { select } from "@clack/prompts"
-import { createArcticClient, type ArcticClient } from "@arctic-ai/sdk/v2"
+import { createArcticClient, type ArcticClient } from "@arctic-cli/sdk/v2"
 import { Server } from "../../server/server"
 import { Provider } from "../../provider/provider"
 

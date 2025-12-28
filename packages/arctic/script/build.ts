@@ -13,7 +13,7 @@ const dir = path.resolve(__dirname, "..")
 process.chdir(dir)
 
 import pkg from "../package.json"
-import { Script } from "@arctic-ai/script"
+import { Script } from "@arctic-cli/script"
 
 const singleFlag = process.argv.includes("--single")
 const skipInstall = process.argv.includes("--skip-install")
@@ -77,6 +77,8 @@ const allTargets: {
   },
 ]
 
+const baseName = pkg.name.includes("/") ? pkg.name.split("/")[1] : pkg.name
+
 const targets = singleFlag
   ? allTargets.filter((item) => item.os === process.platform && item.arch === process.arch)
   : allTargets
@@ -90,17 +92,17 @@ if (!skipInstall) {
 }
 for (const item of targets) {
   const name = [
-    pkg.name,
-    // changing to win32 flags npm for some reason
-    item.os === "win32" ? "windows" : item.os,
+    `${baseName}-${item.os === "win32" ? "windows" : item.os}`,
     item.arch,
     item.avx2 === false ? "baseline" : undefined,
     item.abi === undefined ? undefined : item.abi,
   ]
     .filter(Boolean)
     .join("-")
-  console.log(`building ${name}`)
-  await $`mkdir -p dist/${name}/bin`
+  const scopedName = `@arctic-cli/${name}`
+  const targetName = name.replace(baseName, "bun")
+  console.log(`building ${scopedName}`)
+  await $`mkdir -p dist/${scopedName}/bin`
 
   const parserWorker = fs.realpathSync(path.resolve(dir, "./node_modules/@opentui/core/parser.worker.js"))
   const workerPath = "./src/cli/cmd/tui/worker.ts"
@@ -120,8 +122,8 @@ for (const item of targets) {
       //@ts-ignore (bun types aren't up to date)
       autoloadTsconfig: true,
       autoloadPackageJson: true,
-      target: name.replace(pkg.name, "bun") as any,
-      outfile: `dist/${name}/bin/arctic`,
+      target: targetName as any,
+      outfile: `dist/${scopedName}/bin/arctic`,
       execArgv: [`--user-agent=arctic/${Script.version}`, "--"],
       windows: {},
     },
@@ -135,11 +137,11 @@ for (const item of targets) {
     },
   })
 
-  await $`rm -rf ./dist/${name}/bin/tui`
-  await Bun.file(`dist/${name}/package.json`).write(
+  await $`rm -rf ./dist/${scopedName}/bin/tui`
+  await Bun.file(`dist/${scopedName}/package.json`).write(
     JSON.stringify(
       {
-        name,
+        name: scopedName,
         version: Script.version,
         os: [item.os],
         cpu: [item.arch],
@@ -148,7 +150,7 @@ for (const item of targets) {
       2,
     ),
   )
-  binaries[name] = Script.version
+  binaries[scopedName] = Script.version
 }
 
 export { binaries }

@@ -2,7 +2,7 @@ import { BusEvent } from "@/bus/bus-event"
 import { Bus } from "@/bus"
 import { spawn } from "bun"
 import z from "zod"
-import { NamedError } from "@arctic-ai/util/error"
+import { NamedError } from "@arctic-cli/util/error"
 import { Log } from "../util/log"
 
 const SUPPORTED_IDES = [

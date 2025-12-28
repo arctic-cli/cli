@@ -1,4 +1,4 @@
-import type { Auth, Model, Provider } from "@arctic-ai/sdk"
+import type { Auth, Model, Provider } from "@arctic-cli/sdk"
 
 export interface PluginConfig {
   /**

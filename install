@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+if [ -z "${BASH_VERSION-}" ]; then
+  echo "This installer requires bash."
+  echo "Run: curl -fsSL https://arcticli.com/install | bash"
+  exit 1
+fi
 set -euo pipefail
 APP=arctic
 
@@ -8,6 +13,7 @@ ORANGE='\033[38;5;214m'
 NC='\033[0m' # No Color
 
 requested_version=${VERSION:-}
+requested_tag=${TAG:-}
 
 raw_os=$(uname -s)
 os=$(echo "$raw_os" | tr '[:upper:]' '[:lower:]')
@@ -96,6 +102,18 @@ if [ "$os" = "windows" ]; then
   supports_npm_fallback=false
 fi
 
+is_semver() {
+    echo "$1" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+'
+}
+
+resolve_npm_tag_version() {
+    local tag="$1"
+    local meta_url="$npm_registry/@arctic-cli%2F$package_name"
+    local json
+    json=$(curl -s "$meta_url")
+    echo "$json" | tr -d '\n' | sed -n "s/.*\"dist-tags\"[^{]*{[^}]*\"$tag\":\"\\([^\"]*\\)\".*/\\1/p"
+}
+
 
 if [ "$os" = "linux" ]; then
     if ! command -v tar >/dev/null 2>&1; then
@@ -112,7 +130,28 @@ fi
 INSTALL_DIR=$HOME/.arctic/bin
 mkdir -p "$INSTALL_DIR"
 
-if [ -z "$requested_version" ]; then
+force_npm_download=false
+
+if [ -n "$requested_tag" ]; then
+    specific_version=$(resolve_npm_tag_version "$requested_tag")
+    if [[ -z "$specific_version" ]]; then
+        echo -e "${RED}Failed to resolve npm dist-tag '${requested_tag}' for @arctic-cli/${package_name}.${NC}"
+        exit 1
+    fi
+    force_npm_download=true
+elif [ -n "$requested_version" ]; then
+    if is_semver "$requested_version"; then
+        url="https://github.com/arctic-cli/cli/releases/download/v${requested_version}/$filename"
+        specific_version=$requested_version
+    else
+        specific_version=$(resolve_npm_tag_version "$requested_version")
+        if [[ -z "$specific_version" ]]; then
+            echo -e "${RED}Failed to resolve npm dist-tag '${requested_version}' for @arctic-cli/${package_name}.${NC}"
+            exit 1
+        fi
+        force_npm_download=true
+    fi
+else
     url="https://github.com/arctic-cli/cli/releases/latest/download/$filename"
     specific_version=$(curl -s https://api.github.com/repos/arctic-cli/cli/releases/latest | sed -n 's/.*"tag_name": *"v*\([^"]*\)".*/\1/p')
 
@@ -120,9 +159,6 @@ if [ -z "$requested_version" ]; then
         echo -e "${RED}Failed to fetch version information${NC}"
         exit 1
     fi
-else
-    url="https://github.com/arctic-cli/cli/releases/download/v${requested_version}/$filename"
-    specific_version=$requested_version
 fi
 
 print_message() {
@@ -252,12 +288,27 @@ download_and_install() {
     local extractor="$archive_type"
     local used_fallback=false
 
-    if [[ "$os" == "windows" ]] || ! download_with_progress "$url" "$downloaded_file"; then
+    if [ "$force_npm_download" = true ]; then
+        if [ "$supports_npm_fallback" = true ]; then
+            local npm_filename="$package_name.tgz"
+            local npm_url="$npm_registry/@arctic-cli/$package_name/-/$package_name-$specific_version.tgz"
+            print_message warning "Downloading from npm dist-tag '${requested_tag:-$requested_version}'."
+            if ! download_with_progress "$npm_url" "$npm_filename"; then
+                curl -# -L -f -o "$npm_filename" "$npm_url"
+            fi
+            downloaded_file="$npm_filename"
+            extractor="tar"
+            used_fallback=true
+        else
+            print_message error "npm fallback is not supported on this platform."
+            exit 1
+        fi
+    elif [[ "$os" == "windows" ]] || ! download_with_progress "$url" "$downloaded_file"; then
         # Fallback to standard curl on Windows or if custom progress fails
         if ! curl -# -L -f -o "$downloaded_file" "$url"; then
             if [ "$supports_npm_fallback" = true ]; then
                 local npm_filename="$package_name.tgz"
-                local npm_url="$npm_registry/$package_name/-/$package_name-$specific_version.tgz"
+                local npm_url="$npm_registry/@arctic-cli/$package_name/-/$package_name-$specific_version.tgz"
                 print_message warning "Primary download failed, falling back to npm registry package."
                 if ! download_with_progress "$npm_url" "$npm_filename"; then
                     curl -# -L -f -o "$npm_filename" "$npm_url"
@@ -390,15 +441,16 @@ if [ -n "${GITHUB_ACTIONS-}" ] && [ "${GITHUB_ACTIONS}" == "true" ]; then
 fi
 
 echo -e ""
-echo -e "   ___        _   _      "
-echo -e "  / _ \      | | (_)     "
-echo -e " / /_\ \_ __ | |_ _  ___ "
-echo -e " |  _  | '__|| __| |/ __|"
-echo -e " | | | | |   | |_| | (__ "
-echo -e " \_| |_/_|    \__|_|\___|"
+echo -e "  
+  ___  ______  _____ _____ _____ _____ 
+ / _ \ | ___ \/  __ \_   _|_   _/  __ \
+/ /_\ \| |_/ /| /  \/ | |   | | | /  \/
+|  _  ||    / | |     | |   | | | |    
+| | | || |\ \ | \__/\ | |  _| |_| \__/\
+\_| |_/\_| \_| \____/ \_/  \___/ \____/
+                                       "
 echo -e ""
 echo -e ""
-echo -e "${MUTED}Arctic CLI includes free models, to start:${NC}"
 echo -e ""
 echo -e "cd <project>  ${MUTED}# Open directory${NC}"
 echo -e "arctic        ${MUTED}# Run command${NC}"

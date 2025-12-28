@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "version": "0.0.4-beta",
-  "name": "arctic",
+  "name": "@arctic-cli/arctic",
   "type": "module",
   "private": true,
   "scripts": {
@@ -43,7 +43,7 @@
     "vscode-languageserver-types": "3.17.5",
     "why-is-node-running": "3.2.2",
     "zod-to-json-schema": "3.24.5",
-    "@arctic-ai/script": "workspace:*"
+    "@arctic-cli/script": "workspace:*"
   },
   "dependencies": {
     "@actions/core": "1.11.1",
@@ -59,10 +59,10 @@
     "@ai-sdk/openai-compatible": "1.0.27",
     "@ai-sdk/provider": "2.0.0",
     "@ai-sdk/provider-utils": "3.0.18",
-    "@arctic-ai/plugin": "workspace:*",
-    "@arctic-ai/script": "workspace:*",
-    "@arctic-ai/sdk": "workspace:*",
-    "@arctic-ai/util": "workspace:*",
+    "@arctic-cli/plugin": "workspace:*",
+    "@arctic-cli/script": "workspace:*",
+    "@arctic-cli/sdk": "workspace:*",
+    "@arctic-cli/util": "workspace:*",
     "@clack/prompts": "1.0.0-alpha.1",
     "@hono/standard-validator": "0.1.5",
     "@hono/zod-validator": "catalog:",

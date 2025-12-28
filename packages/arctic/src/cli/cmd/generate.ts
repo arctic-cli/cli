@@ -14,7 +14,7 @@ export const GenerateCommand = {
           {
             lang: "js",
             source: [
-              `import { createArcticClient } from "@arctic-ai/sdk`,
+              `import { createArcticClient } from "@arctic-cli/sdk`,
               ``,
               `const client = createArcticClient()`,
               `await client.${operation.operationId}({`,

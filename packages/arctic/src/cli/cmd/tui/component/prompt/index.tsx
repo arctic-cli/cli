@@ -28,7 +28,7 @@ import { useRenderer } from "@opentui/solid"
 import { Editor } from "@tui/util/editor"
 import { useExit } from "../../context/exit"
 import { Clipboard } from "../../util/clipboard"
-import type { FilePart, AssistantMessage } from "@arctic-ai/sdk/v2"
+import type { FilePart, AssistantMessage } from "@arctic-cli/sdk/v2"
 import { TuiEvent } from "../../event"
 import { iife } from "@/util/iife"
 import { Locale } from "@/util/locale"
@@ -165,6 +165,10 @@ export function Prompt(props: PromptProps) {
 
   const safeFocusInput = () => {
     safe(() => input.focus())
+  }
+
+  const handleTextareaMouseDown = (event: MouseEvent) => {
+    event.target?.focus()
   }
 
   // Calculate context usage
@@ -1472,7 +1476,7 @@ export function Prompt(props: PromptProps) {
                     input.cursorColor = theme.text
                   }, 0)
                 }}
-                onMouseDown={(r: MouseEvent) => r.target?.focus()}
+                onMouseDown={handleTextareaMouseDown}
                 focusedBackgroundColor="transparent"
                 cursorColor={theme.text}
                 syntaxStyle={syntax()}

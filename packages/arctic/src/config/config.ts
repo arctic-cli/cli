@@ -9,7 +9,7 @@ import { mergeDeep, pipe } from "remeda"
 import { Global } from "../global"
 import fs from "fs/promises"
 import { lazy } from "../util/lazy"
-import { NamedError } from "@arctic-ai/util/error"
+import { NamedError } from "@arctic-cli/util/error"
 import { Flag } from "../flag/flag"
 import { Auth } from "../auth"
 import { type ParseError as JsoncParseError, parse as parseJsonc, printParseErrorCode } from "jsonc-parser"
@@ -116,6 +116,20 @@ export namespace Config {
       })
     }
 
+    // Apply permission profile if specified
+    if (Flag.ARCTIC_PERMISSION_PROFILE) {
+      const profileName = Flag.ARCTIC_PERMISSION_PROFILE
+      const allProfiles = { ...DEFAULT_PERMISSION_PROFILES, ...result.permission_profile }
+      const profile = allProfiles[profileName]
+
+      if (!profile) {
+        const available = Object.keys(allProfiles).join(", ")
+        throw new Error(`Unknown permission profile "${profileName}". Available profiles: ${available}`)
+      }
+
+      result.permission = mergeDeep(result.permission ?? {}, profile)
+    }
+
     if (Flag.ARCTIC_PERMISSION) {
       result.permission = mergeDeep(result.permission ?? {}, JSON.parse(Flag.ARCTIC_PERMISSION))
     }
@@ -161,7 +175,7 @@ export namespace Config {
     if (!hasGitIgnore) await Bun.write(gitignore, ["node_modules", "package.json", "bun.lock", ".gitignore"].join("\n"))
 
     await BunProc.run(
-      ["add", "@arctic-ai/plugin@" + (Installation.isLocal() ? "latest" : Installation.VERSION), "--exact"],
+      ["add", "@arctic-cli/plugin@" + (Installation.isLocal() ? "latest" : Installation.VERSION), "--exact"],
       {
         cwd: dir,
       },
@@ -363,6 +377,65 @@ export namespace Config {
   export const Permission = z.enum(["ask", "allow", "deny"])
   export type Permission = z.infer<typeof Permission>
 
+  export const PermissionConfig = z.object({
+    edit: Permission.optional(),
+    bash: z.union([Permission, z.record(z.string(), Permission)]).optional(),
+    webfetch: Permission.optional(),
+    doom_loop: Permission.optional(),
+    external_directory: Permission.optional(),
+  })
+  export type PermissionConfig = z.infer<typeof PermissionConfig>
+
+  export const DEFAULT_PERMISSION_PROFILES: Record<string, PermissionConfig> = {
+    readonly: {
+      edit: "deny",
+      bash: { "*": "deny" },
+      webfetch: "allow",
+      doom_loop: "ask",
+      external_directory: "deny",
+    },
+    "git-only": {
+      edit: "ask",
+      bash: {
+        "git *": "allow",
+        "npm *": "deny",
+        "yarn *": "deny",
+        "pnpm *": "deny",
+        "bun *": "deny",
+        "*": "ask",
+      },
+      webfetch: "allow",
+      doom_loop: "ask",
+      external_directory: "ask",
+    },
+    trusted: {
+      edit: "allow",
+      bash: { "*": "allow" },
+      webfetch: "allow",
+      doom_loop: "ask",
+      external_directory: "allow",
+    },
+    safe: {
+      edit: "ask",
+      bash: {
+        "git *": "allow",
+        "ls *": "allow",
+        "cat *": "allow",
+        "grep *": "allow",
+        "find *": "allow",
+        "npm install*": "allow",
+        "npm ci*": "allow",
+        "yarn install*": "allow",
+        "pnpm install*": "allow",
+        "bun install*": "allow",
+        "*": "ask",
+      },
+      webfetch: "allow",
+      doom_loop: "ask",
+      external_directory: "ask",
+    },
+  }
+
   export const Command = z.object({
     template: z.string(),
     description: z.string().optional(),
@@ -393,15 +466,7 @@ export namespace Config {
         .positive()
         .optional()
         .describe("Maximum number of agentic iterations before forcing text-only response"),
-      permission: z
-        .object({
-          edit: Permission.optional(),
-          bash: z.union([Permission, z.record(z.string(), Permission)]).optional(),
-          webfetch: Permission.optional(),
-          doom_loop: Permission.optional(),
-          external_directory: Permission.optional(),
-        })
-        .optional(),
+      permission: PermissionConfig.optional(),
     })
     .catchall(z.any())
     .meta({
@@ -418,7 +483,7 @@ export namespace Config {
       editor_open: z.string().optional().default("<leader>e").describe("Open external editor"),
       theme_list: z.string().optional().default("<leader>t").describe("List available themes"),
       sidebar_toggle: z.string().optional().default("<leader>b").describe("Toggle sidebar"),
-      scrollbar_toggle: z.string().optional().default("none").describe("Toggle session scrollbar"),
+      scrollbar_toggle: z.string().optional().default("<leader>v").describe("Toggle session scrollbar"),
       username_toggle: z.string().optional().default("none").describe("Toggle username visibility"),
       status_view: z.string().optional().default("<leader>s").describe("View status"),
       session_export: z.string().optional().default("<leader>x").describe("Export session to editor"),
@@ -439,11 +504,7 @@ export namespace Config {
       messages_last: z.string().optional().default("ctrl+alt+g,end").describe("Navigate to last message"),
       messages_last_user: z.string().optional().default("none").describe("Navigate to last user message"),
       messages_copy: z.string().optional().default("<leader>y").describe("Copy message"),
-      selection_copy: z
-        .string()
-        .optional()
-        .default(selectionCopyDefault)
-        .describe("Copy selected text"),
+      selection_copy: z.string().optional().default(selectionCopyDefault).describe("Copy selected text"),
       messages_undo: z.string().optional().default("<leader>u").describe("Undo message"),
       messages_redo: z.string().optional().default("<leader>r").describe("Redo message"),
       messages_toggle_conceal: z
@@ -463,11 +524,7 @@ export namespace Config {
       input_clear: z.string().optional().default("ctrl+c").describe("Clear input field"),
       input_paste: z.string().optional().default("ctrl+v").describe("Paste from clipboard"),
       input_submit: z.string().optional().default("return").describe("Submit input"),
-      input_newline: z
-        .string()
-        .optional()
-        .default("ctrl+j")
-        .describe("Insert newline in input"),
+      input_newline: z.string().optional().default("ctrl+j").describe("Insert newline in input"),
       input_move_left: z.string().optional().default("left,ctrl+b").describe("Move cursor left in input"),
       input_move_right: z.string().optional().default("right,ctrl+f").describe("Move cursor right in input"),
       input_move_up: z.string().optional().default("up").describe("Move cursor up in input"),
@@ -723,15 +780,11 @@ export namespace Config {
         ),
       instructions: z.array(z.string()).optional().describe("Additional instruction files or patterns to include"),
       layout: Layout.optional().describe("@deprecated Always uses stretch layout."),
-      permission: z
-        .object({
-          edit: Permission.optional(),
-          bash: z.union([Permission, z.record(z.string(), Permission)]).optional(),
-          webfetch: Permission.optional(),
-          doom_loop: Permission.optional(),
-          external_directory: Permission.optional(),
-        })
-        .optional(),
+      permission: PermissionConfig.optional().describe("Global permission settings"),
+      permission_profile: z
+        .record(z.string(), PermissionConfig)
+        .optional()
+        .describe("Named permission profiles for quick switching (e.g., readonly, trusted, git-only)"),
       tools: z.record(z.string(), z.boolean()).optional(),
       enterprise: z
         .object({
@@ -949,5 +1002,15 @@ export namespace Config {
 
   export async function directories() {
     return state().then((x) => x.directories)
+  }
+
+  export async function getAvailableProfiles(): Promise<Record<string, PermissionConfig>> {
+    const config = await get()
+    return { ...DEFAULT_PERMISSION_PROFILES, ...config.permission_profile }
+  }
+
+  export async function getProfile(name: string): Promise<PermissionConfig | undefined> {
+    const profiles = await getAvailableProfiles()
+    return profiles[name]
   }
 }

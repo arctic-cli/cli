@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "@arctic-ai/docs",
+  "name": "@arctic-cli/docs",
   "colors": {
     "primary": "#16A34A",
     "light": "#07C983",

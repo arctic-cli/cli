@@ -1,4 +1,4 @@
-import { createArcticClient, createArcticServer } from "@arctic-ai/sdk"
+import { createArcticClient, createArcticServer } from "@arctic-cli/sdk"
 
 const server = await createArcticServer()
 const client = createArcticClient({ baseUrl: server.url })

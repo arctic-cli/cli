@@ -7,7 +7,7 @@
  * @license MIT
  */
 
-import type { Plugin, PluginInput } from "@arctic-ai/plugin"
+import type { Plugin, PluginInput } from "@arctic-cli/plugin"
 import { Auth } from "../index"
 import { OAuth2Client } from "google-auth-library"
 import http from "http"

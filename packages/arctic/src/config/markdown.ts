@@ -1,4 +1,4 @@
-import { NamedError } from "@arctic-ai/util/error"
+import { NamedError } from "@arctic-cli/util/error"
 import matter from "gray-matter"
 import { z } from "zod"
 

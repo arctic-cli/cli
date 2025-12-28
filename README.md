@@ -27,7 +27,7 @@ The goal of Arctic is to provide a single CLI that allows you to:
 ## Installation
 
 ```bash
-curl -fsSL https://arcticli.com/install | sh
+curl -fsSL https://arcticli.com/install | bash
 ```
 
 ## Quick Start

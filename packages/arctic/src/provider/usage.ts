@@ -84,11 +84,11 @@ export namespace ProviderUsage {
 
   const usageFetchers: { [key: string]: UsageFetcher } = {
     codex: fetchCodexUsage,
-    "zai-coding-plan": fetchZaiUsage,
-    anthropic: fetchZaiUsage, // Anthropic provider uses session-based tracking
-    "@ai-sdk/anthropic": fetchZaiUsage, // Alternative anthropic provider name
-    openrouter: fetchZaiUsage, // OpenRouter uses session-based tracking
-    "@openrouter/ai-sdk-provider": fetchZaiUsage, // Alternative openrouter provider name
+    "zai-coding-plan": fetchSessionUsage,
+    anthropic: fetchAnthropicUsage,
+    "@ai-sdk/anthropic": fetchAnthropicUsage, // Alternative anthropic provider name
+    openrouter: fetchSessionUsage, // Session-based tracking
+    "@openrouter/ai-sdk-provider": fetchSessionUsage, // Alternative openrouter provider name
     "github-copilot": fetchGithubCopilotUsageWrapper,
     google: fetchGoogleUsage,
     "kimi-for-coding": fetchKimiUsage,
@@ -117,16 +117,10 @@ export namespace ProviderUsage {
         fetchedAt: timestamp,
       }
 
-      if (!fetcher) {
-        results.push({
-          ...base,
-          error: "Usage reporting not supported",
-        })
-        continue
-      }
+      const resolvedFetcher = fetcher ?? fetchSessionUsage
 
       try {
-        const details = await fetcher({
+        const details = await resolvedFetcher({
           provider,
           sessionID: options?.sessionID,
           timePeriod: options?.timePeriod ?? "session",
@@ -157,7 +151,7 @@ export namespace ProviderUsage {
       .filter((id) => id.length > 0)
   }
 
-  async function fetchZaiUsage(input: {
+  async function fetchSessionUsage(input: {
     provider: Provider.Info
     sessionID?: string
     timePeriod?: TimePeriod
@@ -175,16 +169,28 @@ export namespace ProviderUsage {
     let found = false
     let inspectedMessages = 0
     let modelID: string | undefined
+    let limitSummary: {
+      planType?: string
+      allowed?: boolean
+      limitReached?: boolean
+      limits?: { primary?: RateLimitWindowSummary }
+    } | undefined
+    let limitError: string | undefined
 
     // For session mode, require sessionID
     if (timePeriod === "session" && !input.sessionID) {
-      return {}
+      // We can still fetch usage limits for z.ai even without session context.
+      if (input.provider.id !== "zai-coding-plan") {
+        return {}
+      }
     }
 
-    // Get messages to scan
-    let messageKeys: string[][]
-    if (timePeriod === "session" && input.sessionID) {
-      messageKeys = await Storage.list(["message", input.sessionID])
+    // Get messages to scan (avoid scanning all sessions when sessionID is missing)
+    let messageKeys: string[][] = []
+    if (timePeriod === "session") {
+      if (input.sessionID) {
+        messageKeys = await Storage.list(["message", input.sessionID])
+      }
     } else {
       // For time-based queries, scan all sessions
       const allSessions = await Storage.list(["message"])
@@ -220,10 +226,6 @@ export namespace ProviderUsage {
 
     const totalTokens = inputTokens + outputTokens + cacheReadTokens + cacheCreationTokens
 
-    if (!found) {
-      return {}
-    }
-
     // Calculate costs if we have a model ID
     let costSummary: CostSummary | undefined
     if (modelID) {
@@ -245,16 +247,283 @@ export namespace ProviderUsage {
       }
     }
 
-    return {
-      tokenUsage: {
+    if (input.provider.id === "zai-coding-plan") {
+      try {
+        limitSummary = await fetchZaiUsageLimits(input.provider)
+      } catch (error) {
+        limitError = error instanceof Error ? error.message : String(error)
+      }
+    }
+
+    const record: Omit<Record, "providerID" | "providerName" | "fetchedAt"> = {}
+
+    if (found) {
+      record.tokenUsage = {
         total: totalTokens,
         input: inputTokens,
         output: outputTokens,
         cached: cacheReadTokens,
         cacheCreation: cacheCreationTokens,
-      },
-      costSummary,
+      }
+      record.costSummary = costSummary
     }
+
+    if (limitSummary) {
+      record.planType = limitSummary.planType
+      record.allowed = limitSummary.allowed
+      record.limitReached = limitSummary.limitReached
+      record.limits = limitSummary.limits
+    }
+
+    if (limitError) {
+      record.error = limitError
+    }
+
+    if (!found && !limitSummary && !limitError) {
+      return {}
+    }
+
+    return record
+  }
+
+  const ZAI_USAGE_LIMITS_URL = "https://api.z.ai/api/monitor/usage/quota/limit"
+  const ANTHROPIC_OAUTH_USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
+
+  async function fetchZaiUsageLimits(
+    provider: Provider.Info,
+  ): Promise<{
+    planType?: string
+    allowed?: boolean
+    limitReached?: boolean
+    limits?: { primary?: RateLimitWindowSummary }
+  }> {
+    let token: string | undefined
+    const auth = await Auth.get(provider.id)
+
+    if (auth?.type === "api") {
+      token = auth.key
+    } else if (auth?.type === "oauth") {
+      token = auth.access
+    } else if (auth?.type === "wellknown") {
+      token = auth.token || auth.key
+    }
+
+    if (!token) {
+      token = provider.key ?? provider.options?.apiKey
+    }
+
+    if (!token) {
+      throw new Error("Z.ai authentication is required. Set an API key for provider 'zai-coding-plan'.")
+    }
+
+    const response = await globalThis.fetch(ZAI_USAGE_LIMITS_URL, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    })
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error("Authorization failed. Please check your Z.ai API key.")
+      }
+      throw new Error(`Failed to fetch Z.ai usage limits: ${response.statusText}`)
+    }
+
+    const payload = (await response.json().catch(() => null)) as any
+    const limits = Array.isArray(payload?.data?.limits) ? payload.data.limits : []
+    if (!payload || payload.success !== true || limits.length === 0) {
+      return {}
+    }
+
+    const rows = limits
+      .map((limit: any, idx: number) => formatZaiLimitRow(limit, idx))
+      .filter((row: string | undefined) => row && row.length > 0)
+
+    const detailedPlan = rows.length > 0 ? `Z.ai\n${rows.map((row: string) => `- ${row}`).join("\n")}` : "Z.ai"
+
+    const enriched = limits
+      .map((limit: any) => ({
+        usedPercent: resolveZaiUsedPercent(limit),
+        remaining: typeof limit?.remaining === "number" ? limit.remaining : undefined,
+      }))
+      .filter((limit: { usedPercent?: number; remaining?: number }) => limit.usedPercent !== undefined)
+
+    let primary: { usedPercent: number } | undefined
+    for (const next of enriched) {
+      if (next.usedPercent === undefined) continue
+      if (!primary || next.usedPercent > primary.usedPercent) {
+        primary = { usedPercent: next.usedPercent }
+      }
+    }
+
+    const limitReached = limits.some((limit: any) => {
+      const percent = resolveZaiUsedPercent(limit)
+      if (typeof percent === "number" && percent >= 100) return true
+      if (typeof limit?.remaining === "number" && limit.remaining <= 0) return true
+      return false
+    })
+
+    return {
+      planType: detailedPlan,
+      allowed: !limitReached,
+      limitReached,
+      limits: primary
+        ? {
+            primary: {
+              usedPercent: primary.usedPercent,
+            },
+          }
+        : undefined,
+    }
+  }
+
+  function resolveZaiUsedPercent(limit: any): number | undefined {
+    if (typeof limit?.percentage === "number") return limit.percentage
+    const total = typeof limit?.usage === "number" ? limit.usage : undefined
+    const used =
+      typeof limit?.currentValue === "number"
+        ? limit.currentValue
+        : total !== undefined && typeof limit?.remaining === "number"
+          ? Math.max(0, total - limit.remaining)
+          : undefined
+    if (total && used !== undefined && total > 0) {
+      return (used / total) * 100
+    }
+    return undefined
+  }
+
+  function formatZaiLimitRow(limit: any, idx: number): string {
+    const label = formatZaiLimitLabel(limit, idx)
+    const total = typeof limit?.usage === "number" ? limit.usage : undefined
+    const used =
+      typeof limit?.currentValue === "number"
+        ? limit.currentValue
+        : total !== undefined && typeof limit?.remaining === "number"
+          ? Math.max(0, total - limit.remaining)
+          : undefined
+    const percent = resolveZaiUsedPercent(limit)
+
+    if (total !== undefined && used !== undefined) {
+      const percentLabel = percent !== undefined ? ` (${percent.toFixed(0)}%)` : ""
+      return `${label}: ${used.toLocaleString()} / ${total.toLocaleString()}${percentLabel}`
+    }
+    if (percent !== undefined) {
+      return `${label}: ${percent.toFixed(0)}% used`
+    }
+    return `${label}: usage unknown`
+  }
+
+  function formatZaiLimitLabel(limit: any, idx: number): string {
+    const type = typeof limit?.type === "string" ? limit.type : undefined
+    if (!type) return `Limit #${idx + 1}`
+    switch (type) {
+      case "TIME_LIMIT":
+        return "Time limit"
+      case "TOKENS_LIMIT":
+        return "Token limit"
+      default:
+        return type.replace(/_/g, " ").toLowerCase()
+    }
+  }
+
+  async function fetchAnthropicUsage(input: {
+    provider: Provider.Info
+  }): Promise<Omit<Record, "providerID" | "providerName" | "fetchedAt">> {
+    let token: string | undefined
+    const auth = await Auth.get("anthropic")
+
+    if (auth?.type === "api") {
+      token = auth.key
+    } else if (auth?.type === "oauth") {
+      token = auth.access
+    } else if (auth?.type === "wellknown") {
+      token = auth.token || auth.key
+    }
+
+    if (!token) {
+      token = input.provider.key ?? input.provider.options?.apiKey
+    }
+
+    if (!token) {
+      throw new Error("Anthropic authentication is required. Set an OAuth token or API key for provider 'anthropic'.")
+    }
+
+    const response = await globalThis.fetch(ANTHROPIC_OAUTH_USAGE_URL, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "anthropic-beta": "oauth-2025-04-20",
+        "User-Agent": "Arctic",
+      },
+    })
+
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error("Authorization failed. Please check your Anthropic OAuth token.")
+      }
+      throw new Error(`Failed to fetch Anthropic usage: ${response.statusText}`)
+    }
+
+    const payload = (await response.json().catch(() => null)) as any
+    if (!payload || typeof payload !== "object") {
+      return {}
+    }
+
+    const fiveHour = payload.five_hour
+    const sevenDay = payload.seven_day
+
+    const rows = [
+      formatAnthropicUsageRow("5-hour", fiveHour),
+      formatAnthropicUsageRow("7-day", sevenDay),
+    ].filter((row): row is string => Boolean(row))
+
+    const planType = rows.length > 0 ? `Claude subscription\n${rows.map((row) => `- ${row}`).join("\n")}` : undefined
+
+    const primary = resolveAnthropicLimit(fiveHour)
+    const secondary = resolveAnthropicLimit(sevenDay)
+
+    const limitReached = [primary?.usedPercent, secondary?.usedPercent].some(
+      (value) => typeof value === "number" && value >= 100,
+    )
+
+    return {
+      planType,
+      allowed: !limitReached,
+      limitReached,
+      limits: {
+        primary: primary ?? undefined,
+        secondary: secondary ?? undefined,
+      },
+    }
+  }
+
+  function resolveAnthropicLimit(data: any): RateLimitWindowSummary | undefined {
+    if (!data || typeof data !== "object") return undefined
+    const utilization = typeof data.utilization === "number" ? data.utilization : undefined
+    const resetsAt = resolveAnthropicReset(data.resets_at)
+    if (utilization === undefined && resetsAt === undefined) return undefined
+    return {
+      usedPercent: utilization ?? null,
+      resetsAt,
+    }
+  }
+
+  function resolveAnthropicReset(value: any): number | undefined {
+    if (!value || typeof value !== "string") return undefined
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return undefined
+    return Math.floor(date.getTime() / 1000)
+  }
+
+  function formatAnthropicUsageRow(label: string, data: any): string | undefined {
+    if (!data || typeof data !== "object") return undefined
+    const utilization = typeof data.utilization === "number" ? data.utilization : undefined
+    if (utilization === undefined) return undefined
+    const resetsAt = resolveAnthropicReset(data.resets_at)
+    const resetLabel = resetsAt ? `resets ${new Date(resetsAt * 1000).toISOString()}` : undefined
+    return `${label}: ${utilization.toFixed(0)}% used${resetLabel ? ` (${resetLabel})` : ""}`
   }
 
   function getTimeFilter(period: TimePeriod, now: number): (timestamp: number) => boolean {
