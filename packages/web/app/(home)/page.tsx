@@ -12,8 +12,8 @@ function Highlight({ children }: { children: React.ReactNode }) {
 }
 
 export default function HomePage() {
-  const installCommandMacLinux = "curl -fsSL https://arcticli.com/install | bash"
-  const installCommandWindows = "irm https://arcticli.com/install.ps1 | iex"
+  const installCommandMacLinux = "curl -fsSL https://usearctic.sh/install | bash"
+  const installCommandWindows = "irm https://usearctic.sh/install.ps1 | iex"
 
   return (
     <div className="h-screen w-full flex items-center overflow-hidden">

@@ -5,7 +5,17 @@ description: Compare models on the same task.
 
 Benchmarking lets you run the same prompt across multiple models, isolate changes, and apply the best result.
 
-## Start a benchmark (TUI)
+## Why Benchmark?
+
+Benchmarking helps you answer questions like:
+- Which model produces better code for this task?
+- Is the faster model "good enough" for this use case?
+- Which model handles edge cases better?
+- Is the premium model worth the extra cost?
+
+Arctic makes this process seamless by creating isolated sessions for each model, letting you compare results side-by-side, and apply the best outcome with one command.
+
+## Start a Benchmark (TUI)
 
 In the TUI prompt:
 
@@ -13,29 +23,334 @@ In the TUI prompt:
 /benchmark start
 ```
 
-This creates a **parent** session and **child** sessions for each model you select.
+This opens a model picker dialog where you select which models to compare. Arctic creates:
 
-## Common commands
+1. A **parent session** that contains your original prompt
+2. **Child sessions** - one for each selected model
+
+Each child session runs independently with the same context, tools, and permissions.
+
+## Benchmarking Workflow
+
+### 1. Start a Benchmark
 
 ```
-/benchmark stop
+/benchmark start
+```
+
+Select 2-4 models to compare. More models take longer but provide better comparison data.
+
+### 2. Review Results
+
+Use navigation to switch between child sessions:
+
+```
+/benchmark next       # Next model (ctrl+shift+right)
+/benchmark prev       # Previous model (ctrl+shift+left)
+```
+
+For each session, review:
+- Code quality and structure
+- Reasoning and explanations
+- Tool usage patterns
+- Token usage (in footer)
+- Response time
+
+### 3. Apply the Best Result
+
+Once you've identified the best output:
+
+```
+/benchmark apply     # Apply current session changes
+```
+
+This applies all file changes from the selected child session to your working directory.
+
+### 4. Rollback if Needed
+
+If you're not happy with the result:
+
+```
+/benchmark undo      # Undo applied changes
+```
+
+This uses Git-based snapshots to restore your project state.
+
+### 5. End the Benchmark
+
+```
+/benchmark stop      # Exit benchmark mode
+```
+
+The parent session remains in your session list for reference.
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `ctrl+shift+right` | Next session |
+| `ctrl+shift+left` | Previous session |
+| `ctrl+alt+a` | Apply changes |
+| `ctrl+alt+u` | Undo changes |
+| `ctrl+shift+s` | Stop benchmark |
+
+## Benchmark Use Cases
+
+### Model Selection
+
+Compare models for a new project type:
+
+```
+/benchmark start
+# Select: claude-sonnet-4-5, gpt-4o, gemini-pro
+
+Prompt: "Create a REST API with user CRUD operations"
+
+Review:
+- Which model has better error handling?
+- Which uses better patterns?
+- Which is easier to understand?
+```
+
+### Cost Optimization
+
+Check if a cheaper model is sufficient:
+
+```
+/benchmark start
+# Select: claude-opus-4, claude-sonnet-4-5, claude-haiku
+
+Prompt: "Write unit tests for this function"
+
+Compare:
+- Test coverage
+- Edge case handling
+- Cost difference (view in footer)
+```
+
+### Provider Comparison
+
+Compare similar models across providers:
+
+```
+/benchmark start
+# Select: anthropic/claude-sonnet-4-5, openai/gpt-4o-mini
+
+Prompt: "Refactor this code for performance"
+
+Check:
+- Code quality
+- Performance improvements
+- Reasoning depth
+```
+
+### Edge Case Testing
+
+Test how models handle unusual requirements:
+
+```
+/benchmark start
+# Select 3-4 models
+
+Prompt: "Create a function that handles unicode edge cases in filenames"
+
+Compare:
+- Unicode awareness
+- Error handling
+- Security considerations
+```
+
+## Benchmark Metrics
+
+When comparing sessions, consider:
+
+**Quality Metrics:**
+- Code correctness (does it work?)
+- Code style and readability
+- Error handling completeness
+- Security considerations
+- Performance implications
+
+**Efficiency Metrics:**
+- Token usage (shown in footer)
+- Response time
+- Number of tool calls
+- Files modified
+
+**Cost Metrics:**
+- Total cost per session
+- Cost per useful output
+- ROI for premium models
+
+## Best Practices
+
+### Choose Comparable Models
+
+For meaningful comparisons:
+- Use models in similar capability tiers
+- Consider model strengths (some are better at coding, others at reasoning)
+- Balance speed vs quality
+
+### Use Consistent Prompts
+
+The same prompt across all models ensures fair comparison:
+- Be specific about requirements
+- Include all necessary context
+- Use the same tool permissions
+
+### Set Clear Success Criteria
+
+Before benchmarking, define what "better" means:
+- Passes all tests?
+- Better performance?
+- More maintainable?
+- Lower cost?
+
+### Document Results
+
+Keep track of your findings:
+
+```markdown
+## Benchmark: Authentication API
+
+| Model | Quality | Speed | Cost | Winner |
+|-------|---------|-------|------|--------|
+| Claude Sonnet 4.5 | 9/10 | Medium | $0.12 | ✓ |
+| GPT-4o | 8/10 | Fast | $0.10 | |
+| Gemini Pro | 7/10 | Fast | $0.08 | |
+
+Winner: Claude Sonnet 4.5 - Best error handling and security
+```
+
+### Iterate and Refine
+
+Use benchmark results to refine your workflow:
+- Identify which models work best for specific tasks
+- Create agents that use optimal models
+- Build a decision tree for model selection
+
+## Troubleshooting
+
+### Benchmark not starting
+
+If `/benchmark start` doesn't work:
+
+```bash
+# Ensure you have multiple authenticated providers
+arctic auth list
+
+# Check available models
+arctic models
+
+# Refresh model list
+arctic models --refresh
+```
+
+### Changes not applying
+
+If `/benchmark apply` doesn't work:
+
+```bash
+# Check git status (should be clean or committed)
+git status
+
+# Commit or stash changes first
+git add .
+git commit -m "Work in progress"
+
+# Try apply again
+/benchmark apply
+```
+
+### Can't switch between sessions
+
+If navigation doesn't work:
+
+```bash
+# Make sure you're in the TUI and benchmark mode is active
+# Navigate sessions using:
 /benchmark next
 /benchmark prev
-/benchmark apply
-/benchmark undo
 ```
 
-### Shortcuts (default)
+### Undo not working
 
-- Next session: `ctrl+shift+right`
-- Previous session: `ctrl+shift+left`
-- Apply changes: `ctrl+alt+a`
-- Undo changes: `ctrl+alt+u`
+If `/benchmark undo` fails:
 
-## Typical flow
+```bash
+# Check if snapshots are enabled
+arctic debug config
 
-1. Run `/benchmark start` and choose models
-2. Switch children with `/benchmark next` / `/benchmark prev`
-3. Apply a child’s changes with `/benchmark apply`
-4. Undo with `/benchmark undo`
-5. Exit with `/benchmark stop`
+# Ensure snapshot: true in your config
+```
+
+## Tips for Effective Benchmarking
+
+1. **Start with 2-3 models** - More takes longer but provides better data
+2. **Use the same context** - Attach same files, use same project state
+3. **Test with real tasks** - Synthetic tests may not reflect real-world performance
+4. **Consider your team** - If others will maintain code, choose readable results
+5. **Think long-term** - Consider maintainability, not just initial code quality
+6. **Automate when possible** - Use tests to objectively compare results
+
+## Example Scenarios
+
+### Scenario 1: Choosing a Default Model
+
+You're setting up a new project and need to choose a default model.
+
+```
+/benchmark start
+# Models: claude-opus-4, claude-sonnet-4-5, gpt-4o
+
+Prompt: "Create a complete authentication system with signup, login, logout, and password reset"
+
+Evaluate:
+- Is the code production-ready?
+- Does it handle security properly?
+- Is it maintainable by the team?
+
+Decision: Choose the model that best balances quality and team familiarity.
+```
+
+### Scenario 2: Optimizing for Cost
+
+Your budget is limited and you need to reduce AI costs.
+
+```
+/benchmark start
+# Models: claude-opus-4, claude-sonnet-4-5, claude-haiku
+
+Prompt: "Add comprehensive error handling to existing code"
+
+Compare:
+- Quality of error handling
+- Lines of code added
+- Cost (in footer)
+
+Decision: Use Haiku if quality is acceptable, otherwise Sonnet.
+```
+
+### Scenario 3: Testing New Models
+
+A new model was released and you want to evaluate it.
+
+```
+/benchmark start
+# Models: claude-sonnet-4-5, claude-3-5-sonnet-20241022, new-model
+
+Prompt: "Refactor legacy code to use modern patterns"
+
+Compare:
+- Understanding of legacy code
+- Modern pattern usage
+- Breaking changes introduced
+
+Decision: Test new model in a feature branch before adopting.
+```
+
+## Next Steps
+
+- Review [Sessions](/docs/cli/sessions) for session management
+- Check [Snapshots](/docs/snapshots) for how rollback works
+- See [Config](/docs/cli/config) for customizing Arctic

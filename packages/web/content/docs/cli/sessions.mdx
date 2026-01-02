@@ -44,12 +44,6 @@ Fork from a specific message (exclusive):
 arctic session fork <session-id> <message-id>
 ```
 
-## Delete sessions
-
-```bash
-arctic session delete <session-id>
-```
-
 ## Export / import
 
 ```bash
@@ -59,10 +53,14 @@ arctic import <file-or-url>
 
 ## Diffs and snapshots
 
-See file changes made in a session:
+Arctic tracks file changes using snapshots. To view and work with snapshots:
 
 ```bash
-arctic session diff <session-id>
+# View a snapshot diff
+arctic debug snapshot diff <hash>
+
+# Apply a snapshot patch
+arctic debug snapshot patch <hash>
 ```
 
 Snapshots also power undo/revert and benchmarking. See [Snapshots](/docs/snapshots).

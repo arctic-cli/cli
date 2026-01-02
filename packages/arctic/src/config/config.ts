@@ -477,7 +477,10 @@ export namespace Config {
     }
     if (typeof value === "string") {
       const record: Record<string, boolean> = {}
-      for (const item of value.split(",").map((x) => x.trim()).filter(Boolean)) {
+      for (const item of value
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean)) {
         const tool = normalizeToolName(item)
         record[tool] = true
       }
@@ -738,6 +741,11 @@ export namespace Config {
       benchmark_apply: z.string().optional().default("ctrl+alt+a").describe("Apply benchmark session changes"),
       benchmark_undo: z.string().optional().default("ctrl+alt+u").describe("Undo applied benchmark changes"),
       terminal_suspend: z.string().optional().default("ctrl+z").describe("Suspend terminal"),
+      permission_toggle_allow_all: z
+        .string()
+        .optional()
+        .default("alt+shift+p")
+        .describe("Toggle auto-allow all permissions mode"),
     })
     .strict()
     .meta({
@@ -808,7 +816,7 @@ export namespace Config {
       command: z
         .record(z.string(), Command)
         .optional()
-        .describe("Command configuration, see https://arcticli.com/docs/commands"),
+        .describe("Command configuration, see https://usearctic.sh/docs/commands"),
       watcher: z
         .object({
           ignore: z.array(z.string()).optional(),
@@ -853,7 +861,7 @@ export namespace Config {
         })
         .catchall(Agent)
         .optional()
-        .describe("Agent configuration, see https://arcticli.com/docs/agent"),
+        .describe("Agent configuration, see https://usearctic.sh/docs/agent"),
       provider: z
         .record(z.string(), Provider)
         .optional()
@@ -983,7 +991,7 @@ export namespace Config {
       .then(async (mod) => {
         const { provider, model, ...rest } = mod.default
         if (provider && model) result.model = `${provider}/${model}`
-        result["$schema"] = "https://arcticli.com/config.json"
+        result["$schema"] = "https://usearctic.sh/config.json"
         result = mergeDeep(result, rest)
         await Bun.write(path.join(Global.Path.config, "config.json"), JSON.stringify(result, null, 2))
         await fs.unlink(path.join(Global.Path.config, "config"))
@@ -1074,7 +1082,7 @@ export namespace Config {
     const parsed = Info.safeParse(data)
     if (parsed.success) {
       if (!parsed.data.$schema) {
-        parsed.data.$schema = "https://arcticli.com/config.json"
+        parsed.data.$schema = "https://usearctic.sh/config.json"
         await Bun.write(configFilepath, JSON.stringify(parsed.data, null, 2))
       }
       const data = parsed.data

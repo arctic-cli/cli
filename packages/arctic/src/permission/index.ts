@@ -48,6 +48,13 @@ export namespace Permission {
         response: z.string(),
       }),
     ),
+    AllowAllModeChanged: BusEvent.define(
+      "permission.allowAllModeChanged",
+      z.object({
+        sessionID: z.string(),
+        enabled: z.boolean(),
+      }),
+    ),
   }
 
   const state = Instance.state(
@@ -68,9 +75,14 @@ export namespace Permission {
         }
       } = {}
 
+      const allowAllMode: {
+        [sessionID: string]: boolean
+      } = {}
+
       return {
         pending,
         approved,
+        allowAllMode,
       }
     },
     async (state) => {
@@ -86,6 +98,19 @@ export namespace Permission {
     return state().pending
   }
 
+  export function isAllowAllMode(sessionID: string): boolean {
+    return state().allowAllMode[sessionID] ?? false
+  }
+
+  export function toggleAllowAllMode(sessionID: string): boolean {
+    const { allowAllMode } = state()
+    const newValue = !allowAllMode[sessionID]
+    allowAllMode[sessionID] = newValue
+    log.info("toggle allow-all mode", { sessionID, enabled: newValue })
+    Bus.publish(Event.AllowAllModeChanged, { sessionID, enabled: newValue })
+    return newValue
+  }
+
   export async function ask(input: {
     type: Info["type"]
     title: Info["title"]
@@ -95,7 +120,18 @@ export namespace Permission {
     messageID: Info["messageID"]
     metadata: Info["metadata"]
   }) {
-    const { pending, approved } = state()
+    const { pending, approved, allowAllMode } = state()
+
+    // Check if allow-all mode is enabled for this session
+    if (allowAllMode[input.sessionID]) {
+      log.info("auto-approving (allow-all mode)", {
+        sessionID: input.sessionID,
+        type: input.type,
+        pattern: input.pattern,
+      })
+      return
+    }
+
     log.info("asking", {
       sessionID: input.sessionID,
       messageID: input.messageID,
@@ -178,6 +214,20 @@ export namespace Permission {
           })
         }
       }
+    }
+  }
+
+  export function allowAll(input: { sessionID: string }) {
+    log.info("allow all", input)
+    const { pending } = state()
+    const items = pending[input.sessionID]
+    if (!items) return
+    for (const item of Object.values(items)) {
+      respond({
+        sessionID: input.sessionID,
+        permissionID: item.info.id,
+        response: "always",
+      })
     }
   }
 

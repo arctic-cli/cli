@@ -1,53 +1,74 @@
+import { Identifier } from "@/id/id"
+import { Keybind } from "@/util/keybind"
+import { Locale } from "@/util/locale"
+import type { AssistantMessage, FilePart } from "@arctic-cli/sdk/v2"
 import {
   BoxRenderable,
-  TextareaRenderable,
   MouseEvent,
   PasteEvent,
-  t,
-  dim,
-  fg,
+  TextareaRenderable,
   TextAttributes,
   type KeyBinding,
 } from "@opentui/core"
-import { createEffect, createMemo, type JSX, onMount, createSignal, onCleanup, Show, Switch, Match } from "solid-js"
-import "opentui-spinner/solid"
-import { useLocal } from "@tui/context/local"
-import { useTheme } from "@tui/context/theme"
-import { EmptyBorder } from "@tui/component/border"
-import { useSDK } from "@tui/context/sdk"
-import { useRoute } from "@tui/context/route"
-import { useSync } from "@tui/context/sync"
-import { Identifier } from "@/id/id"
-import { createStore, produce } from "solid-js/store"
-import { useKeybind } from "@tui/context/keybind"
-import { Keybind } from "@/util/keybind"
-import { usePromptHistory, type PromptInfo } from "./history"
-import { type AutocompleteRef, Autocomplete } from "./autocomplete"
-import { useCommandDialog } from "../dialog-command"
 import { useRenderer } from "@opentui/solid"
+import { EmptyBorder } from "@tui/component/border"
+import { useKeybind } from "@tui/context/keybind"
+import { useLocal } from "@tui/context/local"
+import { useRoute } from "@tui/context/route"
+import { useSDK } from "@tui/context/sdk"
+import { useSync } from "@tui/context/sync"
+import { useTheme } from "@tui/context/theme"
 import { Editor } from "@tui/util/editor"
+import "opentui-spinner/solid"
+import { createEffect, createMemo, createSignal, Match, onCleanup, onMount, Show, Switch, type JSX } from "solid-js"
+import { createStore, produce } from "solid-js/store"
 import { useExit } from "../../context/exit"
-import { Clipboard } from "../../util/clipboard"
-import type { FilePart, AssistantMessage } from "@arctic-cli/sdk/v2"
 import { TuiEvent } from "../../event"
-import { iife } from "@/util/iife"
-import { Locale } from "@/util/locale"
-import { createColors, createFrames } from "../../ui/spinner.ts"
+import { Clipboard } from "../../util/clipboard"
+import { useCommandDialog } from "../dialog-command"
+import { Autocomplete, type AutocompleteRef } from "./autocomplete"
+import { usePromptHistory, type PromptInfo } from "./history"
+
+import { Pricing } from "@/provider/pricing"
 import { useDialog } from "@tui/ui/dialog"
-import { DialogProvider as DialogProviderConnect } from "../dialog-provider"
+import { usePromptRef } from "../../context/prompt"
 import { DialogAlert } from "../../ui/dialog-alert"
 import { DialogConfirm } from "../../ui/dialog-confirm"
 import { DialogPrompt } from "../../ui/dialog-prompt"
-import { usePromptRef } from "../../context/prompt"
 import { DialogSelect } from "../../ui/dialog-select"
 import { useToast } from "../../ui/toast"
-import { Pricing } from "@/provider/pricing"
 import { DialogPrompts } from "../dialog-prompts"
+import { DialogProvider as DialogProviderConnect } from "../dialog-provider"
+import type { ProviderUsage } from "@/provider/usage"
+
+async function fetchUsageRecord(input: {
+  baseUrl?: string
+  directory?: string
+  sessionID?: string
+  providerID: string
+}) {
+  if (!input.baseUrl) return undefined
+  const url = new URL(`/usage/providers/${encodeURIComponent(input.providerID)}`, input.baseUrl)
+  const res = await fetch(`${url}`, {
+    headers: {
+      ...(input.directory ? { "x-arctic-directory": input.directory } : {}),
+      ...(input.sessionID ? { "x-arctic-session-id": input.sessionID } : {}),
+      "x-arctic-time-period": "session",
+    },
+    credentials: "include",
+  })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`Request failed (${res.status}): ${body || res.statusText}`)
+  }
+  return (await res.json()) as ProviderUsage.Record
+}
 
 export type PromptProps = {
   sessionID?: string
   disabled?: boolean
   onSubmit?: () => void
+  onInterrupt?: (count: number) => void
   ref?: (ref: PromptRef) => void
   hint?: JSX.Element
   showPlaceholder?: boolean
@@ -139,6 +160,10 @@ export function Prompt(props: PromptProps) {
   const promptRef = usePromptRef()
   const { theme, syntax } = useTheme()
   const currentSession = createMemo(() => (props.sessionID ? sync.session.get(props.sessionID) : undefined))
+  const isAllowAllMode = createMemo(() => {
+    if (!props.sessionID) return false
+    return sync.data.permission_allow_all_mode?.[props.sessionID] ?? false
+  })
   const displayModel = createMemo(() => {
     const benchmark = currentSession()?.benchmark
     const sessionModel = benchmark?.type === "child" ? benchmark.model : undefined
@@ -185,6 +210,15 @@ export function Prompt(props: PromptProps) {
   }
 
   const [sessionCost, setSessionCost] = createSignal<number | undefined>(undefined)
+  const [dailyCostByModel, setDailyCostByModel] = createSignal<Record<string, { name: string; cost: number }>>({})
+  const [usageLimits, setUsageLimits] = createSignal<
+    | {
+        percent?: number
+        remaining?: number
+        timeLeft?: string
+      }
+    | undefined
+  >(undefined)
 
   const resolvePricingOptions = (providerID: string | undefined) => {
     if (!providerID) return undefined
@@ -205,16 +239,12 @@ export function Prompt(props: PromptProps) {
     for (const msg of msgs) {
       if (msg.role === "assistant" && msg.tokens.output > 0) {
         const assistantMsg = msg as AssistantMessage
-        const costBreakdown = Pricing.calculateCost(
-          assistantMsg.modelID,
-          {
-            input: assistantMsg.tokens.input,
-            output: assistantMsg.tokens.output,
-            cacheCreation: assistantMsg.tokens.cache.write,
-            cacheRead: assistantMsg.tokens.cache.read,
-          },
-          resolvePricingOptions(assistantMsg.providerID),
-        )
+        const costBreakdown = Pricing.calculateCost(assistantMsg.modelID, {
+          input: assistantMsg.tokens.input,
+          output: assistantMsg.tokens.output,
+          cacheCreation: assistantMsg.tokens.cache.write,
+          cacheRead: assistantMsg.tokens.cache.read,
+        })
         if (costBreakdown) {
           syncHasPricing = true
           syncTotal += costBreakdown.totalCost
@@ -233,16 +263,12 @@ export function Prompt(props: PromptProps) {
         for (const msg of msgs) {
           if (msg.role === "assistant" && msg.tokens.output > 0) {
             const assistantMsg = msg as AssistantMessage
-            const costBreakdown = await Pricing.calculateCostAsync(
-              assistantMsg.modelID,
-              {
-                input: assistantMsg.tokens.input,
-                output: assistantMsg.tokens.output,
-                cacheCreation: assistantMsg.tokens.cache.write,
-                cacheRead: assistantMsg.tokens.cache.read,
-              },
-              resolvePricingOptions(assistantMsg.providerID),
-            )
+            const costBreakdown = await Pricing.calculateCostAsync(assistantMsg.modelID, {
+              input: assistantMsg.tokens.input,
+              output: assistantMsg.tokens.output,
+              cacheCreation: assistantMsg.tokens.cache.write,
+              cacheRead: assistantMsg.tokens.cache.read,
+            })
             if (costBreakdown) {
               hasPricing = true
               total += costBreakdown.totalCost
@@ -258,6 +284,145 @@ export function Prompt(props: PromptProps) {
 
     onCleanup(() => {
       cancelled = true
+    })
+  })
+
+  // Calculate daily cost per model used in current session + burn rate
+  createEffect(() => {
+    const msgs = messages()
+    const sessionID = props.sessionID
+    if (!sessionID) return
+
+    // Get unique models used in this session
+    const modelsInSession = new Set<string>()
+    for (const msg of msgs) {
+      if (msg.role === "assistant" && msg.tokens.output > 0) {
+        const assistantMsg = msg as AssistantMessage
+        modelsInSession.add(assistantMsg.modelID)
+      }
+    }
+
+    if (modelsInSession.size === 0) return // Calculate daily costs (async because we need to scan all messages)
+    ;(async () => {
+      const now = Date.now()
+      const startOfDay = new Date(now)
+      startOfDay.setHours(0, 0, 0, 0)
+      const dayStart = startOfDay.getTime()
+
+      const dailyCosts: Record<string, { name: string; cost: number }> = {}
+
+      // Scan all messages across all sessions for today
+      const allMessages = Object.values(sync.data.message).flat()
+
+      for (const msg of allMessages) {
+        if (msg.role === "assistant" && msg.tokens.output > 0) {
+          const assistantMsg = msg as AssistantMessage
+          const messageTime = assistantMsg.time?.completed ?? assistantMsg.time?.created
+
+          // Only count messages from today
+          if (!messageTime || messageTime < dayStart) continue
+
+          // Only count models used in current session
+          if (!modelsInSession.has(assistantMsg.modelID)) continue
+
+          const costBreakdown = await Pricing.calculateCostAsync(assistantMsg.modelID, {
+            input: assistantMsg.tokens.input,
+            output: assistantMsg.tokens.output,
+            cacheCreation: assistantMsg.tokens.cache.write,
+            cacheRead: assistantMsg.tokens.cache.read,
+          })
+
+          if (costBreakdown) {
+            if (!dailyCosts[assistantMsg.modelID]) {
+              const provider = sync.data.provider.find((p) => p.id === assistantMsg.providerID)
+              const modelInfo = provider?.models?.[assistantMsg.modelID]
+              dailyCosts[assistantMsg.modelID] = {
+                name: modelInfo?.name ?? assistantMsg.modelID,
+                cost: 0,
+              }
+            }
+            dailyCosts[assistantMsg.modelID].cost += costBreakdown.totalCost
+          }
+        }
+      }
+
+      setDailyCostByModel(dailyCosts)
+    })().catch(() => {})
+  })
+
+  // Fetch usage limits for the current provider
+  createEffect(() => {
+    const model = local.model.current()
+    if (!model) return
+
+    const sessionID = props.sessionID
+    if (!sessionID) return
+
+    // Fetch usage limits periodically
+    let cancelled = false
+    const fetchLimits = async () => {
+      try {
+        const record = await fetchUsageRecord({
+          baseUrl: sdk.url,
+          directory: sync.data.path.directory,
+          sessionID,
+          providerID: model.providerID,
+        })
+
+        if (cancelled) return
+
+        if (!record || !record.limits) {
+          setUsageLimits(undefined)
+          return
+        }
+
+        const primary = record.limits.primary
+        if (!primary) {
+          setUsageLimits(undefined)
+          return
+        }
+
+        // Calculate time left if we have reset timestamp
+        let timeLeft: string | undefined
+        if (primary.resetsAt) {
+          const now = Date.now()
+          const resetTime = primary.resetsAt * 1000
+          const diff = resetTime - now
+
+          if (diff > 0) {
+            const totalMinutes = Math.floor(diff / 60000)
+            const hours = Math.floor(totalMinutes / 60)
+            const minutes = totalMinutes % 60
+            if (hours > 0) {
+              timeLeft = `${hours}h ${minutes}m`
+            } else {
+              timeLeft = `${minutes}m`
+            }
+          }
+        }
+
+        // For providers that don't use percentage (e.g., kimi, z.ai with request counts)
+        // We'll show "remaining" if available - but this info is in the record itself, not primary
+        const usedPercent = primary.usedPercent ?? undefined
+
+        setUsageLimits({
+          percent: usedPercent !== null ? usedPercent : undefined,
+          remaining: undefined, // Not available in this structure
+          timeLeft,
+        })
+      } catch (error) {
+        if (!cancelled) {
+          setUsageLimits(undefined)
+        }
+      }
+    }
+
+    fetchLimits()
+    const interval = setInterval(fetchLimits, 60000) // Refresh every minute
+
+    onCleanup(() => {
+      cancelled = true
+      clearInterval(interval)
     })
   })
 
@@ -1247,21 +1412,10 @@ export function Prompt(props: PromptProps) {
 
   const spinnerDef = createMemo(() => {
     const color = local.agent.color(local.agent.current().name)
+    const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
     return {
-      frames: createFrames({
-        color,
-        style: "blocks",
-        inactiveFactor: 0.6,
-        // enableFading: false,
-        minAlpha: 0.3,
-      }),
-      color: createColors({
-        color,
-        style: "blocks",
-        inactiveFactor: 0.6,
-        // enableFading: false,
-        minAlpha: 0.3,
-      }),
+      frames,
+      color,
     }
   })
 
@@ -1300,8 +1454,6 @@ export function Prompt(props: PromptProps) {
             bottomRight: " ",
           }}
           width="100%"
-          paddingTop={1}
-          paddingBottom={1}
         >
           <box flexDirection="row" alignItems="flex-start" width="100%" gap={1} paddingLeft={1} paddingRight={1}>
             <text fg={highlight()} attributes={TextAttributes.BOLD}>
@@ -1504,6 +1656,9 @@ export function Prompt(props: PromptProps) {
           <text fg={highlight()}>
             {store.mode === "shell" ? "Shell" : Locale.titlecase(local.agent.current().name)}{" "}
           </text>
+          <Show when={isAllowAllMode()}>
+            <text fg={theme.warning}>Auto-allow all enabled</text>
+          </Show>
           <Show when={store.mode === "normal"}>
             <box flexDirection="row" gap={1}>
               <text flexShrink={0} fg={keybind.leader ? theme.textMuted : theme.text}>
@@ -1512,15 +1667,44 @@ export function Prompt(props: PromptProps) {
               <text fg={theme.textMuted}>{displayModel().provider}</text>
             </box>
           </Show>
-          <Show when={context().tokens > 0}>
+          <Show when={context().tokens > 0 || usageLimits() !== undefined}>
             <box flexDirection="row" gap={1} flexShrink={0}>
-              <text fg={theme.textMuted}>·</text>
-              <text fg={theme.textMuted}>{context().tokensFormatted} tokens</text>
-              <text fg={theme.textMuted}>·</text>
-              <text fg={theme.textMuted}>{context().percentage}% context</text>
+              <Show when={context().tokens > 0}>
+                <text fg={theme.textMuted}>·</text>
+                <text fg={theme.textMuted}>{context().tokensFormatted} tokens</text>
+              </Show>
               <Show when={context().cost !== undefined}>
                 <text fg={theme.textMuted}>·</text>
-                <text fg={theme.textMuted}>${context().cost!.toFixed(4)}</text>
+                <text fg={theme.textMuted}>
+                  session: ${context().cost! < 0.01 ? "0.00" : context().cost!.toFixed(2)}
+                </text>
+              </Show>
+              <Show when={Object.keys(dailyCostByModel()).length > 0}>
+                <text fg={theme.textMuted}>·</text>
+                <text fg={theme.textMuted}>
+                  today: $
+                  {(() => {
+                    const totalToday = Object.values(dailyCostByModel()).reduce((sum, data) => sum + data.cost, 0)
+                    return totalToday < 0.01 ? "0.00" : totalToday.toFixed(2)
+                  })()}
+                </text>
+              </Show>
+              <Show when={context().tokens > 0}>
+                <text fg={theme.textMuted}>·</text>
+                <text fg={theme.textMuted}>{context().percentage}% context</text>
+              </Show>
+              <Show when={usageLimits() !== undefined}>
+                <text fg={theme.textMuted}>·</text>
+                <text fg={theme.textMuted}>
+                  {(() => {
+                    const limits = usageLimits()!
+                    if (limits.percent !== undefined) {
+                      const remaining = Math.max(0, 100 - limits.percent)
+                      return `${remaining.toFixed(0)}% left${limits.timeLeft ? ` (${limits.timeLeft})` : ""}`
+                    }
+                    return limits.timeLeft ? `resets in ${limits.timeLeft}` : ""
+                  })()}
+                </text>
               </Show>
             </box>
           </Show>

@@ -1,15 +1,15 @@
-import { Prompt, type PromptRef } from "@tui/component/prompt"
-import { createMemo, Match, onMount, Show, Switch } from "solid-js"
-import { useTheme } from "@tui/context/theme"
-import { Logo } from "../component/logo"
 import { Locale } from "@/util/locale"
-import { useSync } from "../context/sync"
-import { Toast } from "../ui/toast"
+import { useKeyboard } from "@opentui/solid"
+import { Prompt, type PromptRef } from "@tui/component/prompt"
+import { useRouteData } from "@tui/context/route"
+import { useTheme } from "@tui/context/theme"
+import { createMemo, Match, onMount, Show, Switch } from "solid-js"
+import { Logo } from "../component/logo"
 import { useArgs } from "../context/args"
-import { useDirectory } from "../context/directory"
-import { useRoute, useRouteData } from "@tui/context/route"
+import { useKeybind } from "../context/keybind"
 import { usePromptRef } from "../context/prompt"
-import { Installation } from "@/installation"
+import { useSync } from "../context/sync"
+import { Toast, useToast } from "../ui/toast"
 
 // TODO: what is the best way to do this?
 let once = false
@@ -19,13 +19,28 @@ export function Home() {
   const { theme } = useTheme()
   const route = useRouteData("home")
   const promptRef = usePromptRef()
-  const mcp = createMemo(() => Object.keys(sync.data.mcp).length > 0)
+  const toast = useToast()
+  const keybind = useKeybind()
   const mcpError = createMemo(() => {
     return Object.values(sync.data.mcp).some((x) => x.status === "failed")
   })
 
   const connectedMcpCount = createMemo(() => {
     return Object.values(sync.data.mcp).filter((x) => x.status === "connected").length
+  })
+
+  // Handle permission toggle when not in a session
+  useKeyboard((evt) => {
+    if (evt.eventType !== "press") return
+    if (keybind.match("permission_toggle_allow_all", evt)) {
+      evt.preventDefault?.()
+      toast.show({
+        message: "Open or create a session to toggle permissions mode",
+        variant: "info",
+        duration: 2000,
+      })
+      return
+    }
   })
 
   const Hint = (
@@ -59,7 +74,6 @@ export function Home() {
       once = true
     }
   })
-  const directory = useDirectory()
 
   return (
     <>
@@ -70,8 +84,6 @@ export function Home() {
         justifyContent="space-between"
         paddingLeft={2}
         paddingRight={2}
-        paddingTop={1}
-        paddingBottom={1}
         gap={1}
       >
         <Logo />

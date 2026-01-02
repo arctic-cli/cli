@@ -123,7 +123,7 @@ export namespace Installation {
     let cmd
     switch (method) {
       case "curl":
-        cmd = $`curl -fsSL https://arcticli.com/install | bash`.env({
+        cmd = $`curl -fsSL https://usearctic.sh/install | bash`.env({
           ...process.env,
           VERSION: target,
         })

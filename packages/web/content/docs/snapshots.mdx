@@ -19,19 +19,27 @@ Snapshots use a separate Git repository:
 ~/.local/share/arctic/snapshot/<projectID>/
 ```
 
-This is separate from your project’s `.git` directory.
+This is separate from your project's `.git` directory.
 
 ## View diffs
 
 ```bash
-arctic session diff <session-id>
+arctic debug snapshot diff <hash>
 ```
 
-## Restore from a snapshot
+## Apply a snapshot patch
 
 ```bash
-arctic debug snapshot restore <hash>
+arctic debug snapshot patch <hash>
 ```
+
+## Track current changes
+
+```bash
+arctic debug snapshot track
+```
+
+This creates a new snapshot of your current working directory.
 
 ## Toggle snapshots
 

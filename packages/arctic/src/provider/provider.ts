@@ -339,7 +339,7 @@ export namespace Provider {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://arcticli.com/",
+            "HTTP-Referer": "https://usearctic.sh/",
             "X-Title": "arctic",
           },
         },
@@ -350,7 +350,7 @@ export namespace Provider {
         autoload: false,
         options: {
           headers: {
-            "http-referer": "https://arcticli.com/",
+            "http-referer": "https://usearctic.sh/",
             "x-title": "arctic",
           },
         },
@@ -417,7 +417,7 @@ export namespace Provider {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://arcticli.com/",
+            "HTTP-Referer": "https://usearctic.sh/",
             "X-Title": "arctic",
           },
         },

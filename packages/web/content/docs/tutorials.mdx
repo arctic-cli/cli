@@ -1,0 +1,646 @@
+---
+title: Tutorials
+description: Step-by-step guides for common workflows.
+---
+
+This section provides detailed walkthroughs for common development tasks with Arctic.
+
+<Cards>
+  <Card title="New Feature" href="#new-feature" description="Build a feature from scratch" />
+  <Card title="Bug Fix" href="#bug-fix" description="Debug and fix an issue" />
+  <Card title="Code Review" href="#code-review" description="Review code changes" />
+  <Card title="Refactoring" href="#refactoring" description="Improve existing code" />
+  <Card title="Testing" href="#testing" description="Write tests with AI" />
+  <Card title="Documentation" href="#documentation" description="Generate docs" />
+</Cards>
+
+---
+
+## New Feature
+
+### Scenario: Add user authentication to a Node.js API
+
+This tutorial walks through building a complete authentication system.
+
+#### Prerequisites
+
+- Node.js project initialized
+- Git repository
+- Arctic installed and authenticated
+
+#### Step 1: Start Arctic
+
+```bash
+cd your-project
+arctic
+```
+
+#### Step 2: Set context
+
+Attach your project files:
+
+```
+In TUI: Press Ctrl+P, type "attach", select your project directory
+```
+
+Or in CLI:
+
+```bash
+arctic run -f . "I want to add user authentication to this API"
+```
+
+#### Step 3: Define requirements
+
+```
+I need to add user authentication with these features:
+- User registration (email/password)
+- User login
+- Password hashing with bcrypt
+- JWT token generation
+- Protected routes
+- Password reset (email-based)
+
+The API is built with Express and uses a MongoDB database.
+```
+
+#### Step 4: Let Arctic create the structure
+
+Arctic will:
+1. Analyze your existing code structure
+2. Propose file locations and naming
+3. Create necessary files
+4. Update existing routes to be protected
+
+#### Step 5: Review and iterate
+
+After the initial implementation:
+
+```
+Review the code and suggest improvements:
+1. Add input validation
+2. Add rate limiting
+3. Add error handling
+4. Add logging
+```
+
+#### Step 6: Test the implementation
+
+```bash
+# In Arctic, let it run the tests
+"Please run the tests for the authentication system"
+
+# Or manually
+npm test
+```
+
+#### Step 7: Commit changes
+
+```bash
+git add .
+git commit -m "Add user authentication system"
+```
+
+### What you learned
+
+- How to set context with project files
+- How to guide Arctic with clear requirements
+- How to iterate and refine AI-generated code
+- How to use Arctic for testing
+
+---
+
+## Bug Fix
+
+### Scenario: Fix a memory leak in a React application
+
+#### Step 1: Start Arctic in debug mode
+
+```bash
+ARCTIC_DEBUG=1 arctic
+```
+
+#### Step 2: Describe the issue
+
+```
+I have a memory leak in my React application. Here's what happens:
+- Navigate to /dashboard
+- Memory usage increases
+- Navigate away and back
+- Memory keeps increasing
+- Eventually the browser becomes unresponsive
+
+The dashboard component fetches data every 5 seconds and displays charts.
+```
+
+#### Step 3: Let Arctic investigate
+
+Arctic will:
+1. Read the dashboard component
+2. Check for common memory leak patterns
+3. Identify issues like:
+   - Missing cleanup in useEffect
+   - Unsubscribed event listeners
+   - Infinite loops
+   - Stale closures
+
+#### Step 4: Apply fixes
+
+Common fixes Arctic might suggest:
+
+```typescript
+// Before: Missing cleanup
+useEffect(() => {
+  const interval = setInterval(() => {
+    fetchData();
+  }, 5000);
+}, []);
+
+// After: Proper cleanup
+useEffect(() => {
+  const interval = setInterval(() => {
+    fetchData();
+  }, 5000);
+
+  return () => clearInterval(interval);
+}, []);
+```
+
+#### Step 5: Verify the fix
+
+```
+"Please verify the memory leak is fixed by:
+1. Checking all useEffect hooks
+2. Ensuring all intervals/timeouts are cleared
+3. Checking event listeners are removed
+4. Testing navigation scenarios"
+```
+
+#### Step 6: Test manually
+
+1. Open Chrome DevTools
+2. Go to Performance tab
+3. Navigate to /dashboard
+4. Record performance
+5. Navigate away and back
+6. Check if memory is released
+
+### What you learned
+
+- How to describe bugs clearly
+- How Arctic identifies memory leak patterns
+- How to apply fixes systematically
+- How to verify bug fixes
+
+---
+
+## Code Review
+
+### Scenario: Review a large pull request
+
+#### Step 1: Get the diff
+
+```bash
+git diff main...feature-branch > changes.diff
+```
+
+#### Step 2: Load into Arctic
+
+```bash
+cat changes.diff | arctic run "Review these changes thoroughly"
+
+# Or attach the file
+arctic run -f changes.diff "Review these changes"
+```
+
+#### Step 3: Ask for specific review areas
+
+```
+Please review these changes and focus on:
+1. Security vulnerabilities
+2. Performance issues
+3. Code quality and best practices
+4. Test coverage
+5. Documentation completeness
+
+For each issue found, provide:
+- The specific file and line
+- The problem
+- Why it's a problem
+- A suggested fix
+```
+
+#### Step 4: Categorize findings
+
+Arctic will categorize issues into:
+- **Critical**: Must fix before merge
+- **High**: Should fix
+- **Medium**: Nice to fix
+- **Low**: Optional
+
+#### Step 5: Generate a summary
+
+```
+Please generate a PR review summary with:
+- Overall assessment (approve/needs changes/reject)
+- Key concerns
+- Positive highlights
+- Actionable checklist
+```
+
+#### Step 6: Discuss specific changes
+
+```
+Can you explain why this function was refactored this way?
+[point to specific code]
+
+What are the trade-offs of this approach?
+```
+
+### What you learned
+
+- How to use Arctic for code reviews
+- How to structure review requests
+- How to generate actionable feedback
+- How to have discussions about code
+
+---
+
+## Refactoring
+
+### Scenario: Modernize a legacy codebase
+
+#### Step 1: Analyze the codebase
+
+```bash
+arctic run "Analyze this codebase and identify:
+1. Outdated patterns
+2. Code smells
+3. Security issues
+4. Performance bottlenecks
+5. Areas that would benefit from modernization"
+```
+
+#### Step 2: Create a refactoring plan
+
+```
+Based on the analysis, create a prioritized refactoring plan.
+For each item, include:
+- What to change
+- Why change it
+- Estimated effort
+- Risk level
+- Dependencies on other changes"
+```
+
+#### Step 3: Refactor in iterations
+
+Start with low-risk, high-impact changes:
+
+```
+Let's start with the easiest wins. Please:
+1. Update all var to const/let
+2. Convert function expressions to arrow functions
+3. Add destructuring where appropriate
+4. Use template literals instead of string concatenation
+```
+
+#### Step 4: Test after each iteration
+
+```bash
+# Run tests
+npm test
+
+# Or ask Arctic to verify
+"Please run the tests and verify all changes work correctly"
+```
+
+#### Step 5: Move to more complex changes
+
+```
+Now let's refactor the API layer:
+1. Extract common request logic
+2. Add error handling middleware
+3. Implement proper error types
+4. Add request/response logging
+```
+
+#### Step 6: Document the changes
+
+```
+Please create a REFACTORING.md file that documents:
+- What was changed
+- Why it was changed
+- Breaking changes (if any)
+- Migration guide for other developers
+```
+
+### What you learned
+
+- How to analyze legacy code
+- How to create refactoring plans
+- How to refactor iteratively
+- How to document changes
+
+---
+
+## Testing
+
+### Scenario: Add comprehensive tests to an untested module
+
+#### Step 1: Identify what to test
+
+```bash
+arctic run -f src/user-service.ts "Analyze this module and identify:
+1. All functions that need tests
+2. Edge cases to cover
+3. Error scenarios to test
+4. Integration points to mock"
+```
+
+#### Step 2: Generate test files
+
+```
+Please generate comprehensive test files using Jest that cover:
+- Unit tests for each function
+- Integration tests
+- Error handling tests
+- Edge case tests
+
+Use proper mocking for external dependencies.
+```
+
+#### Step 3: Review and refine tests
+
+```
+Review the generated tests and improve:
+1. Test descriptions (make them clearer)
+2. Test organization (group related tests)
+3. Assertions (use more specific matchers)
+4. Test data (use realistic data)
+```
+
+#### Step 4: Run tests
+
+```bash
+npm test
+
+# Or with coverage
+npm test -- --coverage
+```
+
+#### Step 5: Address failing tests
+
+```
+The following tests are failing. Please fix them:
+[paste failing test output]
+```
+
+#### Step 6: Add to CI
+
+```
+Please update the CI configuration to:
+1. Run tests on every push
+2. Require tests to pass
+3. Generate coverage reports
+4. Enforce minimum coverage thresholds
+```
+
+### What you learned
+
+- How to generate comprehensive tests
+- How to review and improve AI-generated tests
+- How to integrate tests into CI/CD
+- How to ensure quality test coverage
+
+---
+
+## Documentation
+
+### Scenario: Generate API documentation
+
+#### Step 1: Analyze API routes
+
+```bash
+arctic run -f src/api/ "Analyze all API routes and document:
+1. Endpoints (method, path)
+2. Request parameters
+3. Request body schema
+4. Response format
+5. Error responses
+6. Authentication requirements"
+```
+
+#### Step 2: Choose documentation format
+
+```
+Please generate documentation in OpenAPI 3.0 format that I can use with Swagger or ReDoc.
+```
+
+#### Step 3: Generate examples
+
+```
+For each endpoint, include:
+1. cURL example
+2. Request payload example
+3. Success response example
+4. Error response example
+```
+
+#### Step 4: Generate additional docs
+
+```bash
+# Generate getting started guide
+arctic run "Generate a getting started guide for this API including:
+1. How to authenticate
+2. How to make your first request
+3. Common use cases
+4. Best practices"
+
+# Generate troubleshooting guide
+arctic run "Generate a troubleshooting guide covering:
+1. Common errors
+2. How to debug
+3. Rate limits
+4. Authentication issues"
+```
+
+#### Step 5: Set up documentation site
+
+```
+Please create a Docusaurus site configuration and structure for this API documentation.
+Include:
+- Navigation structure
+- Homepage
+- Getting started page
+- API reference pages
+- Troubleshooting page
+```
+
+### What you learned
+
+- How to generate API documentation
+- How to create examples
+- How to structure documentation sites
+- How to make docs developer-friendly
+
+---
+
+## Advanced Workflow: Feature from Idea to Production
+
+This comprehensive tutorial covers building a feature from concept to deployment.
+
+### Phase 1: Planning
+
+```bash
+arctic run "I want to build a feature that allows users to export their data as CSV.
+Please help me:
+
+1. Define the requirements
+2. Identify the technical approach
+3. Plan the implementation steps
+4. Identify potential issues
+5. Create a task list"
+```
+
+Arctic will create a detailed plan including:
+- Functional requirements
+- Technical specifications
+- Implementation steps
+- Testing strategy
+- Deployment considerations
+
+### Phase 2: Implementation
+
+```bash
+# Create a feature branch
+git checkout -b feature/data-export
+
+# Start implementing
+arctic run "Let's implement the data export feature step by step.
+Start with the core functionality."
+```
+
+Iterate through each component:
+
+```
+Now implement:
+1. The CSV generation logic
+2. The API endpoint
+3. Frontend UI
+4. Error handling
+5. Progress tracking for large exports
+```
+
+### Phase 3: Testing
+
+```bash
+# Generate tests
+arctic run "Generate comprehensive tests for the data export feature"
+
+# Run tests
+npm test
+
+# Manual testing
+arctic run "Create a test plan for manual testing of the data export feature"
+```
+
+### Phase 4: Documentation
+
+```bash
+# Update API docs
+arctic run -f src/api/export.ts "Generate API documentation for the export endpoint"
+
+# Update user docs
+arctic run "Write user documentation explaining how to use the data export feature"
+
+# Update changelog
+arctic run "Generate a changelog entry for this feature"
+```
+
+### Phase 5: Code Review
+
+```bash
+# Self-review
+arctic run -f . "Review all changes in this feature branch for:
+1. Security issues
+2. Performance problems
+3. Code quality
+4. Best practices
+5. Edge cases"
+
+# Generate PR description
+arctic run "Generate a pull request description for this feature including:
+- Feature summary
+- Changes made
+- Testing done
+- Breaking changes (if any)
+- Screenshots (if applicable)"
+```
+
+### Phase 6: Deployment
+
+```bash
+# Deployment checklist
+arctic run "Create a deployment checklist for this feature covering:
+1. Database migrations needed
+2. Environment variables
+3. Feature flags
+4. Monitoring
+5. Rollback plan"
+```
+
+### What you learned
+
+- End-to-end feature development
+- How to use Arctic throughout the development lifecycle
+- How to create comprehensive documentation
+- How to ensure quality and maintainability
+
+---
+
+## Tips for Effective Tutorials
+
+### Be Specific
+
+Instead of:
+```
+"Fix the code"
+```
+
+Use:
+```
+"Fix the authentication bug where users can't login after password reset.
+The issue is in src/auth.js, line 45."
+```
+
+### Provide Context
+
+Always give Arctic enough context:
+- What you're trying to achieve
+- What you've already tried
+- Constraints and requirements
+- Existing code structure
+
+### Iterate and Refine
+
+Don't expect perfection on the first try:
+- Review the initial output
+- Provide feedback
+- Ask for improvements
+- Iterate until satisfied
+
+### Use Arctic's Strengths
+
+Leverage Arctic's capabilities:
+- Use attachments for code context
+- Use benchmarks to compare approaches
+- Use different models for different tasks
+- Use agents for specialized workflows
+
+---
+
+## Next Steps
+
+- Explore [Agents](/docs/cli/agents) for specialized workflows
+- Learn about [Custom Commands](/docs/cli/commands) for reusable prompts
+- Check [Config](/docs/cli/config) to customize Arctic for your workflow

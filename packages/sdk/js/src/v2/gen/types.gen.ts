@@ -46,6 +46,86 @@ export type EventServerInstanceDisposed = {
   }
 }
 
+export type EventTuiPromptAppend = {
+  type: "tui.prompt.append"
+  properties: {
+    text: string
+  }
+}
+
+export type EventTuiCommandExecute = {
+  type: "tui.command.execute"
+  properties: {
+    command:
+      | "session.list"
+      | "session.new"
+      | "session.interrupt"
+      | "session.compact"
+      | "session.page.up"
+      | "session.page.down"
+      | "session.half.page.up"
+      | "session.half.page.down"
+      | "session.first"
+      | "session.last"
+      | "prompt.clear"
+      | "prompt.submit"
+      | "agent.cycle"
+      | string
+  }
+}
+
+export type EventTuiToastShow = {
+  type: "tui.toast.show"
+  properties: {
+    title?: string
+    message: string
+    variant: "info" | "success" | "warning" | "error"
+    /**
+     * Duration in milliseconds
+     */
+    duration?: number
+  }
+}
+
+export type Pty = {
+  id: string
+  title: string
+  command: string
+  args: Array<string>
+  cwd: string
+  status: "running" | "exited"
+  pid: number
+}
+
+export type EventPtyCreated = {
+  type: "pty.created"
+  properties: {
+    info: Pty
+  }
+}
+
+export type EventPtyUpdated = {
+  type: "pty.updated"
+  properties: {
+    info: Pty
+  }
+}
+
+export type EventPtyExited = {
+  type: "pty.exited"
+  properties: {
+    id: string
+    exitCode: number
+  }
+}
+
+export type EventPtyDeleted = {
+  type: "pty.deleted"
+  properties: {
+    id: string
+  }
+}
+
 export type EventLspClientDiagnostics = {
   type: "lsp.client.diagnostics"
   properties: {
@@ -475,6 +555,14 @@ export type EventPermissionReplied = {
   }
 }
 
+export type EventPermissionAllowAllModeChanged = {
+  type: "permission.allowAllModeChanged"
+  properties: {
+    sessionID: string
+    enabled: boolean
+  }
+}
+
 export type SessionStatus =
   | {
       type: "idle"
@@ -573,9 +661,10 @@ export type BenchmarkParentInfo = {
   enabled: boolean
   createdAt: number
   baseSnapshot?: string
-  appliedBaseSnapshot?: string
+  baseWorktree?: string
   children: Array<BenchmarkChildInfo>
   appliedSessionID?: string
+  checkpointSnapshot?: string
 }
 
 export type BenchmarkChildSessionInfo = {
@@ -669,86 +758,6 @@ export type EventVcsBranchUpdated = {
   }
 }
 
-export type EventTuiPromptAppend = {
-  type: "tui.prompt.append"
-  properties: {
-    text: string
-  }
-}
-
-export type EventTuiCommandExecute = {
-  type: "tui.command.execute"
-  properties: {
-    command:
-      | "session.list"
-      | "session.new"
-      | "session.interrupt"
-      | "session.compact"
-      | "session.page.up"
-      | "session.page.down"
-      | "session.half.page.up"
-      | "session.half.page.down"
-      | "session.first"
-      | "session.last"
-      | "prompt.clear"
-      | "prompt.submit"
-      | "agent.cycle"
-      | string
-  }
-}
-
-export type EventTuiToastShow = {
-  type: "tui.toast.show"
-  properties: {
-    title?: string
-    message: string
-    variant: "info" | "success" | "warning" | "error"
-    /**
-     * Duration in milliseconds
-     */
-    duration?: number
-  }
-}
-
-export type Pty = {
-  id: string
-  title: string
-  command: string
-  args: Array<string>
-  cwd: string
-  status: "running" | "exited"
-  pid: number
-}
-
-export type EventPtyCreated = {
-  type: "pty.created"
-  properties: {
-    info: Pty
-  }
-}
-
-export type EventPtyUpdated = {
-  type: "pty.updated"
-  properties: {
-    info: Pty
-  }
-}
-
-export type EventPtyExited = {
-  type: "pty.exited"
-  properties: {
-    id: string
-    exitCode: number
-  }
-}
-
-export type EventPtyDeleted = {
-  type: "pty.deleted"
-  properties: {
-    id: string
-  }
-}
-
 export type EventServerConnected = {
   type: "server.connected"
   properties: {
@@ -768,6 +777,13 @@ export type Event =
   | EventInstallationUpdateAvailable
   | EventProjectUpdated
   | EventServerInstanceDisposed
+  | EventTuiPromptAppend
+  | EventTuiCommandExecute
+  | EventTuiToastShow
+  | EventPtyCreated
+  | EventPtyUpdated
+  | EventPtyExited
+  | EventPtyDeleted
   | EventLspClientDiagnostics
   | EventLspUpdated
   | EventMessageUpdated
@@ -776,6 +792,7 @@ export type Event =
   | EventMessagePartRemoved
   | EventPermissionUpdated
   | EventPermissionReplied
+  | EventPermissionAllowAllModeChanged
   | EventSessionStatus
   | EventSessionIdle
   | EventSessionCompacted
@@ -789,13 +806,6 @@ export type Event =
   | EventSessionError
   | EventFileWatcherUpdated
   | EventVcsBranchUpdated
-  | EventTuiPromptAppend
-  | EventTuiCommandExecute
-  | EventTuiToastShow
-  | EventPtyCreated
-  | EventPtyUpdated
-  | EventPtyExited
-  | EventPtyDeleted
   | EventServerConnected
   | EventGlobalDisposed
 
@@ -1147,6 +1157,10 @@ export type KeybindsConfig = {
    * Suspend terminal
    */
   terminal_suspend?: string
+  /**
+   * Toggle auto-allow all permissions mode
+   */
+  permission_toggle_allow_all?: string
 }
 
 export type AgentConfig = {
@@ -1395,7 +1409,7 @@ export type Config = {
     diff_style?: "auto" | "stacked"
   }
   /**
-   * Command configuration, see https://arcticli.com/docs/commands
+   * Command configuration, see https://usearctic.sh/docs/commands
    */
   command?: {
     [key: string]: {
@@ -1444,7 +1458,7 @@ export type Config = {
     [key: string]: AgentConfig | undefined
   }
   /**
-   * Agent configuration, see https://arcticli.com/docs/agent
+   * Agent configuration, see https://usearctic.sh/docs/agent
    */
   agent?: {
     plan?: AgentConfig
@@ -1501,6 +1515,9 @@ export type Config = {
    */
   instructions?: Array<string>
   layout?: LayoutConfig
+  /**
+   * Global permission settings
+   */
   permission?: {
     edit?: "ask" | "allow" | "deny"
     bash?:
@@ -1513,6 +1530,24 @@ export type Config = {
     webfetch?: "ask" | "allow" | "deny"
     doom_loop?: "ask" | "allow" | "deny"
     external_directory?: "ask" | "allow" | "deny"
+  }
+  /**
+   * Named permission profiles for quick switching (e.g., readonly, trusted, git-only)
+   */
+  permission_profile?: {
+    [key: string]: {
+      edit?: "ask" | "allow" | "deny"
+      bash?:
+        | "ask"
+        | "allow"
+        | "deny"
+        | {
+            [key: string]: "ask" | "allow" | "deny"
+          }
+      webfetch?: "ask" | "allow" | "deny"
+      doom_loop?: "ask" | "allow" | "deny"
+      external_directory?: "ask" | "allow" | "deny"
+    }
   }
   tools?: {
     [key: string]: boolean
@@ -1877,7 +1912,13 @@ export type GithubAuth = {
   token: string
 }
 
-export type Auth = OAuth | ApiAuth | WellKnownAuth | CodexAuth | GithubAuth
+export type OllamaAuth = {
+  type: "ollama"
+  host: string
+  port: number
+}
+
+export type Auth = OAuth | ApiAuth | WellKnownAuth | CodexAuth | GithubAuth | OllamaAuth
 
 export type GlobalEventData = {
   body?: never
@@ -3267,6 +3308,76 @@ export type PermissionRespondResponses = {
 
 export type PermissionRespondResponse = PermissionRespondResponses[keyof PermissionRespondResponses]
 
+export type PermissionAllowAllData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: {
+    directory?: string
+  }
+  url: "/session/{sessionID}/permissions/allow-all"
+}
+
+export type PermissionAllowAllErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type PermissionAllowAllError = PermissionAllowAllErrors[keyof PermissionAllowAllErrors]
+
+export type PermissionAllowAllResponses = {
+  /**
+   * All permissions processed successfully
+   */
+  200: boolean
+}
+
+export type PermissionAllowAllResponse = PermissionAllowAllResponses[keyof PermissionAllowAllResponses]
+
+export type PermissionToggleAllowAllModeData = {
+  body?: never
+  path: {
+    sessionID: string
+  }
+  query?: {
+    directory?: string
+  }
+  url: "/session/{sessionID}/permissions/toggle-allow-all-mode"
+}
+
+export type PermissionToggleAllowAllModeErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type PermissionToggleAllowAllModeError =
+  PermissionToggleAllowAllModeErrors[keyof PermissionToggleAllowAllModeErrors]
+
+export type PermissionToggleAllowAllModeResponses = {
+  /**
+   * Mode toggled successfully
+   */
+  200: {
+    enabled: boolean
+  }
+}
+
+export type PermissionToggleAllowAllModeResponse =
+  PermissionToggleAllowAllModeResponses[keyof PermissionToggleAllowAllModeResponses]
+
 export type CommandListData = {
   body?: never
   path?: never
@@ -3430,11 +3541,13 @@ export type UsageProvidersResponses = {
         usedPercent: number | null
         windowMinutes?: number | null
         resetsAt?: number | null
+        label?: string
       }
       secondary?: {
         usedPercent: number | null
         windowMinutes?: number | null
         resetsAt?: number | null
+        label?: string
       }
     }
     credits?: {
@@ -3462,6 +3575,67 @@ export type UsageProvidersResponses = {
 }
 
 export type UsageProvidersResponse = UsageProvidersResponses[keyof UsageProvidersResponses]
+
+export type UsageProviderData = {
+  body?: never
+  path: {
+    providerID: string
+  }
+  query?: {
+    directory?: string
+  }
+  url: "/usage/providers/{providerID}"
+}
+
+export type UsageProviderResponses = {
+  /**
+   * Provider usage record
+   */
+  200: {
+    providerID: string
+    providerName: string
+    planType?: string
+    allowed?: boolean
+    limitReached?: boolean
+    limits?: {
+      primary?: {
+        usedPercent: number | null
+        windowMinutes?: number | null
+        resetsAt?: number | null
+        label?: string
+      }
+      secondary?: {
+        usedPercent: number | null
+        windowMinutes?: number | null
+        resetsAt?: number | null
+        label?: string
+      }
+    }
+    credits?: {
+      hasCredits: boolean
+      unlimited: boolean
+      balance?: string
+    }
+    tokenUsage?: {
+      total?: number
+      input?: number
+      output?: number
+      cached?: number
+      cacheCreation?: number
+    }
+    costSummary?: {
+      totalCost?: number
+      inputCost?: number
+      outputCost?: number
+      cacheCreationCost?: number
+      cacheReadCost?: number
+    }
+    fetchedAt: number
+    error?: string
+  }
+}
+
+export type UsageProviderResponse = UsageProviderResponses[keyof UsageProviderResponses]
 
 export type ProviderOauthAuthorizeData = {
   body?: {

@@ -17,13 +17,13 @@ Frustrated by forced clipboard copying and rigid interfaces, I forked OpenCode, 
 **macOS / Linux**
 
 ```bash
-curl -fsSL https://arcticli.com/install | bash
+curl -fsSL https://usearctic.sh/install | bash
 ```
 
 **Windows**
 
 ```powershell
-irm https://arcticli.com/install.ps1 | iex
+irm https://usearctic.sh/install.ps1 | iex
 ```
 
 ## Supported Providers
@@ -71,4 +71,4 @@ Arctic is a brand new project and we'd love your input! Whether you have ideas, 
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
-[Documentation](https://arcticli.com/docs) • [License](LICENSE)
+[Documentation](https://usearctic.sh/docs) • [License](LICENSE)

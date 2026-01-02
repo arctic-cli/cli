@@ -281,8 +281,10 @@ function App() {
         return
       }
 
-      // If the prompt has input, let the prompt component handle Ctrl+C
+      // If the prompt has input, track this as first press but let prompt component handle it
       if (promptRef.current?.current.input) {
+        // Track as first Ctrl+C press for exit detection
+        lastCtrlCPress = Date.now()
         return
       }
 
@@ -296,13 +298,9 @@ function App() {
         /* @ts-expect-error */
         renderer.writeOut(finalOsc52)
         // Also try native clipboard as fallback
-        Clipboard.copy(lastSelectionText)
-          .then(() => {
-            toast.show({ message: "Selection copied to clipboard", variant: "success", duration: 1500 })
-          })
-          .catch(() => {
-            toast.show({ message: "Failed to copy selection", variant: "error", duration: 3000 })
-          })
+        Clipboard.copy(lastSelectionText).catch(() => {
+          toast.show({ message: "Failed to copy selection", variant: "error", duration: 3000 })
+        })
         // Reset the double-press timer when copying selected text
         lastCtrlCPress = 0
       } else if (isCtrlC || isCopy) {
@@ -534,7 +532,7 @@ function App() {
       title: "Open docs",
       value: "docs.open",
       onSelect: () => {
-        open("https://arcticli.com/docs").catch(() => {})
+        open("https://usearctic.sh/docs").catch(() => {})
         dialog.clear()
       },
       category: "System",
@@ -666,9 +664,9 @@ function App() {
       /* @ts-expect-error */
       renderer.writeOut(finalOsc52)
       // Also try native clipboard as fallback
-      await Clipboard.copy(lastSelectionText)
-        .then(() => toast.show({ message: "Copied to clipboard", variant: "success", duration: 1500 }))
-        .catch(() => toast.show({ message: "Failed to copy", variant: "error", duration: 2000 }))
+      await Clipboard.copy(lastSelectionText).catch(() =>
+        toast.show({ message: "Failed to copy", variant: "error", duration: 2000 }),
+      )
       renderer.clearSelection()
       setShowCopyButton(false)
     }

@@ -1193,7 +1193,7 @@ export type Config = {
     diff_style?: "auto" | "stacked"
   }
   /**
-   * Command configuration, see https://arcticli.com/docs/commands
+   * Command configuration, see https://usearctic.sh/docs/commands
    */
   command?: {
     [key: string]: {
@@ -1250,7 +1250,7 @@ export type Config = {
     [key: string]: AgentConfig | undefined
   }
   /**
-   * Agent configuration, see https://arcticli.com/docs/agent
+   * Agent configuration, see https://usearctic.sh/docs/agent
    */
   agent?: {
     plan?: AgentConfig

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://arcticli.com/theme.json",
+  "$schema": "https://usearctic.sh/theme.json",
   "defs": {
     "ink0": "#0b0b0b",
     "ink1": "#121212",

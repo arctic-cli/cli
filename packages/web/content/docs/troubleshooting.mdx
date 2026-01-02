@@ -1,0 +1,414 @@
+---
+title: Troubleshooting
+description: Common issues and how to fix them.
+---
+
+This guide covers common issues you might encounter when using Arctic and how to resolve them.
+
+## Installation Issues
+
+### Binary not found after install
+
+If you installed with the script but can't run `arctic`:
+
+```bash
+# Check if it's in PATH
+which arctic
+
+# If not found, restart your shell or add to PATH manually
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Add the export to your shell config (`~/.bashrc`, `~/.zshrc`, or `~/.config/fish/config.fish`).
+
+### Permission denied on install
+
+If the install script fails with permission errors:
+
+```bash
+# Create the directory first
+mkdir -p ~/.local/bin
+
+# Run install script again
+curl -fsSL https://usearctic.sh/install | bash
+```
+
+### Windows PowerShell execution policy error
+
+If you get an error about execution policy:
+
+```powershell
+# Set execution policy for current session
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+
+# Then run install again
+irm https://usearctic.sh/install.ps1 | iex
+```
+
+## Authentication Issues
+
+### Auth login fails or hangs
+
+If `arctic auth login` doesn't work:
+
+```bash
+# Check your network connection
+ping api.github.com
+
+# Try clearing auth and retrying
+rm ~/.config/arctic/auth.json
+arctic auth login
+```
+
+### API key not detected
+
+If you set an environment variable but Arctic doesn't see it:
+
+```bash
+# Verify the variable is set
+echo $OPENAI_API_KEY
+
+# Check for typos (case sensitive)
+# Correct: OPENAI_API_KEY
+# Wrong: openai_api_key
+
+# Restart your shell after setting the variable
+source ~/.bashrc  # or ~/.zshrc
+```
+
+### OAuth token expired
+
+If you get authentication errors after using OAuth:
+
+```bash
+# Logout and login again
+arctic auth logout
+arctic auth login
+```
+
+## TUI Issues
+
+### TUI looks broken or has artifacts
+
+If the terminal UI doesn't render correctly:
+
+```bash
+# Reset your terminal
+reset
+
+# Try a different terminal if issues persist
+# Known issues with: old Terminal.app versions, tmux with certain configs
+```
+
+### Keybindings not working
+
+If keyboard shortcuts don't respond:
+
+```bash
+# Check for keybinding conflicts in config
+arctic debug config
+
+# Try default keybindings by removing keybinds from config
+# Edit ~/.config/arctic/arctic.json and remove the "keybinds" section
+```
+
+### Mouse selection copies everything
+
+By default, mouse selection copies in Arctic. To disable or customize:
+
+```json
+{
+  "selection": {
+    "mouse": false
+  }
+}
+```
+
+## Session Issues
+
+### Session not found
+
+If `arctic run --continue` says session not found:
+
+```bash
+# List available sessions
+arctic session list
+
+# Use the correct session ID
+arctic run --session <session-id> "..."
+```
+
+### Can't resume session
+
+If you can't resume a session:
+
+```bash
+# Check if session exists
+arctic session list
+
+# Verify you're in the correct directory (project detection)
+pwd
+git status  # verify git repo if applicable
+```
+
+### Session history too long
+
+If a session is slow to load due to history:
+
+```bash
+# Compact the session
+arctic run --command compact
+
+# Or start a new session
+arctic
+# In TUI: Ctrl+X N
+```
+
+## Tool Issues
+
+### Permission denied for tools
+
+If tools keep getting denied:
+
+```bash
+# Check your permissions config
+arctic debug config
+
+# Or temporarily allow all tools (use with caution)
+# In ~/.config/arctic/arctic.json:
+{
+  "permission": {
+    "edit": "allow",
+    "bash": { "*": "allow" },
+    "webfetch": "allow"
+  }
+}
+```
+
+### Bash tool not working
+
+If bash commands fail:
+
+```bash
+# Verify bash is in PATH
+which bash
+
+# Check Arctic has execute permissions
+arctic debug file read /tmp/test.txt
+```
+
+### File operations fail
+
+If read/write/edit tools fail:
+
+```bash
+# Check file permissions
+ls -la <file>
+
+# Verify Arctic has access to the directory
+arctic debug file read <path>
+```
+
+## MCP Issues
+
+### MCP server not connecting
+
+If MCP tools don't appear:
+
+```bash
+# Check MCP configuration
+arctic mcp list
+
+# Verify server is running (for local MCP)
+arctic mcp auth
+
+# Check MCP logs if available
+```
+
+### MCP tools timeout
+
+If MCP tools are slow or timeout:
+
+```bash
+# Increase timeout in config
+{
+  "mcp": {
+    "my-server": {
+      "timeout": 10000
+    }
+  }
+}
+```
+
+## Performance Issues
+
+### Slow responses
+
+If Arctic feels slow:
+
+```bash
+# Try a faster model
+arctic models  # to see options
+# In TUI: Ctrl+X M to switch
+
+# Check your network connection
+ping api.anthropic.com
+```
+
+### High memory usage
+
+If Arctic uses too much memory:
+
+```bash
+# Compact old sessions
+arctic session list
+arctic run --command compact
+
+# Delete old sessions you don't need
+arctic session delete <session-id>
+```
+
+## Configuration Issues
+
+### Config not loading
+
+If changes to config don't take effect:
+
+```bash
+# Verify config file location
+cat ~/.config/arctic/arctic.json
+
+# Check for JSON syntax errors
+# Use a JSON validator or:
+python3 -m json.tool ~/.config/arctic/arctic.json
+
+# Restart Arctic after config changes
+```
+
+### Config precedence confusion
+
+If you have multiple config files:
+
+```bash
+# Debug config to see what's loaded
+arctic debug config
+
+# Config precedence:
+# 1. Global: ~/.config/arctic/arctic.json
+# 2. Project: <worktree>/.arctic/arctic.json
+# 3. Environment: ARCTIC_CONFIG or ARCTIC_CONFIG_CONTENT
+```
+
+## Snapshots Issues
+
+### Snapshot restore fails
+
+If you can't restore a snapshot:
+
+```bash
+# Check snapshot exists
+
+# Verify snapshot hash
+arctic debug snapshot diff <hash>
+
+# Ensure working directory is clean
+git status
+git stash
+```
+
+### Snapshots not working
+
+If snapshots aren't created:
+
+```bash
+# Check if Git is installed
+which git
+
+# Verify snapshots are enabled in config
+arctic debug config
+
+# Ensure snapshot: true in config
+{
+  "snapshot": true
+}
+```
+
+## Debug Mode
+
+For persistent issues, enable debug logging:
+
+```bash
+# Enable debug mode
+ARCTIC_DEBUG=1 arctic
+
+# Or set in environment
+export ARCTIC_DEBUG=1
+arctic
+```
+
+## Getting Help
+
+If you can't resolve your issue:
+
+1. Check the [GitHub Issues](https://github.com/arctic-cli/interface/issues) for similar problems
+2. Run debug commands and gather output:
+
+```bash
+arctic debug config
+arctic mcp list
+arctic session list
+```
+
+3. Create a new issue with:
+   - Your OS and version
+   - Arctic version (`arctic --version`)
+   - Steps to reproduce
+   - Error messages or debug output
+
+## Common Error Messages
+
+### "Provider not found"
+
+You're trying to use a provider that isn't configured.
+
+```bash
+# List available providers
+arctic models
+
+# Authenticate with the provider
+arctic auth login
+```
+
+### "Rate limit exceeded"
+
+You've hit the provider's rate limit.
+
+```bash
+# Check usage
+arctic run --command usage
+
+# Wait for the limit to reset or use a different provider
+```
+
+### "Session not found"
+
+The session ID doesn't exist or you're in the wrong project.
+
+```bash
+# List sessions
+arctic session list
+
+# Check current directory
+pwd
+```
+
+### "Permission denied"
+
+A tool is being blocked by permissions.
+
+```bash
+# Check your permissions config
+arctic debug config
+
+# Allow the tool temporarily or adjust permissions
+```

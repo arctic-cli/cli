@@ -40,6 +40,9 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       permission: {
         [sessionID: string]: Permission[]
       }
+      permission_allow_all_mode: {
+        [sessionID: string]: boolean
+      }
       config: Config
       session: Session[]
       session_status: {
@@ -81,6 +84,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       status: "loading",
       agent: [],
       permission: {},
+      permission_allow_all_mode: {},
       command: [],
       provider: [],
       provider_default: {},
@@ -135,6 +139,11 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
               draft.splice(match.index, 1)
             }),
           )
+          break
+        }
+
+        case "permission.allowAllModeChanged": {
+          setStore("permission_allow_all_mode", event.properties.sessionID, event.properties.enabled)
           break
         }
 

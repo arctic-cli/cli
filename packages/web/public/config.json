@@ -20,649 +20,487 @@
           "description": "Leader key for keybind combinations\n\ndefault: `ctrl+x`",
           "default": "ctrl+x",
           "type": "string",
-          "examples": [
-            "ctrl+x"
-          ]
+          "examples": ["ctrl+x"]
         },
         "app_exit": {
           "description": "Exit the application\n\ndefault: `ctrl+c,ctrl+d,<leader>q`",
           "default": "ctrl+c,ctrl+d,<leader>q",
           "type": "string",
-          "examples": [
-            "ctrl+c,ctrl+d,<leader>q"
-          ]
+          "examples": ["ctrl+c,ctrl+d,<leader>q"]
         },
         "editor_open": {
           "description": "Open external editor\n\ndefault: `<leader>e`",
           "default": "<leader>e",
           "type": "string",
-          "examples": [
-            "<leader>e"
-          ]
+          "examples": ["<leader>e"]
         },
         "theme_list": {
           "description": "List available themes\n\ndefault: `<leader>t`",
           "default": "<leader>t",
           "type": "string",
-          "examples": [
-            "<leader>t"
-          ]
+          "examples": ["<leader>t"]
         },
         "sidebar_toggle": {
           "description": "Toggle sidebar\n\ndefault: `<leader>b`",
           "default": "<leader>b",
           "type": "string",
-          "examples": [
-            "<leader>b"
-          ]
+          "examples": ["<leader>b"]
         },
         "scrollbar_toggle": {
           "description": "Toggle session scrollbar\n\ndefault: `<leader>v`",
           "default": "<leader>v",
           "type": "string",
-          "examples": [
-            "<leader>v"
-          ]
+          "examples": ["<leader>v"]
         },
         "username_toggle": {
           "description": "Toggle username visibility\n\ndefault: `none`",
           "default": "none",
           "type": "string",
-          "examples": [
-            "none"
-          ]
+          "examples": ["none"]
         },
         "status_view": {
           "description": "View status\n\ndefault: `<leader>s`",
           "default": "<leader>s",
           "type": "string",
-          "examples": [
-            "<leader>s"
-          ]
+          "examples": ["<leader>s"]
         },
         "session_export": {
           "description": "Export session to editor\n\ndefault: `<leader>x`",
           "default": "<leader>x",
           "type": "string",
-          "examples": [
-            "<leader>x"
-          ]
+          "examples": ["<leader>x"]
         },
         "session_new": {
           "description": "Create a new session\n\ndefault: `<leader>n`",
           "default": "<leader>n",
           "type": "string",
-          "examples": [
-            "<leader>n"
-          ]
+          "examples": ["<leader>n"]
         },
         "session_list": {
           "description": "List all sessions\n\ndefault: `<leader>l`",
           "default": "<leader>l",
           "type": "string",
-          "examples": [
-            "<leader>l"
-          ]
+          "examples": ["<leader>l"]
         },
         "session_timeline": {
           "description": "Show session timeline\n\ndefault: `<leader>g`",
           "default": "<leader>g",
           "type": "string",
-          "examples": [
-            "<leader>g"
-          ]
+          "examples": ["<leader>g"]
         },
         "session_interrupt": {
           "description": "Interrupt current session\n\ndefault: `escape`",
           "default": "escape",
           "type": "string",
-          "examples": [
-            "escape"
-          ]
+          "examples": ["escape"]
         },
         "session_compact": {
           "description": "Compact the session\n\ndefault: `<leader>c`",
           "default": "<leader>c",
           "type": "string",
-          "examples": [
-            "<leader>c"
-          ]
+          "examples": ["<leader>c"]
         },
         "messages_page_up": {
           "description": "Scroll messages up by one page\n\ndefault: `pageup`",
           "default": "pageup",
           "type": "string",
-          "examples": [
-            "pageup"
-          ]
+          "examples": ["pageup"]
         },
         "messages_page_down": {
           "description": "Scroll messages down by one page\n\ndefault: `pagedown`",
           "default": "pagedown",
           "type": "string",
-          "examples": [
-            "pagedown"
-          ]
+          "examples": ["pagedown"]
         },
         "messages_half_page_up": {
           "description": "Scroll messages up by half page\n\ndefault: `ctrl+alt+u`",
           "default": "ctrl+alt+u",
           "type": "string",
-          "examples": [
-            "ctrl+alt+u"
-          ]
+          "examples": ["ctrl+alt+u"]
         },
         "messages_half_page_down": {
           "description": "Scroll messages down by half page\n\ndefault: `ctrl+alt+d`",
           "default": "ctrl+alt+d",
           "type": "string",
-          "examples": [
-            "ctrl+alt+d"
-          ]
+          "examples": ["ctrl+alt+d"]
         },
         "messages_first": {
           "description": "Navigate to first message\n\ndefault: `ctrl+g,home`",
           "default": "ctrl+g,home",
           "type": "string",
-          "examples": [
-            "ctrl+g,home"
-          ]
+          "examples": ["ctrl+g,home"]
         },
         "messages_last": {
           "description": "Navigate to last message\n\ndefault: `ctrl+alt+g,end`",
           "default": "ctrl+alt+g,end",
           "type": "string",
-          "examples": [
-            "ctrl+alt+g,end"
-          ]
+          "examples": ["ctrl+alt+g,end"]
         },
         "messages_last_user": {
           "description": "Navigate to last user message\n\ndefault: `none`",
           "default": "none",
           "type": "string",
-          "examples": [
-            "none"
-          ]
+          "examples": ["none"]
         },
         "messages_copy": {
           "description": "Copy message\n\ndefault: `<leader>y`",
           "default": "<leader>y",
           "type": "string",
-          "examples": [
-            "<leader>y"
-          ]
+          "examples": ["<leader>y"]
         },
         "selection_copy": {
           "description": "Copy selected text\n\ndefault: `ctrl+shift+c`",
           "default": "ctrl+shift+c",
           "type": "string",
-          "examples": [
-            "ctrl+shift+c"
-          ]
+          "examples": ["ctrl+shift+c"]
         },
         "messages_undo": {
           "description": "Undo message\n\ndefault: `<leader>u`",
           "default": "<leader>u",
           "type": "string",
-          "examples": [
-            "<leader>u"
-          ]
+          "examples": ["<leader>u"]
         },
         "messages_redo": {
           "description": "Redo message\n\ndefault: `<leader>r`",
           "default": "<leader>r",
           "type": "string",
-          "examples": [
-            "<leader>r"
-          ]
+          "examples": ["<leader>r"]
         },
         "messages_toggle_conceal": {
           "description": "Toggle code block concealment in messages\n\ndefault: `<leader>h`",
           "default": "<leader>h",
           "type": "string",
-          "examples": [
-            "<leader>h"
-          ]
+          "examples": ["<leader>h"]
         },
         "thinking_toggle": {
           "description": "Toggle thinking display\n\ndefault: `<leader>i`",
           "default": "<leader>i",
           "type": "string",
-          "examples": [
-            "<leader>i"
-          ]
+          "examples": ["<leader>i"]
         },
         "tool_details": {
           "description": "Toggle tool details visibility\n\ndefault: `none`",
           "default": "none",
           "type": "string",
-          "examples": [
-            "none"
-          ]
+          "examples": ["none"]
         },
         "model_list": {
           "description": "List available models\n\ndefault: `<leader>m`",
           "default": "<leader>m",
           "type": "string",
-          "examples": [
-            "<leader>m"
-          ]
+          "examples": ["<leader>m"]
         },
         "model_cycle_recent": {
           "description": "Next recently used model\n\ndefault: `f2`",
           "default": "f2",
           "type": "string",
-          "examples": [
-            "f2"
-          ]
+          "examples": ["f2"]
         },
         "model_cycle_recent_reverse": {
           "description": "Previous recently used model\n\ndefault: `shift+f2`",
           "default": "shift+f2",
           "type": "string",
-          "examples": [
-            "shift+f2"
-          ]
+          "examples": ["shift+f2"]
         },
         "command_list": {
           "description": "List available commands\n\ndefault: `ctrl+p`",
           "default": "ctrl+p",
           "type": "string",
-          "examples": [
-            "ctrl+p"
-          ]
+          "examples": ["ctrl+p"]
         },
         "agent_list": {
           "description": "List agents\n\ndefault: `<leader>a`",
           "default": "<leader>a",
           "type": "string",
-          "examples": [
-            "<leader>a"
-          ]
+          "examples": ["<leader>a"]
         },
         "agent_cycle": {
           "description": "Next agent\n\ndefault: `tab`",
           "default": "tab",
           "type": "string",
-          "examples": [
-            "tab"
-          ]
+          "examples": ["tab"]
         },
         "agent_cycle_reverse": {
           "description": "Previous agent\n\ndefault: `shift+tab`",
           "default": "shift+tab",
           "type": "string",
-          "examples": [
-            "shift+tab"
-          ]
+          "examples": ["shift+tab"]
         },
         "input_clear": {
           "description": "Clear input field\n\ndefault: `ctrl+c`",
           "default": "ctrl+c",
           "type": "string",
-          "examples": [
-            "ctrl+c"
-          ]
+          "examples": ["ctrl+c"]
         },
         "input_paste": {
           "description": "Paste from clipboard\n\ndefault: `ctrl+v`",
           "default": "ctrl+v",
           "type": "string",
-          "examples": [
-            "ctrl+v"
-          ]
+          "examples": ["ctrl+v"]
         },
         "input_submit": {
           "description": "Submit input\n\ndefault: `return`",
           "default": "return",
           "type": "string",
-          "examples": [
-            "return"
-          ]
+          "examples": ["return"]
         },
         "input_newline": {
           "description": "Insert newline in input\n\ndefault: `ctrl+j`",
           "default": "ctrl+j",
           "type": "string",
-          "examples": [
-            "ctrl+j"
-          ]
+          "examples": ["ctrl+j"]
         },
         "input_move_left": {
           "description": "Move cursor left in input\n\ndefault: `left,ctrl+b`",
           "default": "left,ctrl+b",
           "type": "string",
-          "examples": [
-            "left,ctrl+b"
-          ]
+          "examples": ["left,ctrl+b"]
         },
         "input_move_right": {
           "description": "Move cursor right in input\n\ndefault: `right,ctrl+f`",
           "default": "right,ctrl+f",
           "type": "string",
-          "examples": [
-            "right,ctrl+f"
-          ]
+          "examples": ["right,ctrl+f"]
         },
         "input_move_up": {
           "description": "Move cursor up in input\n\ndefault: `up`",
           "default": "up",
           "type": "string",
-          "examples": [
-            "up"
-          ]
+          "examples": ["up"]
         },
         "input_move_down": {
           "description": "Move cursor down in input\n\ndefault: `down`",
           "default": "down",
           "type": "string",
-          "examples": [
-            "down"
-          ]
+          "examples": ["down"]
         },
         "input_select_left": {
           "description": "Select left in input\n\ndefault: `shift+left`",
           "default": "shift+left",
           "type": "string",
-          "examples": [
-            "shift+left"
-          ]
+          "examples": ["shift+left"]
         },
         "input_select_right": {
           "description": "Select right in input\n\ndefault: `shift+right`",
           "default": "shift+right",
           "type": "string",
-          "examples": [
-            "shift+right"
-          ]
+          "examples": ["shift+right"]
         },
         "input_select_up": {
           "description": "Select up in input\n\ndefault: `shift+up`",
           "default": "shift+up",
           "type": "string",
-          "examples": [
-            "shift+up"
-          ]
+          "examples": ["shift+up"]
         },
         "input_select_down": {
           "description": "Select down in input\n\ndefault: `shift+down`",
           "default": "shift+down",
           "type": "string",
-          "examples": [
-            "shift+down"
-          ]
+          "examples": ["shift+down"]
         },
         "input_line_home": {
           "description": "Move to start of line in input\n\ndefault: `ctrl+a`",
           "default": "ctrl+a",
           "type": "string",
-          "examples": [
-            "ctrl+a"
-          ]
+          "examples": ["ctrl+a"]
         },
         "input_line_end": {
           "description": "Move to end of line in input\n\ndefault: `ctrl+e`",
           "default": "ctrl+e",
           "type": "string",
-          "examples": [
-            "ctrl+e"
-          ]
+          "examples": ["ctrl+e"]
         },
         "input_select_line_home": {
           "description": "Select to start of line in input\n\ndefault: `ctrl+shift+a`",
           "default": "ctrl+shift+a",
           "type": "string",
-          "examples": [
-            "ctrl+shift+a"
-          ]
+          "examples": ["ctrl+shift+a"]
         },
         "input_select_line_end": {
           "description": "Select to end of line in input\n\ndefault: `ctrl+shift+e`",
           "default": "ctrl+shift+e",
           "type": "string",
-          "examples": [
-            "ctrl+shift+e"
-          ]
+          "examples": ["ctrl+shift+e"]
         },
         "input_visual_line_home": {
           "description": "Move to start of visual line in input\n\ndefault: `alt+a`",
           "default": "alt+a",
           "type": "string",
-          "examples": [
-            "alt+a"
-          ]
+          "examples": ["alt+a"]
         },
         "input_visual_line_end": {
           "description": "Move to end of visual line in input\n\ndefault: `alt+e`",
           "default": "alt+e",
           "type": "string",
-          "examples": [
-            "alt+e"
-          ]
+          "examples": ["alt+e"]
         },
         "input_select_visual_line_home": {
           "description": "Select to start of visual line in input\n\ndefault: `alt+shift+a`",
           "default": "alt+shift+a",
           "type": "string",
-          "examples": [
-            "alt+shift+a"
-          ]
+          "examples": ["alt+shift+a"]
         },
         "input_select_visual_line_end": {
           "description": "Select to end of visual line in input\n\ndefault: `alt+shift+e`",
           "default": "alt+shift+e",
           "type": "string",
-          "examples": [
-            "alt+shift+e"
-          ]
+          "examples": ["alt+shift+e"]
         },
         "input_buffer_home": {
           "description": "Move to start of buffer in input\n\ndefault: `home`",
           "default": "home",
           "type": "string",
-          "examples": [
-            "home"
-          ]
+          "examples": ["home"]
         },
         "input_buffer_end": {
           "description": "Move to end of buffer in input\n\ndefault: `end`",
           "default": "end",
           "type": "string",
-          "examples": [
-            "end"
-          ]
+          "examples": ["end"]
         },
         "input_select_buffer_home": {
           "description": "Select to start of buffer in input\n\ndefault: `shift+home`",
           "default": "shift+home",
           "type": "string",
-          "examples": [
-            "shift+home"
-          ]
+          "examples": ["shift+home"]
         },
         "input_select_buffer_end": {
           "description": "Select to end of buffer in input\n\ndefault: `shift+end`",
           "default": "shift+end",
           "type": "string",
-          "examples": [
-            "shift+end"
-          ]
+          "examples": ["shift+end"]
         },
         "input_delete_line": {
           "description": "Delete line in input\n\ndefault: `ctrl+shift+d`",
           "default": "ctrl+shift+d",
           "type": "string",
-          "examples": [
-            "ctrl+shift+d"
-          ]
+          "examples": ["ctrl+shift+d"]
         },
         "input_delete_to_line_end": {
           "description": "Delete to end of line in input\n\ndefault: `ctrl+k`",
           "default": "ctrl+k",
           "type": "string",
-          "examples": [
-            "ctrl+k"
-          ]
+          "examples": ["ctrl+k"]
         },
         "input_delete_to_line_start": {
           "description": "Delete to start of line in input\n\ndefault: `ctrl+u`",
           "default": "ctrl+u",
           "type": "string",
-          "examples": [
-            "ctrl+u"
-          ]
+          "examples": ["ctrl+u"]
         },
         "input_backspace": {
           "description": "Backspace in input\n\ndefault: `backspace,shift+backspace`",
           "default": "backspace,shift+backspace",
           "type": "string",
-          "examples": [
-            "backspace,shift+backspace"
-          ]
+          "examples": ["backspace,shift+backspace"]
         },
         "input_delete": {
           "description": "Delete character in input\n\ndefault: `ctrl+d,delete,shift+delete`",
           "default": "ctrl+d,delete,shift+delete",
           "type": "string",
-          "examples": [
-            "ctrl+d,delete,shift+delete"
-          ]
+          "examples": ["ctrl+d,delete,shift+delete"]
         },
         "input_undo": {
           "description": "Undo in input\n\ndefault: `ctrl+-,super+z`",
           "default": "ctrl+-,super+z",
           "type": "string",
-          "examples": [
-            "ctrl+-,super+z"
-          ]
+          "examples": ["ctrl+-,super+z"]
         },
         "input_redo": {
           "description": "Redo in input\n\ndefault: `ctrl+.,super+shift+z`",
           "default": "ctrl+.,super+shift+z",
           "type": "string",
-          "examples": [
-            "ctrl+.,super+shift+z"
-          ]
+          "examples": ["ctrl+.,super+shift+z"]
         },
         "input_word_forward": {
           "description": "Move word forward in input\n\ndefault: `alt+f,alt+right,ctrl+right`",
           "default": "alt+f,alt+right,ctrl+right",
           "type": "string",
-          "examples": [
-            "alt+f,alt+right,ctrl+right"
-          ]
+          "examples": ["alt+f,alt+right,ctrl+right"]
         },
         "input_word_backward": {
           "description": "Move word backward in input\n\ndefault: `alt+b,alt+left,ctrl+left`",
           "default": "alt+b,alt+left,ctrl+left",
           "type": "string",
-          "examples": [
-            "alt+b,alt+left,ctrl+left"
-          ]
+          "examples": ["alt+b,alt+left,ctrl+left"]
         },
         "input_select_word_forward": {
           "description": "Select word forward in input\n\ndefault: `alt+shift+f,alt+shift+right`",
           "default": "alt+shift+f,alt+shift+right",
           "type": "string",
-          "examples": [
-            "alt+shift+f,alt+shift+right"
-          ]
+          "examples": ["alt+shift+f,alt+shift+right"]
         },
         "input_select_word_backward": {
           "description": "Select word backward in input\n\ndefault: `alt+shift+b,alt+shift+left`",
           "default": "alt+shift+b,alt+shift+left",
           "type": "string",
-          "examples": [
-            "alt+shift+b,alt+shift+left"
-          ]
+          "examples": ["alt+shift+b,alt+shift+left"]
         },
         "input_delete_word_forward": {
           "description": "Delete word forward in input\n\ndefault: `alt+d,alt+delete,ctrl+delete`",
           "default": "alt+d,alt+delete,ctrl+delete",
           "type": "string",
-          "examples": [
-            "alt+d,alt+delete,ctrl+delete"
-          ]
+          "examples": ["alt+d,alt+delete,ctrl+delete"]
         },
         "input_delete_word_backward": {
           "description": "Delete word backward in input\n\ndefault: `ctrl+w,ctrl+backspace,alt+backspace`",
           "default": "ctrl+w,ctrl+backspace,alt+backspace",
           "type": "string",
-          "examples": [
-            "ctrl+w,ctrl+backspace,alt+backspace"
-          ]
+          "examples": ["ctrl+w,ctrl+backspace,alt+backspace"]
         },
         "history_previous": {
           "description": "Previous history item\n\ndefault: `up`",
           "default": "up",
           "type": "string",
-          "examples": [
-            "up"
-          ]
+          "examples": ["up"]
         },
         "history_next": {
           "description": "Next history item\n\ndefault: `down`",
           "default": "down",
           "type": "string",
-          "examples": [
-            "down"
-          ]
+          "examples": ["down"]
         },
         "session_child_cycle": {
           "description": "Next child session\n\ndefault: `<leader>right`",
           "default": "<leader>right",
           "type": "string",
-          "examples": [
-            "<leader>right"
-          ]
+          "examples": ["<leader>right"]
         },
         "session_child_cycle_reverse": {
           "description": "Previous child session\n\ndefault: `<leader>left`",
           "default": "<leader>left",
           "type": "string",
-          "examples": [
-            "<leader>left"
-          ]
+          "examples": ["<leader>left"]
         },
         "benchmark_next": {
           "description": "Next benchmark session\n\ndefault: `ctrl+shift+right`",
           "default": "ctrl+shift+right",
           "type": "string",
-          "examples": [
-            "ctrl+shift+right"
-          ]
+          "examples": ["ctrl+shift+right"]
         },
         "benchmark_prev": {
           "description": "Previous benchmark session\n\ndefault: `ctrl+shift+left`",
           "default": "ctrl+shift+left",
           "type": "string",
-          "examples": [
-            "ctrl+shift+left"
-          ]
+          "examples": ["ctrl+shift+left"]
         },
         "benchmark_apply": {
           "description": "Apply benchmark session changes\n\ndefault: `ctrl+alt+a`",
           "default": "ctrl+alt+a",
           "type": "string",
-          "examples": [
-            "ctrl+alt+a"
-          ]
+          "examples": ["ctrl+alt+a"]
         },
         "benchmark_undo": {
           "description": "Undo applied benchmark changes\n\ndefault: `ctrl+alt+u`",
           "default": "ctrl+alt+u",
           "type": "string",
-          "examples": [
-            "ctrl+alt+u"
-          ]
+          "examples": ["ctrl+alt+u"]
         },
         "terminal_suspend": {
           "description": "Suspend terminal\n\ndefault: `ctrl+z`",
           "default": "ctrl+z",
           "type": "string",
-          "examples": [
-            "ctrl+z"
-          ]
+          "examples": ["ctrl+z"]
         }
       },
       "additionalProperties": false
@@ -685,24 +523,19 @@
               "type": "boolean"
             }
           },
-          "required": [
-            "enabled"
-          ],
+          "required": ["enabled"],
           "additionalProperties": false
         },
         "diff_style": {
           "description": "Control diff rendering style: 'auto' adapts to terminal width, 'stacked' always shows single column",
           "type": "string",
-          "enum": [
-            "auto",
-            "stacked"
-          ]
+          "enum": ["auto", "stacked"]
         }
       },
       "additionalProperties": false
     },
     "command": {
-      "description": "Command configuration, see https://arcticli.com/docs/commands",
+      "description": "Command configuration, see https://usearctic.sh/docs/commands",
       "type": "object",
       "propertyNames": {
         "type": "string"
@@ -726,9 +559,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "template"
-        ],
+        "required": ["template"],
         "additionalProperties": false
       }
     },
@@ -829,11 +660,7 @@
             },
             "mode": {
               "type": "string",
-              "enum": [
-                "subagent",
-                "primary",
-                "all"
-              ]
+              "enum": ["subagent", "primary", "all"]
             },
             "color": {
               "description": "Hex color code for the agent (e.g., #FF5733)",
@@ -851,21 +678,13 @@
               "properties": {
                 "edit": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "bash": {
                   "anyOf": [
                     {
                       "type": "string",
-                      "enum": [
-                        "ask",
-                        "allow",
-                        "deny"
-                      ]
+                      "enum": ["ask", "allow", "deny"]
                     },
                     {
                       "type": "object",
@@ -874,38 +693,22 @@
                       },
                       "additionalProperties": {
                         "type": "string",
-                        "enum": [
-                          "ask",
-                          "allow",
-                          "deny"
-                        ]
+                        "enum": ["ask", "allow", "deny"]
                       }
                     }
                   ]
                 },
                 "webfetch": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "doom_loop": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "external_directory": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 }
               },
               "additionalProperties": false
@@ -947,11 +750,7 @@
             },
             "mode": {
               "type": "string",
-              "enum": [
-                "subagent",
-                "primary",
-                "all"
-              ]
+              "enum": ["subagent", "primary", "all"]
             },
             "color": {
               "description": "Hex color code for the agent (e.g., #FF5733)",
@@ -969,21 +768,13 @@
               "properties": {
                 "edit": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "bash": {
                   "anyOf": [
                     {
                       "type": "string",
-                      "enum": [
-                        "ask",
-                        "allow",
-                        "deny"
-                      ]
+                      "enum": ["ask", "allow", "deny"]
                     },
                     {
                       "type": "object",
@@ -992,38 +783,22 @@
                       },
                       "additionalProperties": {
                         "type": "string",
-                        "enum": [
-                          "ask",
-                          "allow",
-                          "deny"
-                        ]
+                        "enum": ["ask", "allow", "deny"]
                       }
                     }
                   ]
                 },
                 "webfetch": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "doom_loop": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "external_directory": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 }
               },
               "additionalProperties": false
@@ -1066,11 +841,7 @@
           },
           "mode": {
             "type": "string",
-            "enum": [
-              "subagent",
-              "primary",
-              "all"
-            ]
+            "enum": ["subagent", "primary", "all"]
           },
           "color": {
             "description": "Hex color code for the agent (e.g., #FF5733)",
@@ -1088,21 +859,13 @@
             "properties": {
               "edit": {
                 "type": "string",
-                "enum": [
-                  "ask",
-                  "allow",
-                  "deny"
-                ]
+                "enum": ["ask", "allow", "deny"]
               },
               "bash": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "enum": [
-                      "ask",
-                      "allow",
-                      "deny"
-                    ]
+                    "enum": ["ask", "allow", "deny"]
                   },
                   {
                     "type": "object",
@@ -1111,38 +874,22 @@
                     },
                     "additionalProperties": {
                       "type": "string",
-                      "enum": [
-                        "ask",
-                        "allow",
-                        "deny"
-                      ]
+                      "enum": ["ask", "allow", "deny"]
                     }
                   }
                 ]
               },
               "webfetch": {
                 "type": "string",
-                "enum": [
-                  "ask",
-                  "allow",
-                  "deny"
-                ]
+                "enum": ["ask", "allow", "deny"]
               },
               "doom_loop": {
                 "type": "string",
-                "enum": [
-                  "ask",
-                  "allow",
-                  "deny"
-                ]
+                "enum": ["ask", "allow", "deny"]
               },
               "external_directory": {
                 "type": "string",
-                "enum": [
-                  "ask",
-                  "allow",
-                  "deny"
-                ]
+                "enum": ["ask", "allow", "deny"]
               }
             },
             "additionalProperties": false
@@ -1152,7 +899,7 @@
       }
     },
     "agent": {
-      "description": "Agent configuration, see https://arcticli.com/docs/agent",
+      "description": "Agent configuration, see https://usearctic.sh/docs/agent",
       "type": "object",
       "properties": {
         "plan": {
@@ -1189,11 +936,7 @@
             },
             "mode": {
               "type": "string",
-              "enum": [
-                "subagent",
-                "primary",
-                "all"
-              ]
+              "enum": ["subagent", "primary", "all"]
             },
             "color": {
               "description": "Hex color code for the agent (e.g., #FF5733)",
@@ -1211,21 +954,13 @@
               "properties": {
                 "edit": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "bash": {
                   "anyOf": [
                     {
                       "type": "string",
-                      "enum": [
-                        "ask",
-                        "allow",
-                        "deny"
-                      ]
+                      "enum": ["ask", "allow", "deny"]
                     },
                     {
                       "type": "object",
@@ -1234,38 +969,22 @@
                       },
                       "additionalProperties": {
                         "type": "string",
-                        "enum": [
-                          "ask",
-                          "allow",
-                          "deny"
-                        ]
+                        "enum": ["ask", "allow", "deny"]
                       }
                     }
                   ]
                 },
                 "webfetch": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "doom_loop": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "external_directory": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 }
               },
               "additionalProperties": false
@@ -1307,11 +1026,7 @@
             },
             "mode": {
               "type": "string",
-              "enum": [
-                "subagent",
-                "primary",
-                "all"
-              ]
+              "enum": ["subagent", "primary", "all"]
             },
             "color": {
               "description": "Hex color code for the agent (e.g., #FF5733)",
@@ -1329,21 +1044,13 @@
               "properties": {
                 "edit": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "bash": {
                   "anyOf": [
                     {
                       "type": "string",
-                      "enum": [
-                        "ask",
-                        "allow",
-                        "deny"
-                      ]
+                      "enum": ["ask", "allow", "deny"]
                     },
                     {
                       "type": "object",
@@ -1352,38 +1059,22 @@
                       },
                       "additionalProperties": {
                         "type": "string",
-                        "enum": [
-                          "ask",
-                          "allow",
-                          "deny"
-                        ]
+                        "enum": ["ask", "allow", "deny"]
                       }
                     }
                   ]
                 },
                 "webfetch": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "doom_loop": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "external_directory": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 }
               },
               "additionalProperties": false
@@ -1425,11 +1116,7 @@
             },
             "mode": {
               "type": "string",
-              "enum": [
-                "subagent",
-                "primary",
-                "all"
-              ]
+              "enum": ["subagent", "primary", "all"]
             },
             "color": {
               "description": "Hex color code for the agent (e.g., #FF5733)",
@@ -1447,21 +1134,13 @@
               "properties": {
                 "edit": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "bash": {
                   "anyOf": [
                     {
                       "type": "string",
-                      "enum": [
-                        "ask",
-                        "allow",
-                        "deny"
-                      ]
+                      "enum": ["ask", "allow", "deny"]
                     },
                     {
                       "type": "object",
@@ -1470,38 +1149,22 @@
                       },
                       "additionalProperties": {
                         "type": "string",
-                        "enum": [
-                          "ask",
-                          "allow",
-                          "deny"
-                        ]
+                        "enum": ["ask", "allow", "deny"]
                       }
                     }
                   ]
                 },
                 "webfetch": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "doom_loop": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "external_directory": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 }
               },
               "additionalProperties": false
@@ -1543,11 +1206,7 @@
             },
             "mode": {
               "type": "string",
-              "enum": [
-                "subagent",
-                "primary",
-                "all"
-              ]
+              "enum": ["subagent", "primary", "all"]
             },
             "color": {
               "description": "Hex color code for the agent (e.g., #FF5733)",
@@ -1565,21 +1224,13 @@
               "properties": {
                 "edit": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "bash": {
                   "anyOf": [
                     {
                       "type": "string",
-                      "enum": [
-                        "ask",
-                        "allow",
-                        "deny"
-                      ]
+                      "enum": ["ask", "allow", "deny"]
                     },
                     {
                       "type": "object",
@@ -1588,38 +1239,22 @@
                       },
                       "additionalProperties": {
                         "type": "string",
-                        "enum": [
-                          "ask",
-                          "allow",
-                          "deny"
-                        ]
+                        "enum": ["ask", "allow", "deny"]
                       }
                     }
                   ]
                 },
                 "webfetch": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "doom_loop": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 },
                 "external_directory": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 }
               },
               "additionalProperties": false
@@ -1662,11 +1297,7 @@
           },
           "mode": {
             "type": "string",
-            "enum": [
-              "subagent",
-              "primary",
-              "all"
-            ]
+            "enum": ["subagent", "primary", "all"]
           },
           "color": {
             "description": "Hex color code for the agent (e.g., #FF5733)",
@@ -1684,21 +1315,13 @@
             "properties": {
               "edit": {
                 "type": "string",
-                "enum": [
-                  "ask",
-                  "allow",
-                  "deny"
-                ]
+                "enum": ["ask", "allow", "deny"]
               },
               "bash": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "enum": [
-                      "ask",
-                      "allow",
-                      "deny"
-                    ]
+                    "enum": ["ask", "allow", "deny"]
                   },
                   {
                     "type": "object",
@@ -1707,38 +1330,22 @@
                     },
                     "additionalProperties": {
                       "type": "string",
-                      "enum": [
-                        "ask",
-                        "allow",
-                        "deny"
-                      ]
+                      "enum": ["ask", "allow", "deny"]
                     }
                   }
                 ]
               },
               "webfetch": {
                 "type": "string",
-                "enum": [
-                  "ask",
-                  "allow",
-                  "deny"
-                ]
+                "enum": ["ask", "allow", "deny"]
               },
               "doom_loop": {
                 "type": "string",
-                "enum": [
-                  "ask",
-                  "allow",
-                  "deny"
-                ]
+                "enum": ["ask", "allow", "deny"]
               },
               "external_directory": {
                 "type": "string",
-                "enum": [
-                  "ask",
-                  "allow",
-                  "deny"
-                ]
+                "enum": ["ask", "allow", "deny"]
               }
             },
             "additionalProperties": false
@@ -1818,15 +1425,10 @@
                       "properties": {
                         "field": {
                           "type": "string",
-                          "enum": [
-                            "reasoning_content",
-                            "reasoning_details"
-                          ]
+                          "enum": ["reasoning_content", "reasoning_details"]
                         }
                       },
-                      "required": [
-                        "field"
-                      ],
+                      "required": ["field"],
                       "additionalProperties": false
                     }
                   ]
@@ -1862,17 +1464,11 @@
                           "type": "number"
                         }
                       },
-                      "required": [
-                        "input",
-                        "output"
-                      ],
+                      "required": ["input", "output"],
                       "additionalProperties": false
                     }
                   },
-                  "required": [
-                    "input",
-                    "output"
-                  ],
+                  "required": ["input", "output"],
                   "additionalProperties": false
                 },
                 "limit": {
@@ -1885,10 +1481,7 @@
                       "type": "number"
                     }
                   },
-                  "required": [
-                    "context",
-                    "output"
-                  ],
+                  "required": ["context", "output"],
                   "additionalProperties": false
                 },
                 "modalities": {
@@ -1898,33 +1491,18 @@
                       "type": "array",
                       "items": {
                         "type": "string",
-                        "enum": [
-                          "text",
-                          "audio",
-                          "image",
-                          "video",
-                          "pdf"
-                        ]
+                        "enum": ["text", "audio", "image", "video", "pdf"]
                       }
                     },
                     "output": {
                       "type": "array",
                       "items": {
                         "type": "string",
-                        "enum": [
-                          "text",
-                          "audio",
-                          "image",
-                          "video",
-                          "pdf"
-                        ]
+                        "enum": ["text", "audio", "image", "video", "pdf"]
                       }
                     }
                   },
-                  "required": [
-                    "input",
-                    "output"
-                  ],
+                  "required": ["input", "output"],
                   "additionalProperties": false
                 },
                 "experimental": {
@@ -1932,11 +1510,7 @@
                 },
                 "status": {
                   "type": "string",
-                  "enum": [
-                    "alpha",
-                    "beta",
-                    "deprecated"
-                  ]
+                  "enum": ["alpha", "beta", "deprecated"]
                 },
                 "options": {
                   "type": "object",
@@ -1961,9 +1535,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "npm"
-                  ],
+                  "required": ["npm"],
                   "additionalProperties": false
                 }
               },
@@ -2067,10 +1639,7 @@
                 "maximum": 9007199254740991
               }
             },
-            "required": [
-              "type",
-              "command"
-            ],
+            "required": ["type", "command"],
             "additionalProperties": false
           },
           {
@@ -2135,10 +1704,7 @@
                 "maximum": 9007199254740991
               }
             },
-            "required": [
-              "type",
-              "url"
-            ],
+            "required": ["type", "url"],
             "additionalProperties": false
           }
         ]
@@ -2209,9 +1775,7 @@
                     "const": true
                   }
                 },
-                "required": [
-                  "disabled"
-                ],
+                "required": ["disabled"],
                 "additionalProperties": false
               },
               {
@@ -2249,9 +1813,7 @@
                     "additionalProperties": {}
                   }
                 },
-                "required": [
-                  "command"
-                ],
+                "required": ["command"],
                 "additionalProperties": false
               }
             ]
@@ -2270,10 +1832,7 @@
       "description": "@deprecated Always uses stretch layout.",
       "ref": "LayoutConfig",
       "type": "string",
-      "enum": [
-        "auto",
-        "stretch"
-      ]
+      "enum": ["auto", "stretch"]
     },
     "permission": {
       "description": "Global permission settings",
@@ -2281,21 +1840,13 @@
       "properties": {
         "edit": {
           "type": "string",
-          "enum": [
-            "ask",
-            "allow",
-            "deny"
-          ]
+          "enum": ["ask", "allow", "deny"]
         },
         "bash": {
           "anyOf": [
             {
               "type": "string",
-              "enum": [
-                "ask",
-                "allow",
-                "deny"
-              ]
+              "enum": ["ask", "allow", "deny"]
             },
             {
               "type": "object",
@@ -2304,38 +1855,22 @@
               },
               "additionalProperties": {
                 "type": "string",
-                "enum": [
-                  "ask",
-                  "allow",
-                  "deny"
-                ]
+                "enum": ["ask", "allow", "deny"]
               }
             }
           ]
         },
         "webfetch": {
           "type": "string",
-          "enum": [
-            "ask",
-            "allow",
-            "deny"
-          ]
+          "enum": ["ask", "allow", "deny"]
         },
         "doom_loop": {
           "type": "string",
-          "enum": [
-            "ask",
-            "allow",
-            "deny"
-          ]
+          "enum": ["ask", "allow", "deny"]
         },
         "external_directory": {
           "type": "string",
-          "enum": [
-            "ask",
-            "allow",
-            "deny"
-          ]
+          "enum": ["ask", "allow", "deny"]
         }
       },
       "additionalProperties": false
@@ -2351,21 +1886,13 @@
         "properties": {
           "edit": {
             "type": "string",
-            "enum": [
-              "ask",
-              "allow",
-              "deny"
-            ]
+            "enum": ["ask", "allow", "deny"]
           },
           "bash": {
             "anyOf": [
               {
                 "type": "string",
-                "enum": [
-                  "ask",
-                  "allow",
-                  "deny"
-                ]
+                "enum": ["ask", "allow", "deny"]
               },
               {
                 "type": "object",
@@ -2374,38 +1901,22 @@
                 },
                 "additionalProperties": {
                   "type": "string",
-                  "enum": [
-                    "ask",
-                    "allow",
-                    "deny"
-                  ]
+                  "enum": ["ask", "allow", "deny"]
                 }
               }
             ]
           },
           "webfetch": {
             "type": "string",
-            "enum": [
-              "ask",
-              "allow",
-              "deny"
-            ]
+            "enum": ["ask", "allow", "deny"]
           },
           "doom_loop": {
             "type": "string",
-            "enum": [
-              "ask",
-              "allow",
-              "deny"
-            ]
+            "enum": ["ask", "allow", "deny"]
           },
           "external_directory": {
             "type": "string",
-            "enum": [
-              "ask",
-              "allow",
-              "deny"
-            ]
+            "enum": ["ask", "allow", "deny"]
           }
         },
         "additionalProperties": false
@@ -2462,9 +1973,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "command"
-                  ],
+                  "required": ["command"],
                   "additionalProperties": false
                 }
               }
@@ -2490,9 +1999,7 @@
                     }
                   }
                 },
-                "required": [
-                  "command"
-                ],
+                "required": ["command"],
                 "additionalProperties": false
               }
             }

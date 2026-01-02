@@ -89,6 +89,7 @@ const context = createContext<{
   showDetails: () => boolean
   userMessageMarkdown: () => boolean
   diffWrapMode: () => "word" | "none"
+  interruptCount: () => number
   sync: ReturnType<typeof useSync>
 }>()
 
@@ -105,6 +106,7 @@ export function Session() {
   const kv = useKV()
   const { theme } = useTheme()
   const promptRef = usePromptRef()
+  const [interruptCount, setInterruptCount] = createSignal(0)
   const session = createMemo(() => sync.session.get(route.sessionID)!)
   const messages = createMemo(() => sync.data.message[route.sessionID] ?? [])
   const permissions = createMemo(() => sync.data.permission[route.sessionID] ?? [])
@@ -949,9 +951,7 @@ export function Session() {
         const finalOsc52 = process.env["TMUX"] ? `\x1bPtmux;\x1b${osc52}\x1b\\` : osc52
         /* @ts-expect-error */
         renderer.writeOut(finalOsc52)
-        Clipboard.copy(text)
-          .then(() => toast.show({ message: "Message copied to clipboard!", variant: "success" }))
-          .catch(() => toast.show({ message: "Failed to copy to clipboard", variant: "error" }))
+        Clipboard.copy(text).catch(() => toast.show({ message: "Failed to copy to clipboard", variant: "error" }))
         dialog.clear()
       },
     },
@@ -990,7 +990,6 @@ export function Session() {
 
           // Copy to clipboard
           await Clipboard.copy(transcript)
-          toast.show({ message: "Session transcript copied to clipboard!", variant: "success" })
         } catch (error) {
           toast.show({ message: "Failed to copy session transcript", variant: "error" })
         }
@@ -1188,6 +1187,7 @@ export function Session() {
         showDetails,
         userMessageMarkdown,
         diffWrapMode,
+        interruptCount,
         sync,
       }}
     >
@@ -1328,6 +1328,7 @@ export function Session() {
                 onSubmit={() => {
                   toBottom()
                 }}
+                onInterrupt={(count) => setInterruptCount(count)}
                 sessionID={route.sessionID}
               />
             </box>
@@ -1454,10 +1455,53 @@ function UserMessage(props: {
   )
 }
 
+function StreamingIndicator(props: { interruptCount: number }) {
+  const { theme } = useTheme()
+  const [tick, setTick] = createSignal(0)
+
+  createEffect(() => {
+    const timer = setInterval(() => {
+      setTick((t) => (t + 1) % 12)
+    }, 100)
+    onCleanup(() => clearInterval(timer))
+  })
+
+  const streamingText = "Streaming..."
+  const getCharColor = (index: number) => {
+    const wavePosition = tick()
+    const distance = Math.abs((index - wavePosition + 12) % 12)
+    if (distance <= 2) {
+      const intensity = 1 - distance / 3
+      return RGBA.fromValues(
+        theme.textMuted.r + (theme.primary.r - theme.textMuted.r) * intensity,
+        theme.textMuted.g + (theme.primary.g - theme.textMuted.g) * intensity,
+        theme.textMuted.b + (theme.primary.b - theme.textMuted.b) * intensity,
+        theme.textMuted.a,
+      )
+    }
+    return theme.textMuted
+  }
+
+  return (
+    <box paddingLeft={2} marginTop={1}>
+      <text>
+        <span style={{ fg: theme.primary }}>●</span>{" "}
+        {streamingText.split("").map((char, i) => (
+          <span style={{ fg: getCharColor(i) }}>{char}</span>
+        ))}{" "}
+        <span style={{ fg: theme.textMuted }}>
+          (press {props.interruptCount > 0 ? "ESC again" : "ESC x2"} to interrupt)
+        </span>
+      </text>
+    </box>
+  )
+}
+
 function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; last: boolean }) {
   const local = useLocal()
   const { theme } = useTheme()
   const sync = useSync()
+  const ctx = use()
   const messages = createMemo(() => sync.data.message[props.message.sessionID] ?? [])
   const textOrder = createMemo(() => {
     const order = new Map<string, number>()
@@ -1477,6 +1521,26 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
     const user = messages().find((x) => x.role === "user" && x.id === props.message.parentID)
     if (!user || !user.time) return 0
     return props.message.time.completed - user.time.created
+  })
+
+  const isStreaming = createMemo(() => {
+    if (!props.last || props.message.time.completed) return false
+
+    const lastPart = props.parts[props.parts.length - 1]
+    if (!lastPart) return true
+
+    // Hide when actively showing text or reasoning
+    if (lastPart.type === "text" || lastPart.type === "reasoning") {
+      return false
+    }
+
+    // For tools, only show when pending (not yet started)
+    if (lastPart.type === "tool") {
+      const toolPart = lastPart as ToolPart
+      return toolPart.state?.status === "pending"
+    }
+
+    return true
   })
 
   return (
@@ -1516,6 +1580,9 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
         >
           <text fg={theme.textMuted}>{props.message.error?.data.message}</text>
         </box>
+      </Show>
+      <Show when={isStreaming()}>
+        <StreamingIndicator interruptCount={ctx.interruptCount()} />
       </Show>
     </>
   )

@@ -12,7 +12,7 @@ test("agent color parsed from project config", async () => {
       await Bun.write(
         path.join(dir, "arctic.json"),
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           agent: {
             build: { color: "#FFA500" },
           },
@@ -35,7 +35,7 @@ test("Agent.get includes color from config", async () => {
       await Bun.write(
         path.join(dir, "arctic.json"),
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           agent: {
             plan: { color: "#A855F7" },
           },

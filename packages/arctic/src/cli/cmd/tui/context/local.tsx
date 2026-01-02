@@ -59,10 +59,6 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
         current: agents()[0].name,
       })
       const { values } = useTheme()
-      const colors = createMemo(() => {
-        const theme = values()
-        return [theme.secondary, theme.accent, theme.success, theme.warning, theme.primary, theme.error]
-      })
       return {
         list() {
           return agents()
@@ -91,9 +87,7 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
         color(name: string) {
           const agent = agents().find((x) => x.name === name)
           if (agent?.color) return RGBA.fromHex(agent.color)
-          const index = agents().findIndex((x) => x.name === name)
-          if (index === -1) return colors()[0]
-          return colors()[index % colors().length]
+          return values().primary
         },
       }
     })

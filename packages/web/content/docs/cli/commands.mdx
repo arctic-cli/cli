@@ -73,11 +73,26 @@ arctic import <file-or-url>
 
 ### `arctic stats`
 
-Usage and cost summary across sessions:
+Show comprehensive token usage and cost statistics across your sessions.
 
 ```bash
-arctic stats --days 7
+arctic stats
+arctic stats --days 7 --provider openai
 ```
+
+**Options:**
+
+- `--days <number>`: Show stats for the last N days (default: all time)
+- `--tools <number>`: Limit the number of tools shown
+- `--project <string>`: Filter by project ID (empty string for current project)
+- `--provider <string>`: Filter by provider ID
+- `--model <string>`: Filter by model ID (partial match)
+
+**Output includes:**
+- **Overview**: Session count, message count, active days
+- **Cost & Tokens**: Total cost, average cost/day, token usage breakdown (input/output/cache)
+- **Most Used Models**: Usage counts and costs per model
+- **Tool Usage**: Frequency of tool calls
 
 ### `arctic mcp`
 

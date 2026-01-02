@@ -1,5 +1,5 @@
 # Arctic PowerShell Installer for Windows
-# Usage: irm https://arcticli.com/install.ps1 | iex
+# Usage: irm https://usearctic.sh/install.ps1 | iex
 
 $ErrorActionPreference = 'Stop'
 
@@ -183,7 +183,7 @@ Write-Host ""
 Write-Host "  cd <project>  ${MUTED}# Open your project${NC}"
 Write-Host "  arctic        ${MUTED}# Launch Arctic${NC}"
 Write-Host ""
-Write-Host "  ${MUTED}Docs: ${NC}https://arcticli.com/docs"
+Write-Host "  ${MUTED}Docs: ${NC}https://usearctic.sh/docs"
 Write-Host ""
 Write-Host "${ORANGE}⚠ Important: Restart your terminal for PATH changes to take effect${NC}"
 Write-Host ""

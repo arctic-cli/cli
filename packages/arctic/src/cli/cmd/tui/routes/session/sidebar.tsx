@@ -63,14 +63,6 @@ export function Sidebar(props: { sessionID: string; onHide?: () => void }) {
 
   const [sessionCost, setSessionCost] = createSignal<number | undefined>(undefined)
 
-  const resolvePricingOptions = (providerID: string | undefined) => {
-    if (!providerID) return undefined
-    if (providerID === "openrouter" || providerID === "@openrouter/ai-sdk-provider") {
-      return { provider: providerID }
-    }
-    return undefined
-  }
-
   createEffect(() => {
     const msgs = messages()
     let cancelled = false
@@ -82,16 +74,12 @@ export function Sidebar(props: { sessionID: string; onHide?: () => void }) {
     for (const msg of msgs) {
       if (msg.role === "assistant" && msg.tokens.output > 0) {
         const assistantMsg = msg as AssistantMessage
-        const costBreakdown = Pricing.calculateCost(
-          assistantMsg.modelID,
-          {
-            input: assistantMsg.tokens.input,
-            output: assistantMsg.tokens.output,
-            cacheCreation: assistantMsg.tokens.cache.write,
-            cacheRead: assistantMsg.tokens.cache.read,
-          },
-          resolvePricingOptions(assistantMsg.providerID),
-        )
+        const costBreakdown = Pricing.calculateCost(assistantMsg.modelID, {
+          input: assistantMsg.tokens.input,
+          output: assistantMsg.tokens.output,
+          cacheCreation: assistantMsg.tokens.cache.write,
+          cacheRead: assistantMsg.tokens.cache.read,
+        })
         if (costBreakdown) {
           syncHasPricing = true
           syncTotal += costBreakdown.totalCost
@@ -110,16 +98,12 @@ export function Sidebar(props: { sessionID: string; onHide?: () => void }) {
         for (const msg of msgs) {
           if (msg.role === "assistant" && msg.tokens.output > 0) {
             const assistantMsg = msg as AssistantMessage
-            const costBreakdown = await Pricing.calculateCostAsync(
-              assistantMsg.modelID,
-              {
-                input: assistantMsg.tokens.input,
-                output: assistantMsg.tokens.output,
-                cacheCreation: assistantMsg.tokens.cache.write,
-                cacheRead: assistantMsg.tokens.cache.read,
-              },
-              resolvePricingOptions(assistantMsg.providerID),
-            )
+            const costBreakdown = await Pricing.calculateCostAsync(assistantMsg.modelID, {
+              input: assistantMsg.tokens.input,
+              output: assistantMsg.tokens.output,
+              cacheCreation: assistantMsg.tokens.cache.write,
+              cacheRead: assistantMsg.tokens.cache.read,
+            })
             if (costBreakdown) {
               hasPricing = true
               total += costBreakdown.totalCost

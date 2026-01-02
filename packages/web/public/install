@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 if [ -z "${BASH_VERSION-}" ]; then
   echo "This installer requires bash."
-  echo "Run: curl -fsSL https://arcticli.com/install | bash"
+  echo "Run: curl -fsSL https://usearctic.sh/install | bash"
   exit 1
 fi
 set -euo pipefail
@@ -452,5 +452,5 @@ echo -e ""
 echo -e "  cd <project>  ${MUTED}# Open your project${NC}"
 echo -e "  arctic        ${MUTED}# Launch Arctic${NC}"
 echo -e ""
-echo -e "  ${MUTED}Docs: ${NC}https://arcticli.com/docs"
+echo -e "  ${MUTED}Docs: ${NC}https://usearctic.sh/docs"
 echo -e ""

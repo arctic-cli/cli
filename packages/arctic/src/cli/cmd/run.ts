@@ -137,9 +137,36 @@ export const RunCommand = cmd({
 
       const events = await sdk.event.subscribe()
       let errorMsg: string | undefined
+      let isWorking = false
+      let workingInterval: number | undefined
+
+      const updateWorkingIndicator = () => {
+        if (workingInterval) {
+          clearInterval(workingInterval as any)
+        }
+        if (!isWorking) {
+          process.stderr.write("\r" + " ".repeat(50))
+          return
+        }
+        const spinner = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+        let i = 0
+        workingInterval = setInterval(() => {
+          process.stderr.write(`\r${UI.Style.TEXT_INFO}${spinner[i % 10]} Working...${UI.Style.TEXT_NORMAL}`)
+          i++
+        }, 100) as any
+      }
 
       const eventProcessor = (async () => {
         for await (const event of events.stream) {
+          if (event.type === "session.status") {
+            const status = event.properties.status
+            const newIsWorking = status.type === "busy" || status.type === "retry"
+            if (newIsWorking !== isWorking) {
+              isWorking = newIsWorking
+              updateWorkingIndicator()
+            }
+          }
+
           if (event.type === "message.part.updated") {
             const part = event.properties.part
             if (part.sessionID !== sessionID) continue
@@ -211,6 +238,11 @@ export const RunCommand = cmd({
           }
         }
       })()
+
+      if (isWorking) {
+        isWorking = false
+        updateWorkingIndicator()
+      }
 
       if (args.command) {
         await sdk.session.command({

@@ -3,6 +3,7 @@
   "pages": [
     "index",
     "getting-started",
+    "tutorials",
     "authentication",
     "providers",
     "tui",
@@ -21,6 +22,7 @@
     "snapshots",
     "plugins",
     "features",
+    "troubleshooting",
     "lore"
   ]
 }

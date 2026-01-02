@@ -10,8 +10,12 @@ Plugins let you extend Arctic with custom hooks (auth, events, tools). This is o
 - Add authentication methods for custom providers
 - Listen to events (sessions, messages, tools)
 - Inject configuration at runtime
+- Add custom tools
+- Modify behavior before/after operations
 
-## Minimal shape
+## Plugin Basics
+
+A plugin is a module that exports a function returning a plugin definition:
 
 ```ts
 import type { Plugin } from "@arctic-cli/plugin";
@@ -19,13 +23,430 @@ import type { Plugin } from "@arctic-cli/plugin";
 export default (async () => {
   return {
     config: async (config) => {
-      // modify config
+      // modify config before loading
+      return config;
     },
     event: async ({ event }) => {
-      // observe events
+      // observe events as they happen
     },
   };
 }) satisfies Plugin;
 ```
 
-If you need plugin examples or a full API reference, ask for it and we can expand this page.
+## Installing Plugins
+
+Plugins are loaded from:
+
+```bash
+# Global plugins
+~/.config/arctic/plugin/
+
+# Project plugins
+<project-root>/.arctic/plugin/
+```
+
+Place your plugin file (e.g., `my-plugin.ts`) in one of these directories.
+
+## Plugin API Reference
+
+### Config Hook
+
+The `config` hook allows you to modify Arctic's configuration before it's loaded.
+
+```ts
+{
+  config: async (config) => {
+    // Add custom providers
+    config.provider = config.provider || {};
+    config.provider.myCustomProvider = {
+      api: "https://api.example.com/v1",
+      npm: "@ai-sdk/openai-compatible",
+      options: {
+        apiKey: "$MY_API_KEY"
+      }
+    };
+
+    // Add default agents
+    config.agent = config.agent || {};
+    config.agent.myAgent = {
+      description: "Custom agent",
+      prompt: "You are a specialized assistant.",
+      tools: { bash: true, read: true, write: true }
+    };
+
+    // Add default commands
+    config.command = config.command || {};
+    config.command.myCommand = {
+      description: "Custom command",
+      prompt: "Do something with {{input}}"
+    };
+
+    return config;
+  }
+}
+```
+
+**Parameters:**
+- `config`: The full Arctic config object
+
+**Returns:** Modified config object
+
+### Event Hook
+
+The `event` hook lets you listen to internal events:
+
+```ts
+{
+  event: async ({ event }) => {
+    const { type, properties } = event;
+
+    switch (type) {
+      case "session.created":
+        console.log("New session:", properties.sessionID);
+        break;
+
+      case "message.created":
+        console.log("New message:", properties.messageID);
+        break;
+
+      case "tool.started":
+        console.log("Tool started:", properties.tool);
+        break;
+
+      case "tool.completed":
+        console.log("Tool completed:", properties.tool);
+        break;
+    }
+  }
+}
+```
+
+**Parameters:**
+- `event`: An object with:
+  - `type`: Event type (string)
+  - `properties`: Event-specific data
+
+**Event Types:**
+
+| Type | Properties | Description |
+|------|-----------|-------------|
+| `session.created` | `sessionID`, `directory`, `title` | New session created |
+| `session.updated` | `sessionID`, `changes` | Session metadata changed |
+| `session.deleted` | `sessionID` | Session deleted |
+| `message.created` | `sessionID`, `messageID`, `role` | New message |
+| `message.updated` | `messageID`, `changes` | Message updated |
+| `tool.started` | `sessionID`, `messageID`, `tool`, `args` | Tool execution started |
+| `tool.completed` | `sessionID`, `messageID`, `tool`, `result` | Tool completed |
+| `tool.failed` | `sessionID`, `messageID`, `tool`, `error` | Tool failed |
+
+### Auth Hook
+
+The `auth` hook allows you to add custom authentication methods:
+
+```ts
+{
+  auth: async ({ providerID }) => {
+    if (providerID === "my-provider") {
+      // Perform custom auth flow
+      const token = await myCustomAuthFlow();
+
+      return {
+        apiKey: token,
+        expiresAt: Date.now() + 3600000 // 1 hour
+      };
+    }
+  }
+}
+```
+
+**Parameters:**
+- `providerID`: The provider being authenticated
+
+**Returns:** Auth result with:
+- `apiKey`: The API token/credential
+- `expiresAt`: Optional expiration timestamp
+
+### Tool Hook
+
+The `tool` hook allows you to add custom tools:
+
+```ts
+{
+  tool: async () => {
+    return {
+      myTool: {
+        description: "Does something custom",
+        parameters: {
+          type: "object",
+          properties: {
+            input: { type: "string", description: "Input text" }
+          },
+          required: ["input"]
+        },
+        execute: async (args, context) => {
+          // Implement tool logic
+          return {
+            output: "Tool result",
+            metadata: {}
+          };
+        }
+      }
+    };
+  }
+}
+```
+
+**Parameters:**
+- `args`: Validated tool parameters
+- `context`: Execution context with:
+  - `sessionID`: Current session
+  - `messageID`: Current message
+  - `agent`: Current agent
+  - `abort`: AbortSignal for cancellation
+
+**Returns:** Tool result with:
+- `output`: String output to show user
+- `metadata`: Structured data (optional)
+- `attachments`: File attachments (optional)
+
+## Complete Example
+
+Here's a complete plugin that:
+1. Adds a custom provider
+2. Logs all tool usage
+3. Adds a custom tool
+
+```ts
+import type { Plugin } from "@arctic-cli/plugin";
+
+export default (async () => {
+  return {
+    // Add custom provider
+    config: async (config) => {
+      config.provider = config.provider || {};
+      config.provider.myProvider = {
+        api: "https://api.example.com/v1",
+        npm: "@ai-sdk/openai-compatible",
+        options: {
+          apiKey: "$MY_PROVIDER_API_KEY"
+        }
+      };
+
+      return config;
+    },
+
+    // Log tool usage
+    event: async ({ event }) => {
+      if (event.type === "tool.completed") {
+        console.log(
+          `[Plugin] Tool ${event.properties.tool} completed:`,
+          JSON.stringify(event.properties.result)
+        );
+      }
+    },
+
+    // Add custom tool
+    tool: async () => {
+      return {
+        timestamp: {
+          description: "Get current timestamp",
+          parameters: {
+            type: "object",
+            properties: {},
+            required: []
+          },
+          execute: async () => {
+            return {
+              output: new Date().toISOString(),
+              metadata: {
+                timestamp: Date.now()
+              }
+            };
+          }
+        }
+      };
+    }
+  };
+}) satisfies Plugin;
+```
+
+## Plugin Best Practices
+
+### Error Handling
+
+Always handle errors gracefully:
+
+```ts
+{
+  event: async ({ event }) => {
+    try {
+      // Event handling logic
+    } catch (error) {
+      console.error("[Plugin] Event handler error:", error);
+      // Don't throw - it won't crash Arctic
+    }
+  }
+}
+```
+
+### Async Operations
+
+Use async/await properly for I/O:
+
+```ts
+{
+  event: async ({ event }) => {
+    if (event.type === "message.created") {
+      // Async operation
+      await logToDatabase(event.properties);
+    }
+  }
+}
+```
+
+### Conditional Logic
+
+Only process what you care about:
+
+```ts
+{
+  event: async ({ event }) => {
+    // Only care about tool events
+    if (!event.type.startsWith("tool.")) return;
+
+    // Only care about bash tool
+    if (event.properties.tool !== "bash") return;
+
+    // Process bash tool events
+  }
+}
+```
+
+### Config Validation
+
+Validate config before using it:
+
+```ts
+{
+  config: async (config) => {
+    if (!config.provider) {
+      console.warn("[Plugin] No providers configured");
+    }
+
+    return config;
+  }
+}
+```
+
+## Debugging Plugins
+
+To debug your plugin:
+
+```bash
+# Enable debug mode
+ARCTIC_DEBUG=1 arctic
+
+# Check if plugin loaded
+arctic debug config
+
+# Look for plugin logs in output
+```
+
+Add console.log statements in your plugin to trace execution:
+
+```ts
+{
+  config: async (config) => {
+    console.log("[Plugin] Config hook called");
+    return config;
+  }
+}
+```
+
+## Common Use Cases
+
+### Custom Analytics
+
+Track usage metrics:
+
+```ts
+{
+  event: async ({ event }) => {
+    if (event.type === "tool.completed") {
+      await sendToAnalytics({
+        tool: event.properties.tool,
+        success: true,
+        timestamp: Date.now()
+      });
+    }
+  }
+}
+```
+
+### External Notifications
+
+Send notifications for important events:
+
+```ts
+{
+  event: async ({ event }) => {
+    if (event.type === "message.created" && event.properties.role === "assistant") {
+      await sendSlackNotification("New AI response received");
+    }
+  }
+}
+```
+
+### Custom Model Routing
+
+Route to different models based on context:
+
+```ts
+{
+  config: async (config) => {
+    // Set different models for different project types
+    const packageJson = JSON.parse(
+      await Bun.file("package.json").text()
+    );
+
+    if (packageJson.dependencies?.react) {
+      config.model = "anthropic/claude-sonnet-4-5";
+    } else {
+      config.model = "openai/gpt-4o";
+    }
+
+    return config;
+  }
+}
+```
+
+### Custom Permissions
+
+Add complex permission logic:
+
+```ts
+{
+  event: async ({ event }) => {
+    if (event.type === "tool.started") {
+      const { tool, args } = event.properties;
+
+      if (tool === "bash" && args.command?.includes("rm")) {
+        console.warn("[Plugin] Dangerous command detected:", args.command);
+      }
+    }
+  }
+}
+```
+
+## Plugin Limitations
+
+- Plugins run in the same process as Arctic, so crashes can affect stability
+- Plugins have full access to Arctic's config and events (use responsibly)
+- Plugin errors are logged but don't stop Arctic from running
+- Tool permissions still apply to custom tools
+
+## Next Steps
+
+- See the [Plugin API](https://github.com/arctic-cli/interface) for TypeScript types
+- Check [GitHub Issues](https://github.com/arctic-cli/interface/issues) for plugin examples
+- Share your plugins with the community!

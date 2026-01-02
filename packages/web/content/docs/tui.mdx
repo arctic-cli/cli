@@ -15,8 +15,7 @@ arctic
 
 - **Input** (bottom): type prompts
 - **Messages** (center): conversation history
-- **Sidebar** (left): session info, navigation
-- **Header** (top): model, agent, session
+- **Sidebar** (right): session info, navigation
 - **Footer** (bottom): status + hints
 
 ## Input
@@ -33,19 +32,76 @@ arctic
 - If there is input text, it clears the input.
 - If pressed twice quickly, it exits the CLI.
 
-## Essential shortcuts
+## Keybindings
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+X Q` | Quit Arctic |
-| `Ctrl+X M` | Model picker |
-| `Ctrl+X A` | Agent picker |
-| `Ctrl+X N` | New session |
-| `Ctrl+X L` | Session list |
-| `Ctrl+P` | Command palette |
-| `Ctrl+X /` | Run slash command |
-| `Ctrl+X B` | Toggle sidebar |
-| `Ctrl+X H` | Toggle code block concealment |
+Arctic uses a leader key system for many shortcuts. The default leader key is `Ctrl+X`. In the table below, this is represented as `Ctrl+X`.
+
+### General
+| Action | Shortcut | Description |
+| :--- | :--- | :--- |
+| **Quit** | `Ctrl+C`, `Ctrl+D`, `Ctrl+X q` | Exit the application |
+| **Command Palette** | `Ctrl+P` | List available commands |
+| **Suspend** | `Ctrl+Z` | Suspend terminal |
+| **Allow All Permissions** | `Alt+Shift+P` | Toggle auto-allow all permissions mode |
+
+### Navigation & View
+| Action | Shortcut | Description |
+| :--- | :--- | :--- |
+| **Toggle Sidebar** | `Ctrl+X b` | Toggle sidebar visibility |
+| **Toggle Scrollbar** | `Ctrl+X v` | Toggle session scrollbar |
+| **Status View** | `Ctrl+X s` | View status |
+| **Themes** | `Ctrl+X t` | List available themes |
+| **Toggle Thinking** | `Ctrl+X i` | Toggle thinking display |
+| **Toggle Conceal** | `Ctrl+X h` | Toggle code block concealment |
+
+### Session Management
+| Action | Shortcut | Description |
+| :--- | :--- | :--- |
+| **New Session** | `Ctrl+X n` | Create a new session |
+| **List Sessions** | `Ctrl+X l` | List all sessions |
+| **Timeline** | `Ctrl+X g` | Show session timeline |
+| **Compact Session** | `Ctrl+X c` | Compact the session context |
+| **Export Session** | `Ctrl+X x` | Export session to editor |
+| **Interrupt** | `Esc` | Interrupt current generation |
+| **Next Child Session** | `Ctrl+X Right` | Cycle to next child session |
+| **Prev Child Session** | `Ctrl+X Left` | Cycle to previous child session |
+
+### Models & Agents
+| Action | Shortcut | Description |
+| :--- | :--- | :--- |
+| **List Models** | `Ctrl+X m` | List available models |
+| **Next Recent Model** | `F2` | Cycle to next recently used model |
+| **Prev Recent Model** | `Shift+F2` | Cycle to previous recently used model |
+| **List Agents** | `Ctrl+X a` | List agents |
+| **Next Agent** | `Tab` | Switch to next agent |
+| **Prev Agent** | `Shift+Tab` | Switch to previous agent |
+
+### Messages & Scrolling
+| Action | Shortcut | Description |
+| :--- | :--- | :--- |
+| **Undo Message** | `Ctrl+X u` | Undo last message/generation |
+| **Redo Message** | `Ctrl+X r` | Redo message |
+| **Copy Message** | `Ctrl+X y` | Copy focused message |
+| **Copy Selection** | `Super+C` / `Ctrl+Shift+C` | Copy selected text |
+| **Page Up** | `PageUp` | Scroll messages up by one page |
+| **Page Down** | `PageDown` | Scroll messages down by one page |
+| **Half Page Up** | `Ctrl+Alt+U` | Scroll messages up by half page |
+| **Half Page Down** | `Ctrl+Alt+D` | Scroll messages down by half page |
+| **First Message** | `Ctrl+G`, `Home` | Navigate to first message |
+| **Last Message** | `Ctrl+Alt+G`, `End` | Navigate to last message |
+
+### Input Editor
+| Action | Shortcut | Description |
+| :--- | :--- | :--- |
+| **Submit** | `Return` | Submit input |
+| **Newline** | `Ctrl+J` | Insert newline |
+| **Clear Input** | `Ctrl+C` | Clear input field |
+| **Paste** | `Ctrl+V` | Paste from clipboard |
+| **Open External Editor** | `Ctrl+X e` | Edit input in external editor |
+| **Move Cursor** | `Arrows` | Standard navigation |
+| **Line Start/End** | `Ctrl+A`, `Ctrl+E` | Move to start/end of line |
+| **Word Move** | `Alt+F`, `Alt+B` | Move forward/backward by word |
+| **History Prev/Next** | `Up`, `Down` | Cycle input history |
 
 ## Sessions
 
@@ -101,9 +157,9 @@ Override keybindings in config:
 ```json
 {
   "keybinds": {
-    "quit": "ctrl+q",
-    "model_picker": "ctrl+m",
-    "new_session": "ctrl+n"
+    "app_exit": "ctrl+q",
+    "model_list": "ctrl+m",
+    "session_new": "ctrl+n"
   }
 }
 ```

@@ -23,7 +23,7 @@ test("loads JSON config file", async () => {
       await Bun.write(
         path.join(dir, "arctic.json"),
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           model: "test/model",
           username: "testuser",
         }),
@@ -47,7 +47,7 @@ test("loads JSONC config file", async () => {
         path.join(dir, "arctic.jsonc"),
         `{
         // This is a comment
-        "$schema": "https://arcticli.com/config.json",
+        "$schema": "https://usearctic.sh/config.json",
         "model": "test/model",
         "username": "testuser"
       }`,
@@ -70,7 +70,7 @@ test("merges multiple config files with correct precedence", async () => {
       await Bun.write(
         path.join(dir, "arctic.jsonc"),
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           model: "base",
           username: "base",
         }),
@@ -78,7 +78,7 @@ test("merges multiple config files with correct precedence", async () => {
       await Bun.write(
         path.join(dir, "arctic.json"),
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           model: "override",
         }),
       )
@@ -104,7 +104,7 @@ test("handles environment variable substitution", async () => {
         await Bun.write(
           path.join(dir, "arctic.json"),
           JSON.stringify({
-            $schema: "https://arcticli.com/config.json",
+            $schema: "https://usearctic.sh/config.json",
             theme: "{env:TEST_VAR}",
           }),
         )
@@ -133,7 +133,7 @@ test("handles file inclusion substitution", async () => {
       await Bun.write(
         path.join(dir, "arctic.json"),
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           theme: "{file:included.txt}",
         }),
       )
@@ -154,7 +154,7 @@ test("validates config schema and throws on invalid fields", async () => {
       await Bun.write(
         path.join(dir, "arctic.json"),
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           invalid_field: "should cause error",
         }),
       )
@@ -189,7 +189,7 @@ test("handles agent configuration", async () => {
       await Bun.write(
         path.join(dir, "arctic.json"),
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           agent: {
             test_agent: {
               model: "test/model",
@@ -220,7 +220,7 @@ test("handles command configuration", async () => {
       await Bun.write(
         path.join(dir, "arctic.json"),
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           command: {
             test_command: {
               template: "test template",
@@ -251,7 +251,7 @@ test("migrates mode field to agent field", async () => {
       await Bun.write(
         path.join(dir, "arctic.json"),
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           mode: {
             test_mode: {
               model: "test/model",
@@ -359,7 +359,7 @@ test("resolves scoped npm plugins in config", async () => {
 
       await Bun.write(
         path.join(dir, "arctic.json"),
-        JSON.stringify({ $schema: "https://arcticli.com/config.json", plugin: ["@scope/plugin"] }, null, 2),
+        JSON.stringify({ $schema: "https://usearctic.sh/config.json", plugin: ["@scope/plugin"] }, null, 2),
       )
     },
   })
@@ -394,7 +394,7 @@ test("merges plugin arrays from global and local configs", async () => {
       await Bun.write(
         path.join(dir, "arctic.json"),
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           plugin: ["global-plugin-1", "global-plugin-2"],
         }),
       )
@@ -403,7 +403,7 @@ test("merges plugin arrays from global and local configs", async () => {
       await Bun.write(
         path.join(arcticDir, "arctic.json"),
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           plugin: ["local-plugin-1"],
         }),
       )
@@ -440,7 +440,7 @@ test("deduplicates duplicate plugins from global and local configs", async () =>
       await Bun.write(
         path.join(dir, "arctic.json"),
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           plugin: ["duplicate-plugin", "global-plugin-1"],
         }),
       )
@@ -449,7 +449,7 @@ test("deduplicates duplicate plugins from global and local configs", async () =>
       await Bun.write(
         path.join(arcticDir, "arctic.json"),
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           plugin: ["duplicate-plugin", "local-plugin-1"],
         }),
       )

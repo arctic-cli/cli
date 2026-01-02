@@ -1510,6 +1510,68 @@ export namespace Server {
           return c.json(true)
         },
       )
+      .post(
+        "/session/:sessionID/permissions/allow-all",
+        describeRoute({
+          summary: "Allow all permissions",
+          description: "Approve all pending permission requests for a session.",
+          operationId: "permission.allowAll",
+          responses: {
+            200: {
+              description: "All permissions processed successfully",
+              content: {
+                "application/json": {
+                  schema: resolver(z.boolean()),
+                },
+              },
+            },
+            ...errors(400, 404),
+          },
+        }),
+        validator(
+          "param",
+          z.object({
+            sessionID: z.string(),
+          }),
+        ),
+        async (c) => {
+          const params = c.req.valid("param")
+          const sessionID = params.sessionID
+          Permission.allowAll({ sessionID })
+          return c.json(true)
+        },
+      )
+      .post(
+        "/session/:sessionID/permissions/toggle-allow-all-mode",
+        describeRoute({
+          summary: "Toggle allow-all permissions mode",
+          description: "Enable or disable automatic approval of all permissions for a session.",
+          operationId: "permission.toggleAllowAllMode",
+          responses: {
+            200: {
+              description: "Mode toggled successfully",
+              content: {
+                "application/json": {
+                  schema: resolver(z.object({ enabled: z.boolean() })),
+                },
+              },
+            },
+            ...errors(400, 404),
+          },
+        }),
+        validator(
+          "param",
+          z.object({
+            sessionID: z.string(),
+          }),
+        ),
+        async (c) => {
+          const params = c.req.valid("param")
+          const sessionID = params.sessionID
+          const enabled = Permission.toggleAllowAllMode(sessionID)
+          return c.json({ enabled })
+        },
+      )
       .get(
         "/command",
         describeRoute({

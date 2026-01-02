@@ -49,8 +49,12 @@ import type {
   McpRemoteConfig,
   McpStatusResponses,
   PathGetResponses,
+  PermissionAllowAllErrors,
+  PermissionAllowAllResponses,
   PermissionRespondErrors,
   PermissionRespondResponses,
+  PermissionToggleAllowAllModeErrors,
+  PermissionToggleAllowAllModeResponses,
   ProjectCurrentResponses,
   ProjectListResponses,
   ProjectUpdateErrors,
@@ -141,6 +145,7 @@ import type {
   TuiPublishResponses,
   TuiShowToastResponses,
   TuiSubmitPromptResponses,
+  UsageProviderResponses,
   UsageProvidersResponses,
   VcsGetResponses,
 } from "./types.gen.js"
@@ -1597,52 +1602,6 @@ export class Session extends HeyApiClient {
   }
 
   benchmark = new Benchmark({ client: this.client })
-
-  public benchmarkStart<ThrowOnError extends boolean = false>(
-    parameters: {
-      sessionID: string
-      directory?: string
-      count?: number
-      models?: Array<BenchmarkModel>
-      allowDuplicates?: boolean
-    },
-    options?: Options<never, ThrowOnError>,
-  ) {
-    return this.benchmark.start(parameters, options)
-  }
-
-  public benchmarkStop<ThrowOnError extends boolean = false>(
-    parameters: {
-      sessionID: string
-      directory?: string
-    },
-    options?: Options<never, ThrowOnError>,
-  ) {
-    return this.benchmark.stop(parameters, options)
-  }
-
-  public benchmarkApply<ThrowOnError extends boolean = false>(
-    parameters: {
-      sessionID: string
-      directory?: string
-      targetSessionID?: string
-      allowDirty?: boolean
-    },
-    options?: Options<never, ThrowOnError>,
-  ) {
-    return this.benchmark.apply(parameters, options)
-  }
-
-  public benchmarkUndo<ThrowOnError extends boolean = false>(
-    parameters: {
-      sessionID: string
-      directory?: string
-      allowDirty?: boolean
-    },
-    options?: Options<never, ThrowOnError>,
-  ) {
-    return this.benchmark.undo(parameters, options)
-  }
 }
 
 export class Permission extends HeyApiClient {
@@ -1682,6 +1641,70 @@ export class Permission extends HeyApiClient {
         ...options?.headers,
         ...params.headers,
       },
+    })
+  }
+
+  /**
+   * Allow all permissions
+   *
+   * Approve all pending permission requests for a session.
+   */
+  public allowAll<ThrowOnError extends boolean = false>(
+    parameters: {
+      sessionID: string
+      directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "sessionID" },
+            { in: "query", key: "directory" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<PermissionAllowAllResponses, PermissionAllowAllErrors, ThrowOnError>({
+      url: "/session/{sessionID}/permissions/allow-all",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Toggle allow-all permissions mode
+   *
+   * Enable or disable automatic approval of all permissions for a session.
+   */
+  public toggleAllowAllMode<ThrowOnError extends boolean = false>(
+    parameters: {
+      sessionID: string
+      directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "sessionID" },
+            { in: "query", key: "directory" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<
+      PermissionToggleAllowAllModeResponses,
+      PermissionToggleAllowAllModeErrors,
+      ThrowOnError
+    >({
+      url: "/session/{sessionID}/permissions/toggle-allow-all-mode",
+      ...options,
+      ...params,
     })
   }
 }
@@ -1850,6 +1873,36 @@ export class Usage extends HeyApiClient {
     const params = buildClientParams([parameters], [{ args: [{ in: "query", key: "directory" }] }])
     return (options?.client ?? this.client).get<UsageProvidersResponses, unknown, ThrowOnError>({
       url: "/usage/providers",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Get provider usage (single)
+   *
+   * Fetch usage information for a single configured provider.
+   */
+  public provider<ThrowOnError extends boolean = false>(
+    parameters: {
+      providerID: string
+      directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "providerID" },
+            { in: "query", key: "directory" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<UsageProviderResponses, unknown, ThrowOnError>({
+      url: "/usage/providers/{providerID}",
       ...options,
       ...params,
     })

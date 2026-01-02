@@ -1,17 +1,17 @@
+import type { Hooks } from "@arctic-cli/plugin"
+import * as prompts from "@clack/prompts"
+import os from "os"
+import path from "path"
+import { map, pipe, sortBy, values } from "remeda"
 import { Auth } from "../../auth"
 import { CodexClient } from "../../auth/codex"
-import { cmd } from "./cmd"
-import * as prompts from "@clack/prompts"
-import { UI } from "../ui"
-import { ModelsDev } from "../../provider/models"
-import { map, pipe, sortBy, values } from "remeda"
-import path from "path"
-import os from "os"
 import { Config } from "../../config/config"
 import { Global } from "../../global"
 import { Plugin } from "../../plugin"
 import { Instance } from "../../project/instance"
-import type { Hooks } from "@arctic-cli/plugin"
+import { ModelsDev } from "../../provider/models"
+import { UI } from "../ui"
+import { cmd } from "./cmd"
 
 type PluginAuth = NonNullable<Hooks["auth"]>
 
@@ -477,10 +477,6 @@ export const AuthLoginCommand = cmd({
         if (provider === "ollama") {
           await handleOllamaLogin()
           return
-        }
-
-        if (provider === "arctic") {
-          prompts.log.info("Create an api key at https://arcticli.com/auth")
         }
 
         if (provider === "vercel") {

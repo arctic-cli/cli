@@ -1,5 +1,5 @@
 {
-  "$schema": "https://arcticli.com/theme.json",
+  "$schema": "https://usearctic.sh/theme.json",
   "defs": {
     "nightOwlBg": "#011627",
     "nightOwlFg": "#d6deeb",

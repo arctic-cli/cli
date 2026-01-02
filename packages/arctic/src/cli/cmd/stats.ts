@@ -5,6 +5,7 @@ import { bootstrap } from "../bootstrap"
 import { Storage } from "../../storage/storage"
 import { Project } from "../../project/project"
 import { Instance } from "../../project/instance"
+import { Pricing } from "../../provider/pricing"
 
 interface SessionStats {
   totalSessions: number
@@ -20,6 +21,7 @@ interface SessionStats {
     }
   }
   toolUsage: Record<string, number>
+  modelUsage: Record<string, { count: number; cost: number; tokens: number; providerID?: string; modelID?: string }>
   dateRange: {
     earliest: number
     latest: number
@@ -47,11 +49,24 @@ export const StatsCommand = cmd({
         describe: "filter by project (default: all projects, empty string: current project)",
         type: "string",
       })
+      .option("provider", {
+        describe: "filter by provider ID",
+        type: "string",
+      })
+      .option("model", {
+        describe: "filter by model ID (partial match)",
+        type: "string",
+      })
   },
   handler: async (args) => {
     await bootstrap(process.cwd(), async () => {
-      const stats = await aggregateSessionStats(args.days, args.project)
-      displayStats(stats, args.tools)
+      const stats = await aggregateSessionStats(
+        args.days,
+        args.project,
+        args.provider,
+        args.model as string | undefined,
+      )
+      displayStats(stats, args.tools, args.provider, args.model as string | undefined)
     })
   },
 })
@@ -82,7 +97,12 @@ async function getAllSessions(): Promise<Session.Info[]> {
   return sessions
 }
 
-async function aggregateSessionStats(days?: number, projectFilter?: string): Promise<SessionStats> {
+async function aggregateSessionStats(
+  days?: number,
+  projectFilter?: string,
+  providerFilter?: string,
+  modelFilter?: string,
+): Promise<SessionStats> {
   const sessions = await getAllSessions()
   const DAYS_IN_SECOND = 24 * 60 * 60 * 1000
   const cutoffTime = days ? Date.now() - days * DAYS_IN_SECOND : 0
@@ -112,6 +132,7 @@ async function aggregateSessionStats(days?: number, projectFilter?: string): Pro
       },
     },
     toolUsage: {},
+    modelUsage: {},
     dateRange: {
       earliest: Date.now(),
       latest: Date.now(),
@@ -145,17 +166,61 @@ async function aggregateSessionStats(days?: number, projectFilter?: string): Pro
       let sessionCost = 0
       let sessionTokens = { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } }
       let sessionToolUsage: Record<string, number> = {}
+      let sessionModelUsage: Record<
+        string,
+        { count: number; cost: number; tokens: number; providerID?: string; modelID?: string }
+      > = {}
 
       for (const message of messages) {
         if (message.info.role === "assistant") {
-          sessionCost += message.info.cost || 0
+          const providerID = message.info.providerID
+          const modelID = message.info.modelID
 
-          if (message.info.tokens) {
-            sessionTokens.input += message.info.tokens.input || 0
-            sessionTokens.output += message.info.tokens.output || 0
-            sessionTokens.reasoning += message.info.tokens.reasoning || 0
-            sessionTokens.cache.read += message.info.tokens.cache?.read || 0
-            sessionTokens.cache.write += message.info.tokens.cache?.write || 0
+          // Apply filters
+          if (providerFilter && providerID !== providerFilter) continue
+          if (modelFilter && modelID && !modelID.includes(modelFilter)) continue
+
+          const tokens = message.info.tokens
+
+          // Calculate cost using Pricing module
+          let messageCost = message.info.cost || 0
+          if (tokens && modelID) {
+            const costBreakdown = await Pricing.calculateCostAsync(modelID, {
+              input: tokens.input || 0,
+              output: tokens.output || 0,
+              cacheCreation: tokens.cache?.write || 0,
+              cacheRead: tokens.cache?.read || 0,
+            })
+
+            if (costBreakdown) {
+              messageCost = costBreakdown.totalCost
+            }
+          }
+
+          sessionCost += messageCost
+
+          if (tokens) {
+            sessionTokens.input += tokens.input || 0
+            sessionTokens.output += tokens.output || 0
+            sessionTokens.reasoning += tokens.reasoning || 0
+            sessionTokens.cache.read += tokens.cache?.read || 0
+            sessionTokens.cache.write += tokens.cache?.write || 0
+          }
+
+          // Track model usage
+          if (modelID) {
+            const modelKey = `${providerID}/${modelID}`
+            if (!sessionModelUsage[modelKey]) {
+              sessionModelUsage[modelKey] = { count: 0, cost: 0, tokens: 0, providerID, modelID }
+            }
+            sessionModelUsage[modelKey].count++
+            sessionModelUsage[modelKey].cost += messageCost
+            sessionModelUsage[modelKey].tokens +=
+              (tokens?.input || 0) +
+              (tokens?.output || 0) +
+              (tokens?.reasoning || 0) +
+              (tokens?.cache?.read || 0) +
+              (tokens?.cache?.write || 0)
           }
         }
 
@@ -172,6 +237,7 @@ async function aggregateSessionStats(days?: number, projectFilter?: string): Pro
         sessionTokens,
         sessionTotalTokens: sessionTokens.input + sessionTokens.output + sessionTokens.reasoning,
         sessionToolUsage,
+        sessionModelUsage,
         earliestTime: session.time.created,
         latestTime: session.time.updated,
       }
@@ -194,6 +260,21 @@ async function aggregateSessionStats(days?: number, projectFilter?: string): Pro
 
       for (const [tool, count] of Object.entries(result.sessionToolUsage)) {
         stats.toolUsage[tool] = (stats.toolUsage[tool] || 0) + count
+      }
+
+      for (const [model, usage] of Object.entries(result.sessionModelUsage)) {
+        if (!stats.modelUsage[model]) {
+          stats.modelUsage[model] = {
+            count: 0,
+            cost: 0,
+            tokens: 0,
+            providerID: usage.providerID,
+            modelID: usage.modelID,
+          }
+        }
+        stats.modelUsage[model].count += usage.count
+        stats.modelUsage[model].cost += usage.cost
+        stats.modelUsage[model].tokens += usage.tokens
       }
     }
   }
@@ -219,7 +300,7 @@ async function aggregateSessionStats(days?: number, projectFilter?: string): Pro
   return stats
 }
 
-export function displayStats(stats: SessionStats, toolLimit?: number) {
+export function displayStats(stats: SessionStats, toolLimit?: number, providerFilter?: string, modelFilter?: string) {
   const width = 56
 
   function renderRow(label: string, value: string): string {
@@ -236,6 +317,12 @@ export function displayStats(stats: SessionStats, toolLimit?: number) {
   console.log(renderRow("Sessions", stats.totalSessions.toLocaleString()))
   console.log(renderRow("Messages", stats.totalMessages.toLocaleString()))
   console.log(renderRow("Days", stats.days.toString()))
+  if (providerFilter) {
+    console.log(renderRow("Provider Filter", providerFilter))
+  }
+  if (modelFilter) {
+    console.log(renderRow("Model Filter", modelFilter))
+  }
   console.log("└────────────────────────────────────────────────────────┘")
   console.log()
 
@@ -257,6 +344,29 @@ export function displayStats(stats: SessionStats, toolLimit?: number) {
   console.log(renderRow("Cache Write", formatNumber(stats.totalTokens.cache.write)))
   console.log("└────────────────────────────────────────────────────────┘")
   console.log()
+
+  // Most Used Models section
+  if (Object.keys(stats.modelUsage).length > 0) {
+    const sortedModels = Object.entries(stats.modelUsage).sort(([, a], [, b]) => b.count - a.count)
+    const topModels = sortedModels.slice(0, 5)
+
+    console.log("┌────────────────────────────────────────────────────────┐")
+    console.log("│                   MOST USED MODELS                     │")
+    console.log("├────────────────────────────────────────────────────────┤")
+
+    for (const [model, usage] of topModels) {
+      const maxModelLength = 45
+      const truncatedModel = model.length > maxModelLength ? model.substring(0, maxModelLength - 2) + ".." : model
+      console.log(renderRow(truncatedModel, `${usage.count}×`))
+      console.log(renderRow("  Cost", `$${usage.cost.toFixed(2)}`))
+      console.log(renderRow("  Tokens", formatNumber(usage.tokens)))
+      if (topModels.indexOf([model, usage]) < topModels.length - 1) {
+        console.log("├────────────────────────────────────────────────────────┤")
+      }
+    }
+    console.log("└────────────────────────────────────────────────────────┘")
+    console.log()
+  }
 
   // Tool Usage section
   if (Object.keys(stats.toolUsage).length > 0) {

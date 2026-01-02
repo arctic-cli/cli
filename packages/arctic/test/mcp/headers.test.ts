@@ -53,7 +53,7 @@ test("headers are passed to transports when oauth is enabled (default)", async (
       await Bun.write(
         `${dir}/arctic.json`,
         JSON.stringify({
-          $schema: "https://arcticli.com/config.json",
+          $schema: "https://usearctic.sh/config.json",
           mcp: {
             "test-server": {
               type: "remote",

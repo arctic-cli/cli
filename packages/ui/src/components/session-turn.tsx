@@ -184,7 +184,7 @@ export function SessionTurn(
                     case "list":
                     case "grep":
                     case "glob":
-                      return "Searching the codebase"
+                      return "Searching for codebase"
                     case "webfetch":
                       return "Searching the web"
                     case "edit":
@@ -204,6 +204,28 @@ export function SessionTurn(
                   return "Gathering thoughts"
                 }
                 return undefined
+              })
+
+              const isIdle = createMemo(() => {
+                if (!working()) return false
+                const last = lastPart()
+
+                // No parts yet - show spinner
+                if (!last) return true
+
+                // Hide spinner when actively showing text or reasoning
+                if (last.type === "text" || last.type === "reasoning") {
+                  return false
+                }
+
+                // For tools, only show spinner when pending (not yet started)
+                if (last.type === "tool") {
+                  const toolPart = last as ToolPart
+                  return toolPart.state?.status === "pending"
+                }
+
+                // For any other case, show spinner
+                return true
               })
 
               function duration() {
@@ -301,7 +323,7 @@ export function SessionTurn(
                       size="small"
                       onClick={() => setStore("stepsExpanded", !store.stepsExpanded)}
                     >
-                      <Show when={working()}>
+                      <Show when={working() && isIdle()}>
                         <Spinner />
                       </Show>
                       <Switch>

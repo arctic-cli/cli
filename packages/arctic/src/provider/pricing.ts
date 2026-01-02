@@ -1,84 +1,59 @@
-import claudePricingData from "./pricings/claude.json"
-import glmPricingData from "./pricings/glm.json"
-import openaiPricingData from "./pricings/openai.json"
-
-type PricingData = {
-  models: Record<string, ModelPricing>
-}
-
-const providerPricing: Record<string, PricingData> = {
-  arctic: glmPricingData as PricingData,
-  claude: claudePricingData as PricingData,
-  anthropic: claudePricingData as PricingData,
-  "@ai-sdk/anthropic": claudePricingData as PricingData,
-  openai: openaiPricingData as PricingData,
-  "@ai-sdk/openai": openaiPricingData as PricingData,
-  openrouter: undefined as any, // Fetched dynamically
-  "@openrouter/ai-sdk-provider": undefined as any, // Alias
-}
-
-// OpenRouter API cache with 24-hour TTL
-type OpenRouterModel = {
+// Models.dev API response types
+type ModelsDevModel = {
   id: string
-  pricing: {
-    prompt: string
-    completion: string
-    request: string
-    image: string
-    web_search: string
-    internal_reasoning: string
-    input_cache_read: string
+  name: string
+  cost?: {
+    input: number
+    output: number
+    cache_read?: number
+    cache_write?: number
   }
+  [key: string]: unknown
 }
 
-type OpenRouterResponse = {
-  data: OpenRouterModel[]
+type ModelsDevProvider = {
+  id: string
+  name: string
+  models: Record<string, ModelsDevModel>
+  [key: string]: unknown
 }
 
-let openRouterCache: { data: OpenRouterModel[]; timestamp: number } | null = null
-const OPENROUTER_CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/models"
+type ModelsDevResponse = Record<string, ModelsDevProvider>
+
+// Cache for models.dev pricing data with 24-hour TTL
+let modelsDevCache: { data: ModelsDevResponse; timestamp: number } | null = null
+const MODELSDEV_CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
+const MODELSDEV_API_URL = "https://models.dev/api.json"
+
+// Fallback pricing for models not in models.dev (prices per million tokens)
+const FALLBACK_PRICING: Record<string, ModelPricing> = {
+  // Antigravity models (use Anthropic pricing since they proxy to Claude)
+  "claude-sonnet-4-5-thinking": { input: 3, output: 15, cacheWrite: 3.75, cacheRead: 0.3 },
+  "claude-opus-4-5-thinking": { input: 5, output: 25, cacheWrite: 6.25, cacheRead: 0.5 },
+  "claude-opus-4-thinking": { input: 15, output: 75, cacheWrite: 18.75, cacheRead: 1.5 },
+  "claude-haiku-4-5-thinking": { input: 1, output: 5, cacheWrite: 1.25, cacheRead: 0.1 },
+}
 
 /**
- * Initialize OpenRouter pricing cache (call early to populate cache for sync access)
+ * Initialize models.dev pricing cache (call early to populate cache for sync access)
  */
-export async function initOpenRouterPricing(): Promise<void> {
-  await fetchOpenRouterModels()
+export async function initModelsDevPricing(): Promise<void> {
+  await fetchModelsDevData()
 }
 
-async function fetchOpenRouterModels(): Promise<OpenRouterModel[]> {
-  if (
-    openRouterCache &&
-    Date.now() - openRouterCache.timestamp < OPENROUTER_CACHE_TTL
-  ) {
-    return openRouterCache.data
+async function fetchModelsDevData(): Promise<ModelsDevResponse> {
+  if (modelsDevCache && Date.now() - modelsDevCache.timestamp < MODELSDEV_CACHE_TTL) {
+    return modelsDevCache.data
   }
 
-  const response = await fetch(OPENROUTER_API_URL)
+  const response = await fetch(MODELSDEV_API_URL)
   if (!response.ok) {
-    throw new Error(`OpenRouter API error: ${response.status}`)
+    throw new Error(`models.dev API error: ${response.status}`)
   }
 
-  const data = (await response.json()) as OpenRouterResponse
-  openRouterCache = { data: data.data, timestamp: Date.now() }
-  return data.data
-}
-
-async function getOpenRouterPricing(modelId: string): Promise<ModelPricing | undefined> {
-  const models = await fetchOpenRouterModels()
-  const model = models.find((m) => m.id === modelId)
-  if (!model) return undefined
-
-  // OpenRouter returns per-token pricing as strings, convert to per-million
-  const promptPrice = parseFloat(model.pricing.prompt) || 0
-  const completionPrice = parseFloat(model.pricing.completion) || 0
-  const cacheReadPrice = parseFloat(model.pricing.input_cache_read) || 0
-
-  return {
-    input: promptPrice * 1_000_000,
-    output: completionPrice * 1_000_000,
-    cacheRead: cacheReadPrice > 0 ? cacheReadPrice * 1_000_000 : undefined,
-  }
+  const data = (await response.json()) as ModelsDevResponse
+  modelsDevCache = { data, timestamp: Date.now() }
+  return data
 }
 
 export type TokenUsage = {
@@ -105,112 +80,139 @@ export type ModelPricing = {
 
 export namespace Pricing {
   /**
-   * Detect provider from model ID
+   * Extract model ID from full model string (strip provider prefix)
    */
-  function detectProvider(modelId: string): string | undefined {
-    const lowerModel = modelId.toLowerCase()
-
-    // OpenRouter models use "provider/model" format
-    if (lowerModel.includes("/")) {
-      return "openrouter"
-    }
-
-    if (lowerModel.startsWith("claude-") || lowerModel.startsWith("anthropic/")) {
-      return "claude"
-    }
-    if (
-      lowerModel.startsWith("gpt-") ||
-      lowerModel.startsWith("o1") ||
-      lowerModel.startsWith("o3") ||
-      lowerModel.startsWith("o4") ||
-      lowerModel.includes("codex")
-    ) {
-      return "openai"
-    }
-    if (lowerModel.startsWith("glm-")) {
-      return "arctic"
-    }
-    return undefined
+  function extractModelId(modelId: string): string {
+    const parts = modelId.split("/")
+    return parts.length > 1 ? parts[1] : parts[0]
   }
 
   /**
-   * Get pricing information for a specific model (sync - local data only)
-   */
-  export function getModelPricing(modelId: string, provider?: string): ModelPricing | undefined {
-    const providerKey = provider || detectProvider(modelId)
-    if (!providerKey) return undefined
-
-    // OpenRouter: use cached data if available
-    if (providerKey === "openrouter" || providerKey === "@openrouter/ai-sdk-provider") {
-      if (!openRouterCache) return undefined
-      const model = openRouterCache.data.find((m) => m.id === modelId)
-      if (!model) return undefined
-      const promptPrice = parseFloat(model.pricing.prompt) || 0
-      const completionPrice = parseFloat(model.pricing.completion) || 0
-      const cacheReadPrice = parseFloat(model.pricing.input_cache_read) || 0
-      return {
-        input: promptPrice * 1_000_000,
-        output: completionPrice * 1_000_000,
-        cacheRead: cacheReadPrice > 0 ? cacheReadPrice * 1_000_000 : undefined,
-      }
-    }
-
-    const pricingData = providerPricing[providerKey]
-    if (!pricingData) return undefined
-
-    const pricing = pricingData.models[modelId]
-    if (!pricing) {
-      // Try to find by partial match
-      const normalizedId = normalizeModelId(modelId)
-      for (const [key, value] of Object.entries(pricingData.models)) {
-        if (normalizeModelId(key) === normalizedId) {
-          return value
-        }
-      }
-      return undefined
-    }
-    return pricing
-  }
-
-  /**
-   * Get pricing information for a specific model (async - supports OpenRouter)
-   */
-  export async function getModelPricingAsync(modelId: string, provider?: string): Promise<ModelPricing | undefined> {
-    const providerKey = provider || detectProvider(modelId)
-    if (!providerKey) return undefined
-
-    // Handle OpenRouter via API
-    if (providerKey === "openrouter" || providerKey === "@openrouter/ai-sdk-provider") {
-      return getOpenRouterPricing(modelId)
-    }
-
-    // For other providers, use sync lookup
-    return getModelPricing(modelId, provider)
-  }
-
-  /**
-   * Normalize model ID for matching
+   * Normalize model ID for matching (handle version number formats)
    */
   function normalizeModelId(modelId: string): string {
-    return (
-      modelId
-        .toLowerCase()
-        .replace(/-\d{8}$/, "") // Remove date suffix
-        .replace(/[._]/g, "-")
-    ) // Normalize separators
+    return modelId.replace(/\./g, "-") // Convert 4.5 to 4-5
+  }
+
+  /**
+   * Get pricing information for a specific model (sync - cached data only)
+   */
+  export function getModelPricing(modelId: string): ModelPricing | undefined {
+    const modelName = extractModelId(modelId)
+    const normalized = normalizeModelId(modelName)
+
+    // Check fallback first
+    if (FALLBACK_PRICING[modelName]) {
+      return FALLBACK_PRICING[modelName]
+    }
+    if (FALLBACK_PRICING[normalized]) {
+      return FALLBACK_PRICING[normalized]
+    }
+
+    if (!modelsDevCache) return undefined
+
+    // Search all providers for the model, prefer non-zero pricing
+    let zeroCostPricing: ModelPricing | undefined
+
+    for (const provider of Object.values(modelsDevCache.data)) {
+      // Try exact match first
+      let model = provider.models[modelName]
+      // Try normalized match if exact fails
+      if (!model) {
+        for (const [key, value] of Object.entries(provider.models)) {
+          if (normalizeModelId(key) === normalized) {
+            model = value
+            break
+          }
+        }
+      }
+
+      if (model?.cost) {
+        const pricing = {
+          input: model.cost.input,
+          output: model.cost.output,
+          cacheWrite: model.cost.cache_write,
+          cacheRead: model.cost.cache_read,
+        }
+
+        // If we find non-zero pricing, return it immediately
+        if (pricing.input > 0 || pricing.output > 0) {
+          return pricing
+        }
+
+        // Store zero-cost pricing as fallback
+        if (!zeroCostPricing) {
+          zeroCostPricing = pricing
+        }
+      }
+    }
+
+    // Return zero-cost pricing if that's all we found
+    return zeroCostPricing
+  }
+
+  /**
+   * Get pricing information for a specific model (async - fetches if needed)
+   */
+  export async function getModelPricingAsync(modelId: string): Promise<ModelPricing | undefined> {
+    const modelName = extractModelId(modelId)
+    const normalized = normalizeModelId(modelName)
+
+    // Check fallback first
+    if (FALLBACK_PRICING[modelName]) {
+      return FALLBACK_PRICING[modelName]
+    }
+    if (FALLBACK_PRICING[normalized]) {
+      return FALLBACK_PRICING[normalized]
+    }
+
+    const data = await fetchModelsDevData()
+
+    // Search all providers for the model, prefer non-zero pricing
+    let zeroCostPricing: ModelPricing | undefined
+
+    for (const provider of Object.values(data)) {
+      // Try exact match first
+      let model = provider.models[modelName]
+      // Try normalized match if exact fails
+      if (!model) {
+        for (const [key, value] of Object.entries(provider.models)) {
+          if (normalizeModelId(key) === normalized) {
+            model = value
+            break
+          }
+        }
+      }
+
+      if (model?.cost) {
+        const pricing = {
+          input: model.cost.input,
+          output: model.cost.output,
+          cacheWrite: model.cost.cache_write,
+          cacheRead: model.cost.cache_read,
+        }
+
+        // If we find non-zero pricing, return it immediately
+        if (pricing.input > 0 || pricing.output > 0) {
+          return pricing
+        }
+
+        // Store zero-cost pricing as fallback
+        if (!zeroCostPricing) {
+          zeroCostPricing = pricing
+        }
+      }
+    }
+
+    // Return zero-cost pricing if that's all we found
+    return zeroCostPricing
   }
 
   /**
    * Calculate cost for token usage
    */
-  export function calculateCost(
-    modelId: string,
-    usage: TokenUsage,
-    options?: {
-      provider?: string
-    },
-  ): CostBreakdown | undefined {
-    const pricing = getModelPricing(modelId, options?.provider)
+  export function calculateCost(modelId: string, usage: TokenUsage): CostBreakdown | undefined {
+    const pricing = getModelPricing(modelId)
     if (!pricing) {
       return undefined
     }
@@ -240,16 +242,10 @@ export namespace Pricing {
   }
 
   /**
-   * Calculate cost for token usage (async - supports OpenRouter)
+   * Calculate cost for token usage (async - fetches pricing if needed)
    */
-  export async function calculateCostAsync(
-    modelId: string,
-    usage: TokenUsage,
-    options?: {
-      provider?: string
-    },
-  ): Promise<CostBreakdown | undefined> {
-    const pricing = await getModelPricingAsync(modelId, options?.provider)
+  export async function calculateCostAsync(modelId: string, usage: TokenUsage): Promise<CostBreakdown | undefined> {
+    const pricing = await getModelPricingAsync(modelId)
     if (!pricing) {
       return undefined
     }
@@ -293,10 +289,16 @@ export namespace Pricing {
    * Get all available models
    */
   export function listModels(): string[] {
+    if (!modelsDevCache) return []
     const models: string[] = []
-    for (const data of Object.values(providerPricing)) {
-      models.push(...Object.keys(data.models))
+    for (const provider of Object.values(modelsDevCache.data)) {
+      models.push(...Object.keys(provider.models))
     }
     return models
   }
 }
+
+// Initialize pricing data on module load
+initModelsDevPricing().catch(() => {
+  // Silently fail - sync methods will return undefined
+})

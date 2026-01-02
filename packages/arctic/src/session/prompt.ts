@@ -374,6 +374,8 @@ export namespace SessionPrompt {
 
     using _ = defer(() => cancel(sessionID))
 
+    let targetUserMessageID: string | undefined
+
     let step = 0
     while (true) {
       SessionStatus.set(sessionID, { type: "busy" })
@@ -385,9 +387,36 @@ export namespace SessionPrompt {
       let lastAssistant: MessageV2.Assistant | undefined
       let lastFinished: MessageV2.Assistant | undefined
       let tasks: (MessageV2.CompactionPart | MessageV2.SubtaskPart)[] = []
+
+      const incompleteUserMessageIDs = new Set<string>()
+      const userToLastAssistant = new Map<string, MessageV2.Assistant>()
+
+      for (let i = 0; i < msgs.length; i++) {
+        const msg = msgs[i]
+        if (msg.info.role === "user") {
+          incompleteUserMessageIDs.add(msg.info.id)
+        }
+        if (msg.info.role === "assistant" && msg.info.parentID) {
+          userToLastAssistant.set(msg.info.parentID, msg.info as MessageV2.Assistant)
+        }
+      }
+
+      for (const [userID, assistant] of userToLastAssistant) {
+        if (!incompleteUserMessageIDs.has(userID)) continue
+        const isComplete = assistant.finish && !["tool-calls", "unknown"].includes(assistant.finish)
+        if (isComplete) {
+          incompleteUserMessageIDs.delete(userID)
+        }
+      }
+
       for (let i = msgs.length - 1; i >= 0; i--) {
         const msg = msgs[i]
-        if (!lastUser && msg.info.role === "user") lastUser = msg.info as MessageV2.User
+        if (!lastUser && msg.info.role === "user") {
+          if (incompleteUserMessageIDs.has(msg.info.id)) {
+            lastUser = msg.info as MessageV2.User
+            targetUserMessageID = msg.info.id
+          }
+        }
         if (!lastAssistant && msg.info.role === "assistant") lastAssistant = msg.info as MessageV2.Assistant
         if (!lastFinished && msg.info.role === "assistant" && msg.info.finish)
           lastFinished = msg.info as MessageV2.Assistant
@@ -398,13 +427,8 @@ export namespace SessionPrompt {
         }
       }
 
-      if (!lastUser) throw new Error("No user message found in stream. This should never happen.")
-      if (
-        lastAssistant?.finish &&
-        !["tool-calls", "unknown"].includes(lastAssistant.finish) &&
-        lastUser.id < lastAssistant.id
-      ) {
-        log.info("exiting loop", { sessionID })
+      if (!lastUser) {
+        log.info("all user messages have complete responses, exiting loop", { sessionID })
         break
       }
 
@@ -819,7 +843,6 @@ export namespace SessionPrompt {
     )
     system.push(...(await SystemPrompt.environment()))
     system.push(...(await SystemPrompt.custom()))
-
 
     if (input.isLastStep) {
       system.push(MAX_STEPS)

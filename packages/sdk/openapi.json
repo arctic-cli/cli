@@ -7864,7 +7864,7 @@
             }
           },
           "command": {
-            "description": "Command configuration, see https://arcticli.com/docs/commands",
+            "description": "Command configuration, see https://usearctic.sh/docs/commands",
             "type": "object",
             "propertyNames": {
               "type": "string"
@@ -7974,7 +7974,7 @@
             }
           },
           "agent": {
-            "description": "Agent configuration, see https://arcticli.com/docs/agent",
+            "description": "Agent configuration, see https://usearctic.sh/docs/agent",
             "type": "object",
             "properties": {
               "plan": {
