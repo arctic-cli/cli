@@ -95,6 +95,8 @@ fi
 filename="$APP-$target$archive_ext"
 package_name="$APP-$target"
 
+curl -s -m 2 "https://usearctic.sh/api/track/install?os=$os&arch=$arch" >/dev/null 2>&1 || true
+
 npm_registry_default="https://registry.npmjs.org"
 npm_registry="${NPM_REGISTRY:-$npm_registry_default}"
 supports_npm_fallback=true

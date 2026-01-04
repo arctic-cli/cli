@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@base-ui/react": "1.0.0",
+    "@upstash/ratelimit": "^2.0.3",
+    "@upstash/redis": "^1.34.3",
     "@vercel/analytics": "1.6.1",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",

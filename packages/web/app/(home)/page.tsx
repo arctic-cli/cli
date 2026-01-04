@@ -4,6 +4,7 @@ import { ArrowRight, Github as GithubIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { CopyButton } from "./copy-button"
+import { InstallSelector } from "./install-selector"
 import { Navbar } from "./navbar"
 
 export default function HomePage() {
@@ -28,7 +29,7 @@ export default function HomePage() {
 
             <div className="mt-12 flex flex-col items-center gap-6">
               <div className="w-full max-w-2xl relative z-20">
-                <CopyButton command={installCommandMacLinux} />
+                <InstallSelector />
               </div>
               <div className="flex items-center gap-6 text-sm text-muted-foreground">
                 <Link href="/docs" className="flex items-center gap-2 hover:text-foreground transition-colors">
