@@ -87,6 +87,20 @@ export namespace Pricing {
     return parts.length > 1 ? parts[1] : parts[0]
   }
 
+  function codexBaseModelId(modelId: string): string | null {
+    if (!modelId.includes("codex")) {
+      return null
+    }
+
+    const withoutEffort = modelId.replace(/-codex(-max)?-(low|medium|high|xhigh)$/i, "-codex$1")
+    const stripped = withoutEffort.replace(/-codex(-max)?$/i, "")
+    if (!stripped || stripped === modelId) {
+      return null
+    }
+
+    return stripped
+  }
+
   /**
    * Normalize model ID for matching (handle version number formats)
    */
@@ -100,6 +114,8 @@ export namespace Pricing {
   export function getModelPricing(modelId: string): ModelPricing | undefined {
     const modelName = extractModelId(modelId)
     const normalized = normalizeModelId(modelName)
+    const codexBase = codexBaseModelId(modelName)
+    const normalizedCodexBase = codexBase ? normalizeModelId(codexBase) : null
 
     // Check fallback first
     if (FALLBACK_PRICING[modelName]) {
@@ -107,6 +123,12 @@ export namespace Pricing {
     }
     if (FALLBACK_PRICING[normalized]) {
       return FALLBACK_PRICING[normalized]
+    }
+    if (codexBase && FALLBACK_PRICING[codexBase]) {
+      return FALLBACK_PRICING[codexBase]
+    }
+    if (normalizedCodexBase && FALLBACK_PRICING[normalizedCodexBase]) {
+      return FALLBACK_PRICING[normalizedCodexBase]
     }
 
     if (!modelsDevCache) return undefined
@@ -123,6 +145,17 @@ export namespace Pricing {
           if (normalizeModelId(key) === normalized) {
             model = value
             break
+          }
+        }
+      }
+      if (!model && codexBase) {
+        model = provider.models[codexBase]
+        if (!model) {
+          for (const [key, value] of Object.entries(provider.models)) {
+            if (normalizeModelId(key) === normalizedCodexBase) {
+              model = value
+              break
+            }
           }
         }
       }
@@ -157,6 +190,8 @@ export namespace Pricing {
   export async function getModelPricingAsync(modelId: string): Promise<ModelPricing | undefined> {
     const modelName = extractModelId(modelId)
     const normalized = normalizeModelId(modelName)
+    const codexBase = codexBaseModelId(modelName)
+    const normalizedCodexBase = codexBase ? normalizeModelId(codexBase) : null
 
     // Check fallback first
     if (FALLBACK_PRICING[modelName]) {
@@ -164,6 +199,12 @@ export namespace Pricing {
     }
     if (FALLBACK_PRICING[normalized]) {
       return FALLBACK_PRICING[normalized]
+    }
+    if (codexBase && FALLBACK_PRICING[codexBase]) {
+      return FALLBACK_PRICING[codexBase]
+    }
+    if (normalizedCodexBase && FALLBACK_PRICING[normalizedCodexBase]) {
+      return FALLBACK_PRICING[normalizedCodexBase]
     }
 
     const data = await fetchModelsDevData()
@@ -180,6 +221,17 @@ export namespace Pricing {
           if (normalizeModelId(key) === normalized) {
             model = value
             break
+          }
+        }
+      }
+      if (!model && codexBase) {
+        model = provider.models[codexBase]
+        if (!model) {
+          for (const [key, value] of Object.entries(provider.models)) {
+            if (normalizeModelId(key) === normalizedCodexBase) {
+              model = value
+              break
+            }
           }
         }
       }

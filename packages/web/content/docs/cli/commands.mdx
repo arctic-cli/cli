@@ -77,18 +77,22 @@ Show comprehensive token usage and cost statistics across your sessions.
 
 ```bash
 arctic stats
+arctic stats --days 0
 arctic stats --days 7 --provider openai
+arctic stats --days today
+arctic stats --days yesterday
 ```
 
 **Options:**
 
-- `--days <number>`: Show stats for the last N days (default: all time)
+- `--days <number|today|yesterday>`: Show stats for the last N days, or just today/yesterday (default: all time). Use `0` for today.
 - `--tools <number>`: Limit the number of tools shown
 - `--project <string>`: Filter by project ID (empty string for current project)
 - `--provider <string>`: Filter by provider ID
 - `--model <string>`: Filter by model ID (partial match)
 
 **Output includes:**
+
 - **Overview**: Session count, message count, active days
 - **Cost & Tokens**: Total cost, average cost/day, token usage breakdown (input/output/cache)
 - **Most Used Models**: Usage counts and costs per model

@@ -38,8 +38,8 @@ export const StatsCommand = cmd({
   builder: (yargs: Argv) => {
     return yargs
       .option("days", {
-        describe: "show stats for the last N days (default: all time)",
-        type: "number",
+        describe: "show stats for the last N days, or today/yesterday (default: all time)",
+        type: "string",
       })
       .option("tools", {
         describe: "number of tools to show (default: all)",
@@ -60,16 +60,66 @@ export const StatsCommand = cmd({
   },
   handler: async (args) => {
     await bootstrap(process.cwd(), async () => {
-      const stats = await aggregateSessionStats(
-        args.days,
-        args.project,
-        args.provider,
-        args.model as string | undefined,
-      )
+      const range = resolveDaysRange(args.days)
+      const stats = await aggregateSessionStats(range, args.project, args.provider, args.model as string | undefined)
       displayStats(stats, args.tools, args.provider, args.model as string | undefined)
     })
   },
 })
+
+type DaysRange = { cutoffTime: number; fromTime?: number }
+
+function resolveDaysRange(days?: string): DaysRange {
+  if (!days) {
+    return { cutoffTime: 0 }
+  }
+
+  const normalized = days.trim().toLowerCase()
+
+  if (normalized === "today") {
+    return { cutoffTime: startOfToday() }
+  }
+
+  if (normalized === "yesterday") {
+    const fromTime = startOfYesterday()
+    return { cutoffTime: fromTime, fromTime: startOfToday() }
+  }
+
+  const asNumber = Number(normalized)
+  if (!Number.isFinite(asNumber) || asNumber < 0) {
+    throw new Error("--days must be 0, a positive number, 'today', or 'yesterday'")
+  }
+
+  if (asNumber === 0) {
+    return { cutoffTime: startOfToday() }
+  }
+
+  const DAYS_IN_MILLISECONDS = 24 * 60 * 60 * 1000
+  return { cutoffTime: Date.now() - asNumber * DAYS_IN_MILLISECONDS }
+}
+
+function startOfToday(): number {
+  const now = new Date()
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+}
+
+function startOfYesterday(): number {
+  const todayStart = startOfToday()
+  return todayStart - 24 * 60 * 60 * 1000
+}
+
+function filterSessionsByRange(sessions: Session.Info[], range: DaysRange): Session.Info[] {
+  if (!range.cutoffTime) {
+    return sessions
+  }
+
+  const { cutoffTime, fromTime } = range
+  if (fromTime !== undefined) {
+    return sessions.filter((session) => session.time.updated >= cutoffTime && session.time.updated < fromTime)
+  }
+
+  return sessions.filter((session) => session.time.updated >= cutoffTime)
+}
 
 async function getCurrentProject(): Promise<Project.Info> {
   return Instance.project
@@ -98,16 +148,15 @@ async function getAllSessions(): Promise<Session.Info[]> {
 }
 
 async function aggregateSessionStats(
-  days?: number,
+  range: DaysRange,
   projectFilter?: string,
   providerFilter?: string,
   modelFilter?: string,
 ): Promise<SessionStats> {
   const sessions = await getAllSessions()
   const DAYS_IN_SECOND = 24 * 60 * 60 * 1000
-  const cutoffTime = days ? Date.now() - days * DAYS_IN_SECOND : 0
 
-  let filteredSessions = days ? sessions.filter((session) => session.time.updated >= cutoffTime) : sessions
+  let filteredSessions = filterSessionsByRange(sessions, range)
 
   if (projectFilter !== undefined) {
     if (projectFilter === "") {

@@ -1693,16 +1693,18 @@ export function Prompt(props: PromptProps) {
               </Show>
               <Show when={usageLimits() !== undefined}>
                 <text fg={theme.textMuted}>·</text>
-                <text fg={theme.textMuted}>
-                  {(() => {
-                    const limits = usageLimits()!
-                    if (limits.percent !== undefined) {
-                      const remaining = Math.max(0, 100 - limits.percent)
+                {(() => {
+                  const limits = usageLimits()!
+                  const remaining = limits.percent !== undefined ? Math.max(0, 100 - limits.percent) : undefined
+                  const color = remaining !== undefined && remaining <= 15 ? theme.error : theme.textMuted
+                  const label = (() => {
+                    if (remaining !== undefined) {
                       return `${remaining.toFixed(0)}% left${limits.timeLeft ? ` (${limits.timeLeft})` : ""}`
                     }
                     return limits.timeLeft ? `resets in ${limits.timeLeft}` : ""
-                  })()}
-                </text>
+                  })()
+                  return <text fg={color}>{label}</text>
+                })()}
               </Show>
             </box>
           </Show>

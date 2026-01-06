@@ -744,7 +744,7 @@ export namespace Config {
       permission_toggle_allow_all: z
         .string()
         .optional()
-        .default("alt+shift+p")
+        .default("<leader> p")
         .describe("Toggle auto-allow all permissions mode"),
     })
     .strict()

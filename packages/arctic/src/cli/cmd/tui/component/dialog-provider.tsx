@@ -9,6 +9,7 @@ import { useTheme } from "../context/theme"
 import { TextAttributes } from "@opentui/core"
 import type { ProviderAuthAuthorization } from "@arctic-cli/sdk/v2"
 import { DialogModel } from "./dialog-model"
+import { openBrowserUrl } from "@/auth/codex-oauth/auth/browser"
 
 const PROVIDER_PRIORITY: Record<string, number> = {
   arctic: 0,
@@ -137,7 +138,10 @@ function AutoMethod(props: AutoMethodProps) {
         <text fg={theme.textMuted}>esc</text>
       </box>
       <box gap={1}>
-        <text fg={theme.primary}>{props.authorization.url}</text>
+        <text fg={theme.primary} onMouseUp={() => openBrowserUrl(props.authorization.url)}>
+          {props.authorization.url}
+        </text>
+
         <text fg={theme.textMuted}>{props.authorization.instructions}</text>
       </box>
       <text fg={theme.textMuted}>Waiting for authorization...</text>
@@ -179,7 +183,10 @@ function CodeMethod(props: CodeMethodProps) {
       description={() => (
         <box gap={1}>
           <text fg={theme.textMuted}>{props.authorization.instructions}</text>
-          <text fg={theme.primary}>{props.authorization.url}</text>
+          <text fg={theme.primary} onMouseUp={() => openBrowserUrl(props.authorization.url)}>
+            {props.authorization.url}
+          </text>
+
           <Show when={error()}>
             <text fg={theme.error}>Invalid code</text>
           </Show>

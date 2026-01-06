@@ -792,11 +792,11 @@ export function Session() {
       },
     },
     {
-      title: kv.get("copy_button_enabled", true) ? "Hide copy button" : "Show copy button",
+      title: kv.get("copy_button_enabled", false) ? "Hide copy button" : "Show copy button",
       value: "session.toggle.copy_button",
       category: "Session",
       onSelect: (dialog) => {
-        const current = kv.get("copy_button_enabled", true)
+        const current = kv.get("copy_button_enabled", false)
         kv.set("copy_button_enabled", !current)
         dialog.clear()
       },
@@ -1382,27 +1382,24 @@ function UserMessage(props: {
     <>
       <Show when={text()}>
         <box id={props.message.id} marginTop={props.index === 0 ? 0 : 1}>
-          <box onMouseUp={props.onMouseUp} paddingTop={0} paddingBottom={0} paddingLeft={1} flexShrink={0}>
-            <box flexDirection="row" flexWrap="wrap">
-              <text fg={theme.primary}>{"> "}</text>
-              <box paddingLeft={0} flexShrink={1} flexGrow={1} backgroundColor={theme.backgroundElement}>
-                <Switch>
-                  <Match when={ctx.userMessageMarkdown()}>
-                    <code
-                      filetype="markdown"
-                      drawUnstyledText={true}
-                      streaming={false}
-                      syntaxStyle={syntax()}
-                      content={text()?.text ?? ""}
-                      conceal={ctx.conceal()}
-                      fg={theme.background}
-                    />
-                  </Match>
-                  <Match when={!ctx.userMessageMarkdown()}>
-                    <text fg={theme.background}>{text()?.text}</text>
-                  </Match>
-                </Switch>
-              </box>
+          <box onMouseUp={props.onMouseUp} paddingTop={0} paddingBottom={0} paddingLeft={1}>
+            <box paddingLeft={0} backgroundColor={theme.backgroundElement}>
+              <Switch>
+                <Match when={ctx.userMessageMarkdown()}>
+                  <code
+                    filetype="markdown"
+                    drawUnstyledText={true}
+                    streaming={false}
+                    syntaxStyle={syntax()}
+                    content={formatUserText(text()?.text ?? "")}
+                    conceal={ctx.conceal()}
+                    fg={theme.background}
+                  />
+                </Match>
+                <Match when={!ctx.userMessageMarkdown()}>
+                  <text fg={theme.background}>{formatUserText(text()?.text ?? "")}</text>
+                </Match>
+              </Switch>
             </box>
             <Show when={files().length}>
               <box flexDirection="row" paddingBottom={1} paddingTop={1} gap={1} flexWrap="wrap">
@@ -1459,6 +1456,18 @@ function StreamingIndicator(props: { interruptCount: number }) {
   const { theme } = useTheme()
   const [tick, setTick] = createSignal(0)
 
+  const streamingTexts = [
+    "Streaming...",
+    "Processing...",
+    "Generating...",
+    "Thinking...",
+    "Computing...",
+    "Working...",
+    "Analyzing...",
+  ]
+
+  const [streamingText] = createSignal(streamingTexts[Math.floor(Math.random() * streamingTexts.length)])
+
   createEffect(() => {
     const timer = setInterval(() => {
       setTick((t) => (t + 1) % 12)
@@ -1466,7 +1475,6 @@ function StreamingIndicator(props: { interruptCount: number }) {
     onCleanup(() => clearInterval(timer))
   })
 
-  const streamingText = "Streaming..."
   const getCharColor = (index: number) => {
     const wavePosition = tick()
     const distance = Math.abs((index - wavePosition + 12) % 12)
@@ -1486,9 +1494,11 @@ function StreamingIndicator(props: { interruptCount: number }) {
     <box paddingLeft={2} marginTop={1}>
       <text>
         <span style={{ fg: theme.primary }}>●</span>{" "}
-        {streamingText.split("").map((char, i) => (
-          <span style={{ fg: getCharColor(i) }}>{char}</span>
-        ))}{" "}
+        {streamingText()
+          .split("")
+          .map((char, i) => (
+            <span style={{ fg: getCharColor(i) }}>{char}</span>
+          ))}{" "}
         <span style={{ fg: theme.textMuted }}>
           (press {props.interruptCount > 0 ? "ESC again" : "ESC x2"} to interrupt)
         </span>
@@ -1568,19 +1578,9 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
         </box>
       </Show>
       <Show when={props.message.error}>
-        <box
-          border={["left"]}
-          paddingTop={1}
-          paddingBottom={1}
-          paddingLeft={2}
-          marginTop={1}
-          backgroundColor={theme.backgroundPanel}
-          customBorderChars={SplitBorder.customBorderChars}
-          borderColor={theme.error}
-        >
-          <text fg={theme.textMuted}>{props.message.error?.data.message}</text>
-        </box>
+        <text fg={theme.error}>{props.message.error?.data.message}</text>
       </Show>
+
       <Show when={isStreaming()}>
         <StreamingIndicator interruptCount={ctx.interruptCount()} />
       </Show>
@@ -1682,7 +1682,7 @@ function TextPart(props: { last: boolean; part: TextPart; message: AssistantMess
   const { theme, syntax } = useTheme()
   return (
     <Show when={props.part.text.trim()}>
-      <box id={"text-" + props.part.id} paddingLeft={0} marginTop={props.textIndex === 0 ? 1 : 0} flexShrink={0}>
+      <box id={"text-" + props.part.id} paddingLeft={0} marginTop={props.textIndex === 0 ? 1 : 0}>
         <code
           filetype="markdown"
           drawUnstyledText={false}

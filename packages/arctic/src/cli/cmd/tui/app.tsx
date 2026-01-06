@@ -202,7 +202,7 @@ function App() {
   const keybind = useKeybind()
 
   const [showCopyButton, setShowCopyButton] = createSignal(false)
-  const copyButtonEnabled = () => kv.get("copy_button_enabled", true)
+  const copyButtonEnabled = () => kv.get("copy_button_enabled", false)
   const [copyButtonPos, setCopyButtonPos] = createSignal({ x: 0, y: 0 })
   let lastSelectionText = ""
   let lastMousePos = { x: 0, y: 0 }

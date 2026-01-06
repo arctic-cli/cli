@@ -218,8 +218,10 @@ export function Sidebar(props: { sessionID: string; onHide?: () => void }) {
 
     // Only react to changes in the last completed message time
     const lastCompletedTime = lastCompletedMessageTime()
-
     const meta = usageMeta()
+
+    if (!sdk.url) return
+    if (!lastCompletedTime && !meta) return
     const isSameProvider = meta?.providerID === provider
 
     // Refresh if:
@@ -561,12 +563,13 @@ export function Sidebar(props: { sessionID: string; onHide?: () => void }) {
                 <Show when={!usageLoading()} fallback={<text fg={theme.textMuted}>Loading...</text>}>
                   <Show
                     when={usageData() && !usageData()?.error}
-                    fallback={<text fg={theme.error}>{usageData()?.error ?? "Failed to load"}</text>}
+                    fallback={<text fg={theme.textMuted}>{usageData()?.error ?? "Waiting for usage…"}</text>}
                   >
                     <box gap={0}>
                       <Show when={usageData()?.planType}>
                         <text fg={theme.textMuted}>{usageData()!.planType}</text>
                       </Show>
+
                       <Show when={usageData()?.limits?.primary}>
                         <text fg={theme.textMuted}>
                           {currentProvider() === "codex" ? "5h cycle" : "Primary"}:{" "}
