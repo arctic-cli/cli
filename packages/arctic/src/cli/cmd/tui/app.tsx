@@ -42,10 +42,12 @@ import {
 import { PromptHistoryProvider } from "./component/prompt/history"
 import { ArgsProvider, useArgs, type Args } from "./context/args"
 import { ExitProvider, useExit } from "./context/exit"
+import { ExitConfirmationProvider } from "./context/exit-confirmation"
 import { KVProvider, useKV } from "./context/kv"
 import { PromptRefProvider, usePromptRef } from "./context/prompt"
 import { TuiEvent } from "./event"
 import { DialogAlert } from "./ui/dialog-alert"
+import { DialogConfirm } from "./ui/dialog-confirm"
 import { DialogHelp } from "./ui/dialog-help"
 import { ToastProvider, useToast } from "./ui/toast"
 
@@ -193,7 +195,7 @@ function App() {
   const local = useLocal()
   const kv = useKV()
   const command = useCommandDialog()
-  const { event } = useSDK()
+  const { event, client: sdk } = useSDK()
   const toast = useToast()
   const { theme, mode, setMode } = useTheme()
   const sync = useSync()
@@ -204,6 +206,7 @@ function App() {
   const [showCopyButton, setShowCopyButton] = createSignal(false)
   const copyButtonEnabled = () => kv.get("copy_button_enabled", false)
   const [copyButtonPos, setCopyButtonPos] = createSignal({ x: 0, y: 0 })
+  const [exitConfirmation, setExitConfirmation] = createSignal(false)
   let lastSelectionText = ""
   let lastMousePos = { x: 0, y: 0 }
   let lastCtrlCPress = 0
@@ -308,18 +311,22 @@ function App() {
         Clipboard.copy(lastSelectionText).catch(() => {
           toast.show({ message: "Failed to copy selection", variant: "error", duration: 3000 })
         })
-        // Reset the double-press timer when copying selected text
+        // reset the double-press timer when copying selected text
         lastCtrlCPress = 0
+        setExitConfirmation(false)
       } else if (isCtrlC || isCopy) {
-        // If nothing selected and it was a Ctrl+C (or equivalent exit bind), track for double-press exit
+        // if nothing selected and it was a Ctrl+C (or equivalent exit bind), track for double-press exit
         const now = Date.now()
         if (now - lastCtrlCPress < 500) {
-          // Second Ctrl+C within 500ms - exit
+          setExitConfirmation(false)
           exit()
           return
         }
-        // First Ctrl+C - just record the time, don't exit
         lastCtrlCPress = now
+        setExitConfirmation(true)
+        setTimeout(() => {
+          setExitConfirmation(false)
+        }, 3000)
       }
     }
   })
@@ -583,6 +590,29 @@ function App() {
         process.kill(0, "SIGTSTP")
       },
     },
+    {
+      title: "Toggle permission bypass",
+      value: "permission.bypass.toggle",
+      keybind: "permission_bypass",
+      category: "System",
+      onSelect: async () => {
+        const current = sync.data.permission_bypass_enabled
+        if (!current) {
+          const confirmed = await DialogConfirm.show(
+            dialog,
+            "Enable Permission Bypass",
+            "This will allow AI to execute any command without asking for permission. Are you sure?",
+          )
+          if (!confirmed) return
+        }
+        const next = !current
+        await sdk.permission.bypass.set({ enabled: next })
+        toast.show({
+          variant: next ? "warning" : "info",
+          message: next ? "Permission bypass enabled" : "Permission bypass disabled",
+        })
+      },
+    },
   ])
 
   createEffect(() => {
@@ -688,14 +718,16 @@ function App() {
         lastMousePos = { x: evt.x, y: evt.y }
       }}
     >
-      <Switch>
-        <Match when={route.data.type === "home"}>
-          <Home />
-        </Match>
-        <Match when={route.data.type === "session"}>
-          <Session />
-        </Match>
-      </Switch>
+      <ExitConfirmationProvider exitConfirmation={exitConfirmation}>
+        <Switch>
+          <Match when={route.data.type === "home"}>
+            <Home />
+          </Match>
+          <Match when={route.data.type === "session"}>
+            <Session />
+          </Match>
+        </Switch>
+      </ExitConfirmationProvider>
 
       <Show when={showCopyButton() && copyButtonEnabled()}>
         <box

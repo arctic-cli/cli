@@ -49,12 +49,10 @@ import type {
   McpRemoteConfig,
   McpStatusResponses,
   PathGetResponses,
-  PermissionAllowAllErrors,
-  PermissionAllowAllResponses,
+  PermissionBypassGetResponses,
+  PermissionBypassSetResponses,
   PermissionRespondErrors,
   PermissionRespondResponses,
-  PermissionToggleAllowAllModeErrors,
-  PermissionToggleAllowAllModeResponses,
   ProjectCurrentResponses,
   ProjectListResponses,
   ProjectUpdateErrors,
@@ -1604,6 +1602,62 @@ export class Session extends HeyApiClient {
   benchmark = new Benchmark({ client: this.client })
 }
 
+export class Bypass extends HeyApiClient {
+  /**
+   * Get permission bypass status
+   *
+   * Check if permission bypass mode is enabled.
+   */
+  public get<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams([parameters], [{ args: [{ in: "query", key: "directory" }] }])
+    return (options?.client ?? this.client).get<PermissionBypassGetResponses, unknown, ThrowOnError>({
+      url: "/permission/bypass",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Set permission bypass status
+   *
+   * Enable or disable permission bypass mode. When enabled, all permissions (except doom_loop) are automatically approved.
+   */
+  public set<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      enabled?: boolean
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "body", key: "enabled" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<PermissionBypassSetResponses, unknown, ThrowOnError>({
+      url: "/permission/bypass",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+}
+
 export class Permission extends HeyApiClient {
   /**
    * Respond to permission
@@ -1644,69 +1698,7 @@ export class Permission extends HeyApiClient {
     })
   }
 
-  /**
-   * Allow all permissions
-   *
-   * Approve all pending permission requests for a session.
-   */
-  public allowAll<ThrowOnError extends boolean = false>(
-    parameters: {
-      sessionID: string
-      directory?: string
-    },
-    options?: Options<never, ThrowOnError>,
-  ) {
-    const params = buildClientParams(
-      [parameters],
-      [
-        {
-          args: [
-            { in: "path", key: "sessionID" },
-            { in: "query", key: "directory" },
-          ],
-        },
-      ],
-    )
-    return (options?.client ?? this.client).post<PermissionAllowAllResponses, PermissionAllowAllErrors, ThrowOnError>({
-      url: "/session/{sessionID}/permissions/allow-all",
-      ...options,
-      ...params,
-    })
-  }
-
-  /**
-   * Toggle allow-all permissions mode
-   *
-   * Enable or disable automatic approval of all permissions for a session.
-   */
-  public toggleAllowAllMode<ThrowOnError extends boolean = false>(
-    parameters: {
-      sessionID: string
-      directory?: string
-    },
-    options?: Options<never, ThrowOnError>,
-  ) {
-    const params = buildClientParams(
-      [parameters],
-      [
-        {
-          args: [
-            { in: "path", key: "sessionID" },
-            { in: "query", key: "directory" },
-          ],
-        },
-      ],
-    )
-    return (options?.client ?? this.client).post<
-      PermissionToggleAllowAllModeResponses,
-      PermissionToggleAllowAllModeErrors,
-      ThrowOnError
-    >({
-      url: "/session/{sessionID}/permissions/toggle-allow-all-mode",
-      ...options,
-      ...params,
-    })
-  }
+  bypass = new Bypass({ client: this.client })
 }
 
 export class Command extends HeyApiClient {

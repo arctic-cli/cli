@@ -58,8 +58,11 @@ export namespace Keybind {
 
     return key.split(",").map((combo) => {
       // Handle <leader> syntax by replacing with leader+
-      const normalized = combo.replace(/<leader>/g, "leader+")
-      const parts = normalized.toLowerCase().split("+")
+      const normalized = combo.trim().replace(/<leader>/g, "leader+")
+      const parts = normalized
+        .toLowerCase()
+        .split("+")
+        .map((p) => p.trim())
       const info: Info = {
         ctrl: false,
         meta: false,

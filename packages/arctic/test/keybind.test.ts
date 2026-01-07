@@ -267,6 +267,19 @@ describe("Keybind.parse", () => {
     ])
   })
 
+  test("should parse leader with space before key", () => {
+    const result = Keybind.parse("<leader> p")
+    expect(result).toEqual([
+      {
+        ctrl: false,
+        meta: false,
+        shift: false,
+        leader: true,
+        name: "p",
+      },
+    ])
+  })
+
   test("should parse multiple keybinds separated by comma", () => {
     const result = Keybind.parse("ctrl+c,<leader>q")
     expect(result).toEqual([

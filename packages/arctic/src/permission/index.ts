@@ -1,10 +1,11 @@
-import { BusEvent } from "@/bus/bus-event"
 import { Bus } from "@/bus"
+import { BusEvent } from "@/bus/bus-event"
 import z from "zod"
-import { Log } from "../util/log"
+import { Global } from "../global"
 import { Identifier } from "../id/id"
 import { Plugin } from "../plugin"
 import { Instance } from "../project/instance"
+import { Log } from "../util/log"
 import { Wildcard } from "../util/wildcard"
 
 export namespace Permission {
@@ -48,10 +49,9 @@ export namespace Permission {
         response: z.string(),
       }),
     ),
-    AllowAllModeChanged: BusEvent.define(
-      "permission.allowAllModeChanged",
+    BypassUpdated: BusEvent.define(
+      "permission.bypass.updated",
       z.object({
-        sessionID: z.string(),
         enabled: z.boolean(),
       }),
     ),
@@ -75,14 +75,9 @@ export namespace Permission {
         }
       } = {}
 
-      const allowAllMode: {
-        [sessionID: string]: boolean
-      } = {}
-
       return {
         pending,
         approved,
-        allowAllMode,
       }
     },
     async (state) => {
@@ -98,17 +93,13 @@ export namespace Permission {
     return state().pending
   }
 
-  export function isAllowAllMode(sessionID: string): boolean {
-    return state().allowAllMode[sessionID] ?? false
+  export async function isBypassEnabled(): Promise<boolean> {
+    return Global.getPermissionBypassEnabled()
   }
 
-  export function toggleAllowAllMode(sessionID: string): boolean {
-    const { allowAllMode } = state()
-    const newValue = !allowAllMode[sessionID]
-    allowAllMode[sessionID] = newValue
-    log.info("toggle allow-all mode", { sessionID, enabled: newValue })
-    Bus.publish(Event.AllowAllModeChanged, { sessionID, enabled: newValue })
-    return newValue
+  export async function setBypassEnabled(enabled: boolean): Promise<void> {
+    await Global.setPermissionBypassEnabled(enabled)
+    await Bus.publish(Event.BypassUpdated, { enabled })
   }
 
   export async function ask(input: {
@@ -120,17 +111,7 @@ export namespace Permission {
     messageID: Info["messageID"]
     metadata: Info["metadata"]
   }) {
-    const { pending, approved, allowAllMode } = state()
-
-    // Check if allow-all mode is enabled for this session
-    if (allowAllMode[input.sessionID]) {
-      log.info("auto-approving (allow-all mode)", {
-        sessionID: input.sessionID,
-        type: input.type,
-        pattern: input.pattern,
-      })
-      return
-    }
+    const { pending, approved } = state()
 
     log.info("asking", {
       sessionID: input.sessionID,
@@ -138,6 +119,16 @@ export namespace Permission {
       toolCallID: input.callID,
       pattern: input.pattern,
     })
+
+    // check if permission bypass is enabled (except for doom_loop)
+    if (input.type !== "doom_loop") {
+      const bypassEnabled = await isBypassEnabled()
+      if (bypassEnabled) {
+        log.info("permission bypass enabled, skipping", { type: input.type })
+        return
+      }
+    }
+
     const approvedForSession = approved[input.sessionID] || {}
     const keys = toKeys(input.pattern, input.type)
     if (covered(keys, approvedForSession)) return
@@ -214,20 +205,6 @@ export namespace Permission {
           })
         }
       }
-    }
-  }
-
-  export function allowAll(input: { sessionID: string }) {
-    log.info("allow all", input)
-    const { pending } = state()
-    const items = pending[input.sessionID]
-    if (!items) return
-    for (const item of Object.values(items)) {
-      respond({
-        sessionID: input.sessionID,
-        permissionID: item.info.id,
-        response: "always",
-      })
     }
   }
 

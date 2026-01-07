@@ -555,10 +555,9 @@ export type EventPermissionReplied = {
   }
 }
 
-export type EventPermissionAllowAllModeChanged = {
-  type: "permission.allowAllModeChanged"
+export type EventPermissionBypassUpdated = {
+  type: "permission.bypass.updated"
   properties: {
-    sessionID: string
     enabled: boolean
   }
 }
@@ -599,6 +598,16 @@ export type EventSessionCompacted = {
   }
 }
 
+export type EventCommandExecuted = {
+  type: "command.executed"
+  properties: {
+    name: string
+    sessionID: string
+    arguments: string
+    messageID: string
+  }
+}
+
 export type EventFileEdited = {
   type: "file.edited"
   properties: {
@@ -630,16 +639,6 @@ export type EventTodoUpdated = {
   properties: {
     sessionID: string
     todos: Array<Todo>
-  }
-}
-
-export type EventCommandExecuted = {
-  type: "command.executed"
-  properties: {
-    name: string
-    sessionID: string
-    arguments: string
-    messageID: string
   }
 }
 
@@ -792,13 +791,13 @@ export type Event =
   | EventMessagePartRemoved
   | EventPermissionUpdated
   | EventPermissionReplied
-  | EventPermissionAllowAllModeChanged
+  | EventPermissionBypassUpdated
   | EventSessionStatus
   | EventSessionIdle
   | EventSessionCompacted
+  | EventCommandExecuted
   | EventFileEdited
   | EventTodoUpdated
-  | EventCommandExecuted
   | EventSessionCreated
   | EventSessionUpdated
   | EventSessionDeleted
@@ -1158,9 +1157,9 @@ export type KeybindsConfig = {
    */
   terminal_suspend?: string
   /**
-   * Toggle auto-allow all permissions mode
+   * Toggle permission bypass mode
    */
-  permission_toggle_allow_all?: string
+  permission_bypass?: string
 }
 
 export type AgentConfig = {
@@ -1298,6 +1297,14 @@ export type ProviderConfig = {
      * Timeout in milliseconds for requests to this provider. Default is 300000 (5 minutes). Set to false to disable timeout.
      */
     timeout?: number | false
+    /**
+     * Disable session title generation
+     */
+    disableSessionTitle?: boolean
+    /**
+     * Disable message title generation
+     */
+    disableMessageTitle?: boolean
     [key: string]: unknown | string | boolean | number | false | undefined
   }
 }
@@ -1918,7 +1925,15 @@ export type OllamaAuth = {
   port: number
 }
 
-export type Auth = OAuth | ApiAuth | WellKnownAuth | CodexAuth | GithubAuth | OllamaAuth
+export type AlibabaAuth = {
+  type: "alibaba"
+  access: string
+  refresh: string
+  expires: number
+  enterpriseUrl?: string
+}
+
+export type Auth = OAuth | ApiAuth | WellKnownAuth | CodexAuth | GithubAuth | OllamaAuth | AlibabaAuth
 
 export type GlobalEventData = {
   body?: never
@@ -3308,75 +3323,47 @@ export type PermissionRespondResponses = {
 
 export type PermissionRespondResponse = PermissionRespondResponses[keyof PermissionRespondResponses]
 
-export type PermissionAllowAllData = {
+export type PermissionBypassGetData = {
   body?: never
-  path: {
-    sessionID: string
-  }
+  path?: never
   query?: {
     directory?: string
   }
-  url: "/session/{sessionID}/permissions/allow-all"
+  url: "/permission/bypass"
 }
 
-export type PermissionAllowAllErrors = {
+export type PermissionBypassGetResponses = {
   /**
-   * Bad request
-   */
-  400: BadRequestError
-  /**
-   * Not found
-   */
-  404: NotFoundError
-}
-
-export type PermissionAllowAllError = PermissionAllowAllErrors[keyof PermissionAllowAllErrors]
-
-export type PermissionAllowAllResponses = {
-  /**
-   * All permissions processed successfully
-   */
-  200: boolean
-}
-
-export type PermissionAllowAllResponse = PermissionAllowAllResponses[keyof PermissionAllowAllResponses]
-
-export type PermissionToggleAllowAllModeData = {
-  body?: never
-  path: {
-    sessionID: string
-  }
-  query?: {
-    directory?: string
-  }
-  url: "/session/{sessionID}/permissions/toggle-allow-all-mode"
-}
-
-export type PermissionToggleAllowAllModeErrors = {
-  /**
-   * Bad request
-   */
-  400: BadRequestError
-  /**
-   * Not found
-   */
-  404: NotFoundError
-}
-
-export type PermissionToggleAllowAllModeError =
-  PermissionToggleAllowAllModeErrors[keyof PermissionToggleAllowAllModeErrors]
-
-export type PermissionToggleAllowAllModeResponses = {
-  /**
-   * Mode toggled successfully
+   * Permission bypass status
    */
   200: {
     enabled: boolean
   }
 }
 
-export type PermissionToggleAllowAllModeResponse =
-  PermissionToggleAllowAllModeResponses[keyof PermissionToggleAllowAllModeResponses]
+export type PermissionBypassGetResponse = PermissionBypassGetResponses[keyof PermissionBypassGetResponses]
+
+export type PermissionBypassSetData = {
+  body?: {
+    enabled: boolean
+  }
+  path?: never
+  query?: {
+    directory?: string
+  }
+  url: "/permission/bypass"
+}
+
+export type PermissionBypassSetResponses = {
+  /**
+   * Permission bypass status updated
+   */
+  200: {
+    enabled: boolean
+  }
+}
+
+export type PermissionBypassSetResponse = PermissionBypassSetResponses[keyof PermissionBypassSetResponses]
 
 export type CommandListData = {
   body?: never

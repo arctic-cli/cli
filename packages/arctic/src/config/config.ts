@@ -741,11 +741,7 @@ export namespace Config {
       benchmark_apply: z.string().optional().default("ctrl+alt+a").describe("Apply benchmark session changes"),
       benchmark_undo: z.string().optional().default("ctrl+alt+u").describe("Undo applied benchmark changes"),
       terminal_suspend: z.string().optional().default("ctrl+z").describe("Suspend terminal"),
-      permission_toggle_allow_all: z
-        .string()
-        .optional()
-        .default("<leader> p")
-        .describe("Toggle auto-allow all permissions mode"),
+      permission_bypass: z.string().optional().default("<leader>p").describe("Toggle permission bypass mode"),
     })
     .strict()
     .meta({

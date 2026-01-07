@@ -46,6 +46,7 @@ function init() {
   useKeyboard((evt) => {
     if (suspended()) return
     if (dialog.stack.length > 0) return
+    if (evt.defaultPrevented) return
     for (const option of options()) {
       if (option.keybind && keybind.match(option.keybind, evt)) {
         evt.preventDefault()

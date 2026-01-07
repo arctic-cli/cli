@@ -6,6 +6,7 @@ import { useTheme } from "@tui/context/theme"
 import { createMemo, Match, onMount, Show, Switch } from "solid-js"
 import { Logo } from "../component/logo"
 import { useArgs } from "../context/args"
+import { useExitConfirmation } from "../context/exit-confirmation"
 import { useKeybind } from "../context/keybind"
 import { usePromptRef } from "../context/prompt"
 import { useSync } from "../context/sync"
@@ -21,26 +22,13 @@ export function Home() {
   const promptRef = usePromptRef()
   const toast = useToast()
   const keybind = useKeybind()
+  const exitConfirmation = useExitConfirmation()
   const mcpError = createMemo(() => {
     return Object.values(sync.data.mcp).some((x) => x.status === "failed")
   })
 
   const connectedMcpCount = createMemo(() => {
     return Object.values(sync.data.mcp).filter((x) => x.status === "connected").length
-  })
-
-  // Handle permission toggle when not in a session
-  useKeyboard((evt) => {
-    if (evt.eventType !== "press") return
-    if (keybind.match("permission_toggle_allow_all", evt)) {
-      evt.preventDefault?.()
-      toast.show({
-        message: "Open or create a session to toggle permissions mode",
-        variant: "info",
-        duration: 2000,
-      })
-      return
-    }
   })
 
   const Hint = (
@@ -95,6 +83,7 @@ export function Home() {
               promptRef.set(r)
             }}
             hint={Hint}
+            exitConfirmation={exitConfirmation()}
           />
         </box>
         <Toast />

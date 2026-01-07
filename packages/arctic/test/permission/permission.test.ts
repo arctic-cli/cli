@@ -4,8 +4,8 @@ import { Instance } from "@/project/instance"
 import { tmpdir } from "../fixture/fixture"
 import { Bus } from "@/bus"
 
-describe("Permission.allowAll", () => {
-  test("allows all pending permissions for a session", async () => {
+describe("Permission.respond", () => {
+  test("responds to pending permissions for a session", async () => {
     await using tmp = await tmpdir()
     await Instance.provide({
       directory: tmp.path,
@@ -49,8 +49,11 @@ describe("Permission.allowAll", () => {
         // Wait a bit for permissions to be pending
         await new Promise((resolve) => setTimeout(resolve, 100))
 
-        // Allow all permissions
-        Permission.allowAll({ sessionID })
+        // Respond to all permissions with "always"
+        const pending = Permission.pending()
+        for (const permissionID of Object.keys(pending[sessionID])) {
+          Permission.respond({ sessionID, permissionID, response: "always" })
+        }
 
         // Wait for all promises to resolve
         await Promise.allSettled(permissions)
@@ -63,24 +66,8 @@ describe("Permission.allowAll", () => {
         expect(responses.every((r) => r === "always")).toBe(true)
 
         // No pending permissions should remain
-        const pending = Permission.pending()
-        expect(pending[sessionID]).toEqual({})
-      },
-    })
-  })
-
-  test("handles empty pending permissions", async () => {
-    await using tmp = await tmpdir()
-    await Instance.provide({
-      directory: tmp.path,
-      fn: async () => {
-        const sessionID = "test-session-empty"
-
-        // Call allowAll with no pending permissions
-        Permission.allowAll({ sessionID })
-
-        // Should not throw
-        expect(true).toBe(true)
+        const pendingAfter = Permission.pending()
+        expect(pendingAfter[sessionID]).toEqual({})
       },
     })
   })
@@ -122,8 +109,11 @@ describe("Permission.allowAll", () => {
         // Wait for permissions to be pending
         await new Promise((resolve) => setTimeout(resolve, 100))
 
-        // Allow all for session 1 only
-        Permission.allowAll({ sessionID: sessionID1 })
+        // Respond to session 1 only
+        const pending = Permission.pending()
+        for (const permissionID of Object.keys(pending[sessionID1])) {
+          Permission.respond({ sessionID: sessionID1, permissionID, response: "always" })
+        }
 
         // Wait for session 1 permission to resolve
         await perm1
@@ -136,104 +126,18 @@ describe("Permission.allowAll", () => {
         expect(responses[0].sessionID).toBe(sessionID1)
 
         // Session 2 permission should still be pending
-        const pending = Permission.pending()
-        expect(pending[sessionID2]).toBeDefined()
-        expect(Object.keys(pending[sessionID2]).length).toBe(1)
+        const pendingAfter = Permission.pending()
+        expect(pendingAfter[sessionID2]).toBeDefined()
+        expect(Object.keys(pendingAfter[sessionID2]).length).toBe(1)
 
         // Reject session 2 to clean up
         Permission.respond({
           sessionID: sessionID2,
-          permissionID: Object.keys(pending[sessionID2])[0],
+          permissionID: Object.keys(pendingAfter[sessionID2])[0],
           response: "reject",
         })
 
         await perm2.catch(() => {})
-      },
-    })
-  })
-})
-
-describe("Permission.toggleAllowAllMode", () => {
-  test("toggles allow-all mode for a session", async () => {
-    await using tmp = await tmpdir()
-    await Instance.provide({
-      directory: tmp.path,
-      fn: async () => {
-        const sessionID = "test-session"
-
-        // Initial state should be false
-        expect(Permission.isAllowAllMode(sessionID)).toBe(false)
-
-        // Toggle to true
-        const enabled = Permission.toggleAllowAllMode(sessionID)
-        expect(enabled).toBe(true)
-        expect(Permission.isAllowAllMode(sessionID)).toBe(true)
-
-        // Toggle back to false
-        const disabled = Permission.toggleAllowAllMode(sessionID)
-        expect(disabled).toBe(false)
-        expect(Permission.isAllowAllMode(sessionID)).toBe(false)
-      },
-    })
-  })
-
-  test("auto-approves permissions when allow-all mode is enabled", async () => {
-    await using tmp = await tmpdir()
-    await Instance.provide({
-      directory: tmp.path,
-      fn: async () => {
-        const sessionID = "test-session"
-
-        // Enable allow-all mode
-        Permission.toggleAllowAllMode(sessionID)
-
-        // Create a permission request
-        const perm = Permission.ask({
-          type: "bash",
-          title: "Run bash command",
-          pattern: "echo test",
-          sessionID,
-          messageID: "msg1",
-          metadata: {},
-        })
-
-        // Should resolve immediately without prompting
-        await perm
-
-        // No pending permissions should exist
-        const pending = Permission.pending()
-        expect(pending[sessionID] || {}).toEqual({})
-      },
-    })
-  })
-
-  test("publishes event when mode changes", async () => {
-    await using tmp = await tmpdir()
-    await Instance.provide({
-      directory: tmp.path,
-      fn: async () => {
-        const sessionID = "test-session"
-        const events: { sessionID: string; enabled: boolean }[] = []
-
-        // Subscribe to mode change events
-        const unsubscribe = Bus.subscribe(Permission.Event.AllowAllModeChanged, (event) => {
-          events.push({
-            sessionID: event.properties.sessionID,
-            enabled: event.properties.enabled,
-          })
-        })
-
-        // Toggle mode twice
-        Permission.toggleAllowAllMode(sessionID)
-        Permission.toggleAllowAllMode(sessionID)
-
-        // Clean up
-        unsubscribe()
-
-        // Should have received two events
-        expect(events.length).toBe(2)
-        expect(events[0]).toEqual({ sessionID, enabled: true })
-        expect(events[1]).toEqual({ sessionID, enabled: false })
       },
     })
   })

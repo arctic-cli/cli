@@ -1509,65 +1509,50 @@ export namespace Server {
           return c.json(true)
         },
       )
-      .post(
-        "/session/:sessionID/permissions/allow-all",
+      .get(
+        "/permission/bypass",
         describeRoute({
-          summary: "Allow all permissions",
-          description: "Approve all pending permission requests for a session.",
-          operationId: "permission.allowAll",
+          summary: "Get permission bypass status",
+          description: "Check if permission bypass mode is enabled.",
+          operationId: "permission.bypass.get",
           responses: {
             200: {
-              description: "All permissions processed successfully",
-              content: {
-                "application/json": {
-                  schema: resolver(z.boolean()),
-                },
-              },
-            },
-            ...errors(400, 404),
-          },
-        }),
-        validator(
-          "param",
-          z.object({
-            sessionID: z.string(),
-          }),
-        ),
-        async (c) => {
-          const params = c.req.valid("param")
-          const sessionID = params.sessionID
-          Permission.allowAll({ sessionID })
-          return c.json(true)
-        },
-      )
-      .post(
-        "/session/:sessionID/permissions/toggle-allow-all-mode",
-        describeRoute({
-          summary: "Toggle allow-all permissions mode",
-          description: "Enable or disable automatic approval of all permissions for a session.",
-          operationId: "permission.toggleAllowAllMode",
-          responses: {
-            200: {
-              description: "Mode toggled successfully",
+              description: "Permission bypass status",
               content: {
                 "application/json": {
                   schema: resolver(z.object({ enabled: z.boolean() })),
                 },
               },
             },
-            ...errors(400, 404),
           },
         }),
-        validator(
-          "param",
-          z.object({
-            sessionID: z.string(),
-          }),
-        ),
         async (c) => {
-          const params = c.req.valid("param")
-          const sessionID = params.sessionID
-          const enabled = Permission.toggleAllowAllMode(sessionID)
+          const enabled = await Permission.isBypassEnabled()
+          return c.json({ enabled })
+        },
+      )
+      .post(
+        "/permission/bypass",
+        describeRoute({
+          summary: "Set permission bypass status",
+          description:
+            "Enable or disable permission bypass mode. When enabled, all permissions (except doom_loop) are automatically approved.",
+          operationId: "permission.bypass.set",
+          responses: {
+            200: {
+              description: "Permission bypass status updated",
+              content: {
+                "application/json": {
+                  schema: resolver(z.object({ enabled: z.boolean() })),
+                },
+              },
+            },
+          },
+        }),
+        validator("json", z.object({ enabled: z.boolean() })),
+        async (c) => {
+          const { enabled } = c.req.valid("json")
+          await Permission.setBypassEnabled(enabled)
           return c.json({ enabled })
         },
       )

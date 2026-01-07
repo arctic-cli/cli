@@ -20,6 +20,42 @@ export namespace Global {
     config,
     state,
   } as const
+
+  const settingsFile = path.join(state, "settings.json")
+
+  interface Settings {
+    permissionBypassEnabled?: boolean
+  }
+
+  let settingsCache: Settings | undefined
+
+  async function loadSettings(): Promise<Settings> {
+    if (settingsCache) return settingsCache
+    const file = Bun.file(settingsFile)
+    const exists = await file.exists()
+    if (!exists) {
+      settingsCache = {}
+      return settingsCache
+    }
+    settingsCache = await file.json().catch(() => ({}))
+    return settingsCache!
+  }
+
+  async function saveSettings(settings: Settings): Promise<void> {
+    settingsCache = settings
+    await Bun.write(settingsFile, JSON.stringify(settings, null, 2))
+  }
+
+  export async function getPermissionBypassEnabled(): Promise<boolean> {
+    const settings = await loadSettings()
+    return settings.permissionBypassEnabled ?? false
+  }
+
+  export async function setPermissionBypassEnabled(enabled: boolean): Promise<void> {
+    const settings = await loadSettings()
+    settings.permissionBypassEnabled = enabled
+    await saveSettings(settings)
+  }
 }
 
 await Promise.all([

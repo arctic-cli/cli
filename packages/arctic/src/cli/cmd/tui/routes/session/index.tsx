@@ -27,6 +27,7 @@ import { useKeyboard, useRenderer, useTerminalDimensions, type BoxProps, type JS
 import { SplitBorder } from "@tui/component/border"
 import { useCommandDialog } from "@tui/component/dialog-command"
 import { Prompt, type PromptRef } from "@tui/component/prompt"
+import { useExitConfirmation } from "@tui/context/exit-confirmation"
 import { useKeybind } from "@tui/context/keybind"
 import { useLocal } from "@tui/context/local"
 import { useRoute, useRouteData } from "@tui/context/route"
@@ -106,6 +107,7 @@ export function Session() {
   const kv = useKV()
   const { theme } = useTheme()
   const promptRef = usePromptRef()
+  const exitConfirmation = useExitConfirmation()
   const [interruptCount, setInterruptCount] = createSignal(0)
   const session = createMemo(() => sync.session.get(route.sessionID)!)
   const messages = createMemo(() => sync.data.message[route.sessionID] ?? [])
@@ -1330,6 +1332,7 @@ export function Session() {
                 }}
                 onInterrupt={(count) => setInterruptCount(count)}
                 sessionID={route.sessionID}
+                exitConfirmation={exitConfirmation()}
               />
             </box>
             <Footer />

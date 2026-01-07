@@ -1,30 +1,30 @@
-import type {
-  Message,
-  Agent,
-  Provider,
-  Session,
-  Part,
-  Config,
-  Todo,
-  Command,
-  Permission,
-  LspStatus,
-  McpStatus,
-  FormatterStatus,
-  SessionStatus,
-  ProviderListResponse,
-  ProviderAuthMethod,
-  VcsInfo,
-} from "@arctic-cli/sdk/v2"
-import { createStore, produce, reconcile } from "solid-js/store"
-import { useSDK } from "@tui/context/sdk"
-import { Binary } from "@arctic-cli/util/binary"
-import { createSimpleContext } from "./helper"
 import type { Snapshot } from "@/snapshot"
-import { useExit } from "./exit"
-import { batch, onMount } from "solid-js"
 import { Log } from "@/util/log"
 import type { Path } from "@arctic-cli/sdk"
+import type {
+  Agent,
+  Command,
+  Config,
+  FormatterStatus,
+  LspStatus,
+  McpStatus,
+  Message,
+  Part,
+  Permission,
+  Provider,
+  ProviderAuthMethod,
+  ProviderListResponse,
+  Session,
+  SessionStatus,
+  Todo,
+  VcsInfo,
+} from "@arctic-cli/sdk/v2"
+import { Binary } from "@arctic-cli/util/binary"
+import { useSDK } from "@tui/context/sdk"
+import { batch, onMount } from "solid-js"
+import { createStore, produce, reconcile } from "solid-js/store"
+import { useExit } from "./exit"
+import { createSimpleContext } from "./helper"
 
 export const { use: useSync, provider: SyncProvider } = createSimpleContext({
   name: "Sync",
@@ -40,9 +40,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       permission: {
         [sessionID: string]: Permission[]
       }
-      permission_allow_all_mode: {
-        [sessionID: string]: boolean
-      }
+      permission_bypass_enabled: boolean
       config: Config
       session: Session[]
       session_status: {
@@ -84,7 +82,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       status: "loading",
       agent: [],
       permission: {},
-      permission_allow_all_mode: {},
+      permission_bypass_enabled: false,
       command: [],
       provider: [],
       provider_default: {},
@@ -139,11 +137,6 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
               draft.splice(match.index, 1)
             }),
           )
-          break
-        }
-
-        case "permission.allowAllModeChanged": {
-          setStore("permission_allow_all_mode", event.properties.sessionID, event.properties.enabled)
           break
         }
 
@@ -291,6 +284,11 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           break
         }
       }
+
+      // handle permission bypass update
+      if (event.type === "permission.bypass.updated") {
+        setStore("permission_bypass_enabled", event.properties.enabled)
+      }
     })
 
     const exit = useExit()
@@ -330,6 +328,11 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
             sdk.client.provider.auth().then((x) => setStore("provider_auth", x.data ?? {})),
             sdk.client.vcs.get().then((x) => setStore("vcs", x.data)),
             sdk.client.path.get().then((x) => setStore("path", x.data!)),
+            // fetch permission bypass status
+            sdk.client.permission.bypass
+              .get()
+              .then((x) => setStore("permission_bypass_enabled", x.data?.enabled ?? false))
+              .catch(() => {}),
             // Initialize OpenRouter pricing cache in background (with timeout to avoid hanging)
             // TODO: Temporarily disabled due to Bun crash
             // Promise.race([

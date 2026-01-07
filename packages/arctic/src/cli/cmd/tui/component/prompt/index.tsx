@@ -72,6 +72,7 @@ export type PromptProps = {
   ref?: (ref: PromptRef) => void
   hint?: JSX.Element
   showPlaceholder?: boolean
+  exitConfirmation?: boolean
 }
 
 export type PromptRef = {
@@ -160,10 +161,6 @@ export function Prompt(props: PromptProps) {
   const promptRef = usePromptRef()
   const { theme, syntax } = useTheme()
   const currentSession = createMemo(() => (props.sessionID ? sync.session.get(props.sessionID) : undefined))
-  const isAllowAllMode = createMemo(() => {
-    if (!props.sessionID) return false
-    return sync.data.permission_allow_all_mode?.[props.sessionID] ?? false
-  })
   const displayModel = createMemo(() => {
     const benchmark = currentSession()?.benchmark
     const sessionModel = benchmark?.type === "child" ? benchmark.model : undefined
@@ -581,17 +578,21 @@ export function Prompt(props: PromptProps) {
           }
           if (!props.sessionID) return
 
-          setStore("interrupt", store.interrupt + 1)
+          const nextInterrupt = store.interrupt + 1
+          setStore("interrupt", nextInterrupt)
+          props.onInterrupt?.(nextInterrupt)
 
           setTimeout(() => {
             setStore("interrupt", 0)
+            props.onInterrupt?.(0)
           }, 5000)
 
-          if (store.interrupt >= 2) {
+          if (nextInterrupt >= 2) {
             sdk.client.session.abort({
               sessionID: props.sessionID,
             })
             setStore("interrupt", 0)
+            props.onInterrupt?.(0)
           }
           dialog.clear()
         },
@@ -707,6 +708,11 @@ export function Prompt(props: PromptProps) {
     mode: "normal",
     extmarkToPartIndex: new Map(),
     interrupt: 0,
+  })
+
+  const inputPlaceholder = createMemo(() => {
+    if (props.sessionID) return undefined
+    return `Ask anything... "${PLACEHOLDERS[store.placeholder]}"`
   })
 
   createEffect(() => {
@@ -1461,7 +1467,7 @@ export function Prompt(props: PromptProps) {
               <textarea
                 width="100%"
                 backgroundColor="transparent"
-                placeholder={props.sessionID ? undefined : `Ask anything... "${PLACEHOLDERS[store.placeholder]}"`}
+                placeholder={inputPlaceholder()}
                 textColor={keybind.leader ? theme.textMuted : theme.text}
                 focusedTextColor={keybind.leader ? theme.textMuted : theme.text}
                 minHeight={1}
@@ -1654,9 +1660,6 @@ export function Prompt(props: PromptProps) {
           <text fg={highlight()}>
             {store.mode === "shell" ? "Shell" : Locale.titlecase(local.agent.current().name)}{" "}
           </text>
-          <Show when={isAllowAllMode()}>
-            <text fg={theme.warning}>Auto-allow all enabled</text>
-          </Show>
           <Show when={store.mode === "normal"}>
             <box flexDirection="row" gap={1}>
               <text flexShrink={0} fg={keybind.leader ? theme.textMuted : theme.text}>
@@ -1709,6 +1712,16 @@ export function Prompt(props: PromptProps) {
             </box>
           </Show>
         </box>
+        <Show when={sync.data.permission_bypass_enabled}>
+          <text fg={theme.error} paddingLeft={1}>
+            PERMISSION BYPASS ENABLED - AI can execute any command
+          </text>
+        </Show>
+        <Show when={props.exitConfirmation}>
+          <text fg={theme.textMuted} paddingLeft={1}>
+            Press ctrl+c again to exit
+          </text>
+        </Show>
         <box flexDirection="row" justifyContent="space-between">
           <Show when={status().type !== "idle"} fallback={<text />}>
             <box
