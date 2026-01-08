@@ -13,7 +13,7 @@ BLUE='\033[38;5;117m'
 NC='\033[0m' # No Color
 
 requested_version=${VERSION:-}
-requested_tag=${TAG:-beta}
+requested_tag=${TAG:-main}
 
 raw_os=$(uname -s)
 os=$(echo "$raw_os" | tr '[:upper:]' '[:lower:]')
@@ -183,11 +183,16 @@ check_version() {
         installed_version=$(arctic --version 2>/dev/null | head -n1 | tr -d '[:space:]')
         installed_version=${installed_version#v}
 
-        if [[ "$installed_version" != "$specific_version" ]]; then
-            print_message info "${MUTED}Installed version: ${NC}$installed_version."
+        if [[ "$installed_version" == "$specific_version" ]]; then
+            # Check if the binary actually exists and is executable
+            if [[ -x "$INSTALL_DIR/arctic" ]] || [[ -x "$INSTALL_DIR/arctic.exe" ]]; then
+                print_message info "${MUTED}Version ${NC}$specific_version${MUTED} already installed at ${NC}$arctic_path"
+                exit 0
+            else
+                print_message warning "Version matches but binary not found in $INSTALL_DIR, reinstalling..."
+            fi
         else
-            print_message info "${MUTED}Version ${NC}$specific_version${MUTED} already installed"
-            exit 0
+            print_message info "${MUTED}Installed version: ${NC}$installed_version${MUTED}, updating to ${NC}$specific_version"
         fi
     fi
 }

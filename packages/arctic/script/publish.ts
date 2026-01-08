@@ -63,10 +63,29 @@ if (shouldPublish) {
   const defaultTag = publishTag || Script.channel
   const tagArgs = ["--tag", defaultTag]
   const otpArgs = otpValue ? ["--otp", otpValue] : []
+
+  // Publish platform-specific packages first
   for (const name of platformPackages) {
     console.log(`publishing ${name}`)
     await $`cd dist/${name} && npm publish --access public ${tagArgs} ${otpArgs}`
   }
+
+  // Add additional dist-tag "main" to platform packages if we're publishing to beta
+  // This ensures platform packages can be resolved when installing @arctic-cli/arctic@version
+  if (defaultTag === "beta" || defaultTag === "main") {
+    for (const name of platformPackages) {
+      console.log(`adding dist-tag main to ${name}`)
+      await $`npm dist-tag add ${name}@${Script.version} main`
+    }
+  }
+
+  // Publish main package last
   console.log(`publishing @arctic-cli/${baseName}`)
   await $`cd dist/${baseName} && npm publish --access public ${tagArgs} ${otpArgs}`
+
+  // Add "main" dist-tag to main package if publishing to beta
+  if (defaultTag === "beta" || defaultTag === "main") {
+    console.log(`adding dist-tag main to @arctic-cli/${baseName}`)
+    await $`npm dist-tag add @arctic-cli/${baseName}@${Script.version} main`
+  }
 }
