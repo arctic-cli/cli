@@ -65,15 +65,7 @@ export function Home() {
 
   return (
     <>
-      <box
-        flexGrow={1}
-        flexDirection="column"
-        alignItems="flex-start"
-        justifyContent="space-between"
-        paddingLeft={2}
-        paddingRight={2}
-        gap={1}
-      >
+      <box flexGrow={1} flexDirection="column" alignItems="flex-start" justifyContent="space-between" gap={1}>
         <Logo />
         <box flexGrow={1} />
         <box width="100%" alignSelf="stretch" zIndex={1000}>

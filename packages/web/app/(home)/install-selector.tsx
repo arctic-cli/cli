@@ -7,10 +7,10 @@ type InstallMethod = "curl" | "npm" | "bun" | "pnpm" | "yarn" | "powershell"
 
 const INSTALL_COMMANDS: Record<InstallMethod, string> = {
   curl: "curl -fsSL https://usearctic.sh/install | bash",
-  npm: "npm install -g @arctic-cli/arctic",
-  bun: "bun install -g @arctic-cli/arctic",
-  pnpm: "pnpm install -g @arctic-cli/arctic",
-  yarn: "yarn global add @arctic-cli/arctic",
+  npm: "npm install -g @arctic-cli/arctic@beta",
+  bun: "bun install -g @arctic-cli/arctic@beta",
+  pnpm: "pnpm install -g @arctic-cli/arctic@beta",
+  yarn: "yarn global add @arctic-cli/arctic@beta",
   powershell: "irm https://usearctic.sh/install.ps1 | iex",
 }
 

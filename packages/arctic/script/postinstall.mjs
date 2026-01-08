@@ -49,7 +49,7 @@ function detectPlatformAndArch() {
 
 function findBinary() {
   const { platform, arch } = detectPlatformAndArch()
-  const packageName = `arctic-${platform}-${arch}`
+  const packageName = `@arctic-cli/arctic-${platform}-${arch}`
   const binaryName = platform === "windows" ? "arctic.exe" : "arctic"
 
   try {

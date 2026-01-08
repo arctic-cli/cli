@@ -1459,7 +1459,7 @@ export function Prompt(props: PromptProps) {
           }}
           width="100%"
         >
-          <box flexDirection="row" alignItems="flex-start" width="100%" gap={1} paddingLeft={1} paddingRight={1}>
+          <box flexDirection="row" alignItems="flex-start" width="100%" gap={1}>
             <text fg={highlight()} attributes={TextAttributes.BOLD}>
               {store.mode === "shell" ? "!" : ">"}
             </text>
