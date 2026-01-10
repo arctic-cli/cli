@@ -2266,6 +2266,24 @@ export type ConfigUpdateResponses = {
 
 export type ConfigUpdateResponse = ConfigUpdateResponses[keyof ConfigUpdateResponses]
 
+export type ConfigExportData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+  }
+  url: "/config/export"
+}
+
+export type ConfigExportResponses = {
+  /**
+   * ZIP file containing config backup
+   */
+  200: Blob | File
+}
+
+export type ConfigExportResponse = ConfigExportResponses[keyof ConfigExportResponses]
+
 export type ToolIdsData = {
   body?: never
   path?: never

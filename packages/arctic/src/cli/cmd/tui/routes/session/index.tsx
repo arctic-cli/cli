@@ -1198,6 +1198,8 @@ export function Session() {
           <Show when={session()}>
             <scrollbox
               ref={(r) => (scroll = r)}
+              paddingLeft="0.5%"
+              paddingRight="0.5%"
               viewportOptions={{
                 paddingRight: showScrollbar() ? 1 : 0,
               }}
@@ -1385,7 +1387,7 @@ function UserMessage(props: {
     <>
       <Show when={text()}>
         <box id={props.message.id} marginTop={props.index === 0 ? 0 : 1}>
-          <box onMouseUp={props.onMouseUp} paddingTop={0} paddingBottom={0} paddingLeft={0}>
+          <box onMouseUp={props.onMouseUp} paddingTop={0} paddingBottom={0}>
             <box paddingLeft={0} backgroundColor={theme.backgroundElement}>
               <Switch>
                 <Match when={ctx.userMessageMarkdown()}>

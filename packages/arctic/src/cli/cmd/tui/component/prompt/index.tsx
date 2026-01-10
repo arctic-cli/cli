@@ -1445,7 +1445,7 @@ export function Prompt(props: PromptProps) {
         agentStyleId={agentStyleId}
         promptPartTypeId={() => promptPartTypeId}
       />
-      <box ref={(r) => (anchor = r)} width="100%">
+      <box ref={(r) => (anchor = r)} width="100%" paddingLeft="0.5%" paddingRight="0.5%">
         <box
           border={["top", "bottom"]}
           borderColor={highlight()}
@@ -1802,7 +1802,7 @@ export function Prompt(props: PromptProps) {
             </box>
           </Show>
           <Show when={status().type !== "retry"}>
-            <box gap={2} flexDirection="row">
+            <box gap={2} flexDirection="row" paddingBottom={1}>
               <Switch>
                 <Match when={store.mode === "normal"}>
                   <text fg={theme.text}>

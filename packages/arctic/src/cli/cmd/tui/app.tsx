@@ -49,6 +49,7 @@ import { TuiEvent } from "./event"
 import { DialogAlert } from "./ui/dialog-alert"
 import { DialogConfirm } from "./ui/dialog-confirm"
 import { DialogHelp } from "./ui/dialog-help"
+import { DialogPrompt } from "./ui/dialog-prompt"
 import { ToastProvider, useToast } from "./ui/toast"
 
 async function getTerminalBackgroundColor(): Promise<"dark" | "light"> {
@@ -516,6 +517,57 @@ function App() {
       keybind: "usage_view",
       onSelect: () => {
         dialog.replace(() => <DialogUsage />)
+      },
+      category: "System",
+    },
+    {
+      title: "Export config backup",
+      value: "config.export",
+      onSelect: async (dialog) => {
+        try {
+          const defaultFilename = `arctic-config-${new Date().toISOString().split("T")[0]}.zip`
+          const defaultPath = path.join(process.cwd(), defaultFilename)
+
+          const customPath = await DialogPrompt.show(dialog, "Save location", {
+            value: defaultPath,
+            placeholder: "Enter full path or relative path",
+          })
+
+          if (customPath === null) return
+
+          const userPath = customPath.trim()
+          if (!userPath) {
+            toast.show({ message: "No path provided", variant: "error" })
+            return
+          }
+
+          let resolvedPath = userPath
+          if (userPath.startsWith("~/")) {
+            resolvedPath = path.join(Bun.env.HOME || process.env.HOME || "~", userPath.slice(2))
+          } else if (!path.isAbsolute(userPath)) {
+            resolvedPath = path.resolve(process.cwd(), userPath)
+          }
+
+          const parentDir = path.dirname(resolvedPath)
+          await fs.mkdir(parentDir, { recursive: true }).catch((error) => {
+            throw new Error(`Cannot create directory: ${parentDir}`)
+          })
+
+          const response = await sdk.config.export()
+          if (response.error || !response.data) {
+            toast.show({ message: "Failed to export config", variant: "error" })
+            return
+          }
+
+          const buffer = await (response.data as Blob).arrayBuffer()
+          await Bun.write(resolvedPath, new Uint8Array(buffer))
+
+          toast.show({ message: `Config exported to ${resolvedPath}`, variant: "success" })
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Failed to export config"
+          toast.show({ message, variant: "error" })
+        }
+        dialog.clear()
       },
       category: "System",
     },

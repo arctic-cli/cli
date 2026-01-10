@@ -17,6 +17,7 @@
     "./*": "./src/*.ts"
   },
   "devDependencies": {
+    "@arctic-cli/script": "workspace:*",
     "@babel/core": "7.28.4",
     "@octokit/webhooks-types": "7.6.1",
     "@parcel/watcher-darwin-arm64": "2.5.1",
@@ -30,14 +31,14 @@
     "@tsconfig/bun": "catalog:",
     "@types/babel__core": "7.20.5",
     "@types/bun": "catalog:",
+    "@types/jszip": "3.4.1",
     "@types/turndown": "5.0.5",
     "@types/yargs": "17.0.33",
-    "typescript": "catalog:",
     "@typescript/native-preview": "catalog:",
+    "typescript": "catalog:",
     "vscode-languageserver-types": "3.17.5",
     "why-is-node-running": "3.2.2",
-    "zod-to-json-schema": "3.24.5",
-    "@arctic-cli/script": "workspace:*"
+    "zod-to-json-schema": "3.24.5"
   },
   "dependencies": {
     "@actions/core": "1.11.1",
@@ -84,6 +85,7 @@
     "hono-openapi": "catalog:",
     "ignore": "7.0.5",
     "jsonc-parser": "3.3.1",
+    "jszip": "3.10.1",
     "minimatch": "10.0.3",
     "open": "10.1.2",
     "opentui-spinner": "0.0.6",

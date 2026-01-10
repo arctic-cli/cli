@@ -420,6 +420,12 @@ export function Autocomplete(props: {
         onSelect: () => command.trigger("provider.connect"),
       },
       {
+        display: "/config-export",
+        aliases: ["/backup-config", "/save-config"],
+        description: "export config as zip file",
+        onSelect: () => command.trigger("config.export"),
+      },
+      {
         display: "/help",
         description: "show help",
         onSelect: () => command.trigger("help.show"),

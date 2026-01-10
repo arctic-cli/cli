@@ -13,6 +13,7 @@ import type {
   BenchmarkModel,
   CommandListResponses,
   Config as Config2,
+  ConfigExportResponses,
   ConfigGetResponses,
   ConfigProvidersResponses,
   ConfigUpdateErrors,
@@ -549,6 +550,25 @@ export class Config extends HeyApiClient {
         ...options?.headers,
         ...params.headers,
       },
+    })
+  }
+
+  /**
+   * Export configuration backup
+   *
+   * Export all Arctic configuration files as a ZIP archive for backup purposes
+   */
+  public export<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams([parameters], [{ args: [{ in: "query", key: "directory" }] }])
+    return (options?.client ?? this.client).get<ConfigExportResponses, unknown, ThrowOnError>({
+      url: "/config/export",
+      ...options,
+      ...params,
     })
   }
 

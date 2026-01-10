@@ -4,8 +4,8 @@ import { TextAttributes, type RGBA } from "@opentui/core"
 import { useTerminalDimensions } from "@opentui/solid"
 import { useTheme } from "@tui/context/theme"
 import { For, createMemo } from "solid-js"
-import { useDirectory } from "../context/directory"
 import { loadRecentSessions, type RecentSessionSummary } from "../../../recent-sessions"
+import { useDirectory } from "../context/directory"
 
 type Theme = ReturnType<typeof useTheme>["theme"]
 const MIN_CARD_WIDTH = 36
@@ -28,7 +28,7 @@ export function Logo() {
   const rows = createMemo(() => buildCard(theme, directory(), cardWidth(), recentSessions()))
 
   return (
-    <box width={cardWidth()} alignItems="flex-start" justifyContent="flex-start">
+    <box width={cardWidth()} alignItems="flex-start" justifyContent="flex-start" paddingRight="0.5%" paddingLeft="0.5%">
       <box flexDirection="column" gap={0}>
         <For each={rows()}>
           {(row) => (

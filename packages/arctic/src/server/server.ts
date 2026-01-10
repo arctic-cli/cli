@@ -9,6 +9,7 @@ import { SessionStatus } from "@/session/status"
 import { SessionSummary } from "@/session/summary"
 import { Snapshot } from "@/snapshot"
 import { NamedError } from "@arctic-cli/util/error"
+import { ConfigExport } from "@/config/export"
 import { Hono } from "hono"
 import { describeRoute, generateSpecs, openAPIRouteHandler, resolver, validator } from "hono-openapi"
 import { upgradeWebSocket, websocket } from "hono/bun"
@@ -403,6 +404,33 @@ export namespace Server {
           const config = c.req.valid("json")
           await Config.update(config)
           return c.json(config)
+        },
+      )
+      .get(
+        "/config/export",
+        describeRoute({
+          summary: "Export configuration backup",
+          description: "Export all Arctic configuration files as a ZIP archive for backup purposes",
+          operationId: "config.export",
+          responses: {
+            200: {
+              description: "ZIP file containing config backup",
+              content: {
+                "application/zip": {
+                  schema: { type: "string", format: "binary" },
+                },
+              },
+            },
+            ...errors(500),
+          },
+        }),
+        async (c) => {
+          const zipBuffer = await ConfigExport.backup()
+          const filename = `arctic-config-${new Date().toISOString().split("T")[0]}.zip`
+          return c.body(new Uint8Array(zipBuffer), 200, {
+            "Content-Type": "application/zip",
+            "Content-Disposition": `attachment; filename="${filename}"`,
+          })
         },
       )
       .get(
