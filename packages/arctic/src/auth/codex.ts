@@ -401,25 +401,23 @@ Device codes are a common phishing target. Never share this code.
     return (await response.json()) as T
   }
 
-  export async function ensureValidToken(): Promise<string> {
-    const auth = await Auth.get("codex")
-    if (!auth || auth.type !== "codex") {
-      throw new Error("Codex token not available")
-    }
-
+  export async function ensureValidTokenFor(
+    authKey: string,
+    auth: Extract<Auth.Info, { type: "codex" }>,
+  ): Promise<string> {
     // Refresh 5 minutes before expiration to be safe
     if (Date.now() > auth.expiresAt - 5 * 60 * 1000) {
       try {
         const tokens = await refresh(auth.refreshToken)
         const idTokenInfo = parseIdToken(tokens.id_token)
         const expiresIn = tokens.expires_in ?? 3600
-        
-        await Auth.set("codex", {
+
+        await Auth.set(authKey, {
           ...auth,
           accessToken: tokens.access_token,
           refreshToken: tokens.refresh_token,
           idToken: tokens.id_token,
-      expiresAt: Date.now() + (tokens.expires_in ?? 3600) * 1000,
+          expiresAt: Date.now() + expiresIn * 1000,
           accountId: idTokenInfo?.chatgpt_account_id ?? auth.accountId,
         })
         return tokens.access_token
@@ -428,5 +426,13 @@ Device codes are a common phishing target. Never share this code.
       }
     }
     return auth.accessToken
+  }
+
+  export async function ensureValidToken(): Promise<string> {
+    const auth = await Auth.get("codex")
+    if (!auth || auth.type !== "codex") {
+      throw new Error("Codex token not available")
+    }
+    return ensureValidTokenFor("codex", auth)
   }
 }

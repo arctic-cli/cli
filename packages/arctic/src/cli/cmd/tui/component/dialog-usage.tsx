@@ -13,34 +13,35 @@ import { useDialog } from "../ui/dialog"
 const BAR_SEGMENTS = 20
 const BAR_FILLED = "█"
 const BAR_EMPTY = "░"
-const MAX_TAB_NAME_LENGTH = 12
-const TAB_PADDING = 2
-const TAB_GAP = 1
-const CODING_PLAN_PROVIDERS = new Set([
-  "codex",
-  "zai-coding-plan",
-  "minimax",
-  "minimax-coding-plan",
-  "anthropic",
-  "@ai-sdk/anthropic",
-  "github-copilot",
-  "google",
-  "kimi-for-coding",
-])
+const SIDEBAR_WIDTH = 20
 
-function truncateTabName(name: string): string {
-  if (name.length <= MAX_TAB_NAME_LENGTH) {
-    return name
+const PROVIDER_COLOR_PAIRS: Array<[string, string]> = [
+  ["#ef4444", "#f97316"],
+  ["#60a5fa", "#3b82f6"],
+  ["#34d399", "#22c55e"],
+  ["#f59e0b", "#facc15"],
+  ["#a78bfa", "#8b5cf6"],
+  ["#f472b6", "#ec4899"],
+]
+
+function hashProviderName(value: string): number {
+  let hash = 0
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) | 0
   }
-  return name.slice(0, MAX_TAB_NAME_LENGTH - 3) + "..."
+  return Math.abs(hash)
 }
 
-function chunkArray<T>(array: T[], size: number): T[][] {
-  const chunks: T[][] = []
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size))
+function providerColorPair(providerBase: string): [string, string] {
+  const index = hashProviderName(providerBase) % PROVIDER_COLOR_PAIRS.length
+  return PROVIDER_COLOR_PAIRS[index]
+}
+
+function truncateName(name: string, maxLength: number): string {
+  if (name.length <= maxLength) {
+    return name
   }
-  return chunks
+  return name.slice(0, maxLength - 3) + "..."
 }
 
 async function fetchUsageRecord(input: {
@@ -89,6 +90,7 @@ export function DialogUsage() {
   let debounceTimeout: Timer | undefined
 
   let scroll: ScrollBoxRenderable
+  let sidebarScroll: ScrollBoxRenderable
   let searchInput: InputRenderable | undefined
 
   createEffect(() => {
@@ -117,7 +119,7 @@ export function DialogUsage() {
       return
     }
 
-    // Scroll navigation
+    // Scroll navigation for content
     if (evt.name === "up" || (evt.ctrl && evt.name === "p")) {
       evt.preventDefault()
       scroll?.scrollBy(-1)
@@ -139,15 +141,16 @@ export function DialogUsage() {
       return
     }
 
-    // Tab navigation for providers (consume event immediately)
-    if (evt.name === "tab" && !evt.shift && !evt.ctrl && !evt.meta) {
-      // Always prevent default to stop mode switching
+    // Tab/Shift+Tab for provider navigation
+    if (evt.name === "tab" && !evt.ctrl && !evt.meta) {
       evt.preventDefault()
       const providers = filteredProviderTabs()
       if (providers.length > 0) {
         const current = selectedProvider()
         const currentIndex = current ? providers.indexOf(current) : -1
-        const nextIndex = (currentIndex + 1) % providers.length
+        const nextIndex = evt.shift
+          ? (currentIndex - 1 + providers.length) % providers.length
+          : (currentIndex + 1) % providers.length
         setSelectedProvider(providers[nextIndex])
       }
       return
@@ -161,21 +164,42 @@ export function DialogUsage() {
 
   const sessionID = createMemo(() => (route.data.type === "session" ? route.data.sessionID : undefined))
 
-  const providerTabs = createMemo(() => {
-    const coding: string[] = []
-    const api: string[] = []
-    for (const provider of sync.data.provider) {
-      if (CODING_PLAN_PROVIDERS.has(provider.id)) {
-        coding.push(provider.id)
-      } else {
-        api.push(provider.id)
-      }
-    }
-    return [...coding, ...api]
-  })
-
   const providerById = createMemo(() => {
     return Object.fromEntries(sync.data.provider.map((provider) => [provider.id, provider]))
+  })
+
+  const baseNameCounts = createMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const provider of sync.data.provider) {
+      const baseName = provider.baseProvider ?? provider.id
+      counts[baseName] = (counts[baseName] ?? 0) + 1
+    }
+    return counts
+  })
+
+  const baseNameIndex = createMemo(() => {
+    const seen: Record<string, number> = {}
+    const indices: Record<string, number> = {}
+    for (const provider of sync.data.provider) {
+      const baseName = provider.baseProvider ?? provider.id
+      const idx = seen[baseName] ?? 0
+      indices[provider.id] = idx
+      seen[baseName] = idx + 1
+    }
+    return indices
+  })
+
+  const providerTabs = createMemo(() => {
+    const providers = sync.data.provider.map((provider) => provider.id)
+    return [...providers].sort((a, b) => {
+      // access the store directly to make this reactive
+      const tokensA = usageState.records[a]?.tokenUsage?.total ?? 0
+      const tokensB = usageState.records[b]?.tokenUsage?.total ?? 0
+      if (tokensA !== tokensB) return tokensB - tokensA
+      const nameA = providerById()[a]?.name ?? a
+      const nameB = providerById()[b]?.name ?? b
+      return nameA.localeCompare(nameB)
+    })
   })
 
   const filteredProviderTabs = createMemo(() => {
@@ -190,20 +214,18 @@ export function DialogUsage() {
     })
   })
 
-  // Auto-select first provider from filtered list
+  // Auto-select first provider only when selection is missing
   createEffect(() => {
     const filtered = filteredProviderTabs()
-    if (filtered.length > 0) {
-      const firstProvider = filtered[0]
-      const current = untrack(selectedProvider)
-      if (current !== firstProvider) {
-        setSelectedProvider(firstProvider)
-      }
-    } else {
-      const current = untrack(selectedProvider)
+    const current = untrack(selectedProvider)
+    if (filtered.length === 0) {
       if (current !== null) {
         setSelectedProvider(null)
       }
+      return
+    }
+    if (!current || !filtered.includes(current)) {
+      setSelectedProvider(filtered[0])
     }
   })
 
@@ -221,14 +243,6 @@ export function DialogUsage() {
   const hasEntries = createMemo(() => visibleRecords().length > 0)
   const height = createMemo(() => {
     return Math.min(20, Math.floor(dimensions().height * 0.7))
-  })
-
-  const tabsPerRow = createMemo(() => {
-    const dialogPadding = 4
-    const availableWidth = dimensions().width - dialogPadding
-    const tabWidth = MAX_TAB_NAME_LENGTH + TAB_PADDING * 2 + TAB_GAP
-    const calculated = Math.floor(availableWidth / tabWidth)
-    return Math.max(1, Math.min(calculated, 7))
   })
 
   const loadProviderUsage = (providerID: string) => {
@@ -292,7 +306,7 @@ export function DialogUsage() {
         <text fg={theme.text} attributes={TextAttributes.BOLD}>
           Usage
         </text>
-        <text fg={theme.textMuted}>esc · tab to switch providers</text>
+        <text fg={theme.textMuted}>esc · tab/shift+tab · click to switch</text>
       </box>
 
       <box paddingBottom={1} flexDirection="row" alignItems="flex-start" gap={1}>
@@ -309,59 +323,81 @@ export function DialogUsage() {
         />
       </box>
 
-      {/* Provider Tabs */}
-      <Show when={filteredProviderTabs().length > 0}>
-        <box flexDirection="column" gap={1} paddingBottom={1}>
-          <For each={chunkArray(filteredProviderTabs(), tabsPerRow())}>
-            {(row) => (
-              <box flexDirection="row" gap={TAB_GAP}>
-                <For each={row}>
-                  {(providerID) => {
-                    const record = () => usageState.records[providerID]
-                    const name = () =>
-                      truncateTabName(record()?.providerName ?? providerById()[providerID]?.name ?? providerID)
-                    return (
-                      <box paddingLeft={TAB_PADDING} paddingRight={TAB_PADDING} paddingTop={0} paddingBottom={0} flexShrink={0}>
-                        <text
-                          attributes={selectedProvider() === providerID ? TextAttributes.BOLD : undefined}
-                          style={{
-                            bg: selectedProvider() === providerID ? "#2563eb" : undefined,
-                            fg: selectedProvider() === providerID ? "#ffffff" : theme.textMuted,
-                          }}
-                        >
-                          {name()}
-                        </text>
-                      </box>
-                    )
-                  }}
-                </For>
-              </box>
-            )}
-          </For>
+      <box flexDirection="row" gap={2}>
+        <Show when={filteredProviderTabs().length > 0}>
+          <box flexDirection="column" width={SIDEBAR_WIDTH} flexShrink={0}>
+            <text fg={theme.textMuted} paddingBottom={1}>
+              Providers
+            </text>
+            <scrollbox
+              ref={(r: ScrollBoxRenderable) => (sidebarScroll = r)}
+              height={height()}
+              flexDirection="column"
+              scrollbarOptions={{
+                visible: false,
+              }}
+            >
+              <For each={filteredProviderTabs()}>
+                {(providerID) => {
+                  const record = () => usageState.records[providerID]
+                  const name = () => record()?.providerName ?? providerById()[providerID]?.name ?? providerID
+                  const isSelected = () => selectedProvider() === providerID
+                  const loading = () => usageState.loading[providerID]
+                  const baseName = () => providerById()[providerID]?.baseProvider ?? providerID
+                  const hasDuplicate = () => (baseNameCounts()[baseName()] ?? 0) > 1
+                  const duplicateIndex = () => baseNameIndex()[providerID] ?? 0
+                  const colorPair = () => providerColorPair(baseName())
+                  const duplicateColor = () => (duplicateIndex() % 2 === 0 ? colorPair()[0] : colorPair()[1])
+
+                  return (
+                    <box
+                      paddingLeft={1}
+                      paddingRight={1}
+                      onMouseUp={() => setSelectedProvider(providerID)}
+                      backgroundColor={isSelected() ? theme.primary : undefined}
+                    >
+                      <text
+                        attributes={isSelected() ? TextAttributes.BOLD : undefined}
+                        style={{
+                          fg: isSelected() ? "#ffffff" : hasDuplicate() ? duplicateColor() : theme.text,
+                        }}
+                      >
+                        {truncateName(name(), SIDEBAR_WIDTH - 2)}
+                        {loading() && " ⋯"}
+                      </text>
+                    </box>
+                  )
+                }}
+              </For>
+            </scrollbox>
+          </box>
+        </Show>
+
+        {/* Right content area */}
+        <box flexDirection="column" flexGrow={1}>
+          <Show when={filteredProviderTabs().length === 0 && debouncedQuery().length > 0}>
+            <text fg={theme.textMuted}>No matches found for "{debouncedQuery()}"</text>
+          </Show>
+
+          {!selectedProvider() && filteredProviderTabs().length > 0 && (
+            <text fg={theme.textMuted}>No providers available.</text>
+          )}
+          {selectedProvider() && selectedLoading() && !hasEntries() && <text fg={theme.textMuted}>Loading usage…</text>}
+          {selectedProvider() && hasEntries() && (
+            <scrollbox
+              ref={(r: ScrollBoxRenderable) => (scroll = r)}
+              height={height()}
+              flexDirection="column"
+              gap={1}
+              scrollbarOptions={{
+                visible: false,
+              }}
+            >
+              <For each={visibleRecords()}>{(record) => <UsageCard record={record} />}</For>
+            </scrollbox>
+          )}
         </box>
-      </Show>
-
-      <Show when={filteredProviderTabs().length === 0 && debouncedQuery().length > 0}>
-        <text fg={theme.textMuted}>No matches found for "{debouncedQuery()}"</text>
-      </Show>
-
-      {!selectedProvider() && filteredProviderTabs().length > 0 && (
-        <text fg={theme.textMuted}>No providers available.</text>
-      )}
-      {selectedProvider() && selectedLoading() && !hasEntries() && <text fg={theme.textMuted}>Loading usage…</text>}
-      {selectedProvider() && hasEntries() && (
-        <scrollbox
-          ref={(r: ScrollBoxRenderable) => (scroll = r)}
-          height={height()}
-          flexDirection="column"
-          gap={1}
-          scrollbarOptions={{
-            visible: false,
-          }}
-        >
-          <For each={visibleRecords()}>{(record) => <UsageCard record={record} />}</For>
-        </scrollbox>
-      )}
+      </box>
     </box>
   )
 }
@@ -382,7 +418,7 @@ function UsageCard(props: { record: ProviderUsage.Record }) {
 
   return (
     <box border={["left"]} borderColor={status().color} paddingLeft={2} paddingBottom={1}>
-      <text fg={theme.text} attributes={TextAttributes.BOLD}>
+      <text fg="#60a5fa" attributes={TextAttributes.BOLD}>
         {props.record.providerName}
       </text>
       <Show when={props.record.planType}>{(plan) => <text fg={theme.textMuted}>Plan · {plan()}</text>}</Show>
@@ -393,7 +429,11 @@ function UsageCard(props: { record: ProviderUsage.Record }) {
         Access: <span style={{ fg: status().color }}>{status().label}</span>
       </text>
       <Show when={props.record.credits}>
-        {(credits) => <text fg={theme.text}>Credits: {describeCredits(credits())}</text>}
+        {(credits) => (
+          <text fg={theme.text}>
+            Credits: <span style={{ fg: "#a78bfa" }}>{describeCredits(credits())}</span>
+          </text>
+        )}
       </Show>
       <Show when={!isMiniMaxWithLimits()}>
         <Show when={props.record.tokenUsage}>
@@ -403,22 +443,22 @@ function UsageCard(props: { record: ProviderUsage.Record }) {
               <box marginLeft={2} flexDirection="column">
                 <Show when={usage().total !== undefined}>
                   <text fg={theme.text}>
-                    <b>Total:</b> {formatTokenNumber(usage().total!)}
+                    <b>Total:</b> <span style={{ fg: "#34d399" }}>{formatTokenNumber(usage().total!)}</span>
                   </text>
                 </Show>
                 <Show when={usage().input !== undefined}>
                   <text fg={theme.text}>
-                    <b>Input:</b> {formatTokenNumber(usage().input!)}
+                    <b>Input:</b> <span style={{ fg: "#60a5fa" }}>{formatTokenNumber(usage().input!)}</span>
                   </text>
                 </Show>
                 <Show when={usage().output !== undefined}>
                   <text fg={theme.text}>
-                    <b>Output:</b> {formatTokenNumber(usage().output!)}
+                    <b>Output:</b> <span style={{ fg: "#f472b6" }}>{formatTokenNumber(usage().output!)}</span>
                   </text>
                 </Show>
                 <Show when={usage().cached !== undefined}>
                   <text fg={theme.text}>
-                    <b>Cached:</b> {formatTokenNumber(usage().cached!)}
+                    <b>Cached:</b> <span style={{ fg: "#a78bfa" }}>{formatTokenNumber(usage().cached!)}</span>
                   </text>
                 </Show>
               </box>
@@ -434,27 +474,29 @@ function UsageCard(props: { record: ProviderUsage.Record }) {
               <box marginLeft={2} flexDirection="column">
                 <Show when={cost().totalCost !== undefined}>
                   <text fg={theme.text}>
-                    <b>Total:</b> {formatCurrency(cost().totalCost!)}
+                    <b>Total:</b> <span style={{ fg: "#fbbf24" }}>{formatCurrency(cost().totalCost!)}</span>
                   </text>
                 </Show>
                 <Show when={cost().inputCost !== undefined && (cost().inputCost ?? 0) > 0}>
                   <text fg={theme.text}>
-                    <b>Input:</b> {formatCurrency(cost().inputCost ?? 0)}
+                    <b>Input:</b> <span style={{ fg: "#60a5fa" }}>{formatCurrency(cost().inputCost ?? 0)}</span>
                   </text>
                 </Show>
                 <Show when={cost().outputCost !== undefined && (cost().outputCost ?? 0) > 0}>
                   <text fg={theme.text}>
-                    <b>Output:</b> {formatCurrency(cost().outputCost ?? 0)}
+                    <b>Output:</b> <span style={{ fg: "#f472b6" }}>{formatCurrency(cost().outputCost ?? 0)}</span>
                   </text>
                 </Show>
                 <Show when={cost().cacheReadCost !== undefined && (cost().cacheReadCost ?? 0) > 0}>
                   <text fg={theme.text}>
-                    <b>Cache Read:</b> {formatCurrency(cost().cacheReadCost ?? 0)}
+                    <b>Cache Read:</b>{" "}
+                    <span style={{ fg: "#a78bfa" }}>{formatCurrency(cost().cacheReadCost ?? 0)}</span>
                   </text>
                 </Show>
                 <Show when={cost().cacheCreationCost !== undefined && (cost().cacheCreationCost ?? 0) > 0}>
                   <text fg={theme.text}>
-                    <b>Cache Write:</b> {formatCurrency(cost().cacheCreationCost ?? 0)}
+                    <b>Cache Write:</b>{" "}
+                    <span style={{ fg: "#c084fc" }}>{formatCurrency(cost().cacheCreationCost ?? 0)}</span>
                   </text>
                 </Show>
               </box>
@@ -469,7 +511,7 @@ function UsageCard(props: { record: ProviderUsage.Record }) {
             <For each={limits()}>
               {(limit) => (
                 <text fg={theme.text}>
-                  <b>{limit.label}:</b> {limit.detail}
+                  <b>{limit.label}:</b> <span style={{ fg: limit.color }}>{limit.detail}</span>
                   <Show when={limit.reset}>{(reset) => <span style={{ fg: theme.textMuted }}> · {reset()}</span>}</Show>
                 </text>
               )}
@@ -509,10 +551,10 @@ function describeCredits(credits: ProviderUsage.CreditsSummary): string {
 function describeLimits(
   limits: ProviderUsage.Record["limits"],
   providerID?: string,
-): { label: string; detail: string; reset?: string }[] {
+): { label: string; detail: string; reset?: string; color: string }[] {
   if (!limits) return []
   const isMinimax = providerID === "minimax" || providerID === "minimax-coding-plan"
-  const rows: { label: string; detail: string; reset?: string }[] = []
+  const rows: { label: string; detail: string; reset?: string; color: string }[] = []
   const primary = describeLimit(limits.primary?.label ?? "Primary", limits.primary, isMinimax)
   if (primary) rows.push(primary)
   const secondary = describeLimit(limits.secondary?.label ?? "Secondary", limits.secondary, isMinimax)
@@ -524,15 +566,20 @@ function describeLimit(
   label: string,
   window?: ProviderUsage.RateLimitWindowSummary,
   isMinimax = false,
-): { label: string; detail: string; reset?: string } | undefined {
+): { label: string; detail: string; reset?: string; color: string } | undefined {
   if (!window) return undefined
   const usedPercent = window.usedPercent ?? 0
   const remaining = isMinimax ? usedPercent : Math.max(0, 100 - usedPercent)
+
+  const color = remaining >= 70 ? "#34d399" : remaining >= 40 ? "#fbbf24" : "#f87171"
+
   const detail = `${remaining.toFixed(0)}% ${progressBar(remaining)}`
+
   return {
     label,
     detail,
     reset: window.resetsAt ? formatReset(window.resetsAt) : undefined,
+    color,
   }
 }
 

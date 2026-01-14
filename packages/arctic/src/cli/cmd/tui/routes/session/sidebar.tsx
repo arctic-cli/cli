@@ -168,17 +168,31 @@ export function Sidebar(props: { sessionID: string; onHide?: () => void }) {
     "zai-coding-plan",
   ]
 
+  const usageProviderBase = createMemo(() => {
+    const provider = currentProvider()
+    if (!provider) return provider
+    const providerInfo = sync.data.provider.find((item) => item.id === provider)
+    const baseProvider = providerInfo?.baseProvider ?? provider
+    if (baseProvider === "minimax") {
+      const hasCodingPlan = sync.data.provider.some((item) => item.id === "minimax-coding-plan")
+      return hasCodingPlan ? "minimax-coding-plan" : baseProvider
+    }
+    return baseProvider
+  })
+
   const usageProviderID = createMemo(() => {
     const provider = currentProvider()
-    if (provider === "minimax") {
+    if (!provider) return provider
+    const baseProvider = usageProviderBase()
+    if (baseProvider === "minimax" && provider === baseProvider) {
       const hasCodingPlan = sync.data.provider.some((item) => item.id === "minimax-coding-plan")
-      return hasCodingPlan ? "minimax-coding-plan" : provider
+      return hasCodingPlan ? "minimax-coding-plan" : baseProvider
     }
     return provider
   })
 
   const showUsageLimits = createMemo(() => {
-    const provider = usageProviderID()
+    const provider = usageProviderBase()
     return provider && SUPPORTED_USAGE_PROVIDERS.includes(provider)
   })
 
@@ -591,7 +605,7 @@ export function Sidebar(props: { sessionID: string; onHide?: () => void }) {
                       <Show when={usageData()?.limits?.primary}>
                         {(() => {
                           const usedPercent = usageData()!.limits!.primary!.usedPercent ?? 0
-                          const isMinimax = usageProviderID() === "minimax" || usageProviderID() === "minimax-coding-plan"
+                          const isMinimax = usageProviderBase() === "minimax" || usageProviderBase() === "minimax-coding-plan"
                           const remaining = isMinimax ? usedPercent : 100 - usedPercent
                           const color = usageColor(remaining)
                           const critical = remaining < 10
@@ -614,7 +628,7 @@ export function Sidebar(props: { sessionID: string; onHide?: () => void }) {
                       <Show when={usageData()?.limits?.secondary}>
                         {(() => {
                           const usedPercent = usageData()!.limits!.secondary!.usedPercent ?? 0
-                          const isMinimax = usageProviderID() === "minimax" || usageProviderID() === "minimax-coding-plan"
+                          const isMinimax = usageProviderBase() === "minimax" || usageProviderBase() === "minimax-coding-plan"
                           const remaining = isMinimax ? usedPercent : 100 - usedPercent
                           const color = usageColor(remaining)
                           const critical = remaining < 10
@@ -645,7 +659,7 @@ export function Sidebar(props: { sessionID: string; onHide?: () => void }) {
                       <Show
                         when={usageData()?.limitReached && (() => {
                           const usedPercent = usageData()!.limits?.primary?.usedPercent ?? 0
-                          const isMinimax = usageProviderID() === "minimax" || usageProviderID() === "minimax-coding-plan"
+                          const isMinimax = usageProviderBase() === "minimax" || usageProviderBase() === "minimax-coding-plan"
                           const remaining = isMinimax ? usedPercent : 100 - usedPercent
                           return remaining < 100
                         })()}

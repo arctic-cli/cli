@@ -111,7 +111,7 @@ export namespace ProviderUsage {
     for (const providerID of providerIDs) {
       const provider = providers[providerID]
       const baseProviderID = provider?.baseProvider ?? providerID
-      const fetcher = usageFetchers[baseProviderID]
+      const fetcher = usageFetchers[providerID] ?? usageFetchers[baseProviderID]
       const base: Record = {
         providerID,
         providerName: provider?.name ?? providerID,
@@ -732,12 +732,16 @@ export namespace ProviderUsage {
   async function fetchCodexUsage(input: {
     provider: Provider.Info
   }): Promise<Omit<Record, "providerID" | "providerName" | "fetchedAt">> {
-    const auth = await Auth.get(input.provider.id)
+    const directAuth = await Auth.get(input.provider.id)
+    const baseKey = input.provider.baseProvider ?? input.provider.id
+    const baseAuth = baseKey !== input.provider.id ? await Auth.get(baseKey) : undefined
+    const auth = directAuth ?? baseAuth
     if (!auth) {
       throw new Error("Codex authentication is required. Run `arctic auth codex` to connect your account.")
     }
 
-    const { accessToken, accountId } = await resolveCodexCredentials(auth, input.provider.id)
+    const authKey = directAuth ? input.provider.id : baseKey
+    const { accessToken, accountId } = await resolveCodexCredentials(auth, authKey)
     const payload = await fetchCodexUsagePayload({
       baseUrl: resolveCodexBaseUrl(auth),
       accessToken,
@@ -795,7 +799,7 @@ export namespace ProviderUsage {
 
   async function resolveCodexCredentials(auth: Auth.Info, providerID: string): Promise<{ accessToken: string; accountId: string }> {
     if (auth.type === "codex") {
-      const accessToken = await CodexClient.ensureValidToken()
+      const accessToken = await CodexClient.ensureValidTokenFor(providerID, auth)
       const accountId = resolveAccountId(auth.accountId, auth.idToken ?? accessToken)
       return { accessToken, accountId }
     }
