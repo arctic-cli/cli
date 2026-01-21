@@ -14,6 +14,7 @@ import type {
   Provider,
   ProviderAuthMethod,
   ProviderListResponse,
+  Pty,
   Session,
   SessionStatus,
   Todo,
@@ -71,6 +72,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       formatter: FormatterStatus[]
       vcs: VcsInfo | undefined
       path: Path
+      pty: Pty[]
     }>({
       provider_next: {
         all: [],
@@ -98,6 +100,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       formatter: [],
       vcs: undefined,
       path: { state: "", config: "", worktree: "", directory: "" },
+      pty: [],
     })
 
     const sdk = useSDK()
@@ -286,6 +289,43 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           break
         }
 
+        case "pty.created": {
+          setStore(
+            "pty",
+            produce((draft) => {
+              draft.push(event.properties.info)
+            }),
+          )
+          break
+        }
+
+        case "pty.updated": {
+          const index = store.pty.findIndex((p) => p.id === event.properties.info.id)
+          if (index !== -1) {
+            setStore("pty", index, reconcile(event.properties.info))
+          }
+          break
+        }
+
+        case "pty.exited": {
+          const index = store.pty.findIndex((p) => p.id === event.properties.id)
+          if (index !== -1) {
+            setStore("pty", index, "status", "exited")
+          }
+          break
+        }
+
+        case "pty.deleted": {
+          setStore(
+            "pty",
+            produce((draft) => {
+              const index = draft.findIndex((p) => p.id === event.properties.id)
+              if (index !== -1) draft.splice(index, 1)
+            }),
+          )
+          break
+        }
+
         case "server.connected": {
           // refetch session status on reconnect to ensure TUI state is in sync
           // this handles cases where the connection dropped and we missed status events
@@ -378,6 +418,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
             sdk.client.provider.auth().then((x) => setStore("provider_auth", x.data ?? {})),
             sdk.client.vcs.get().then((x) => setStore("vcs", x.data)),
             sdk.client.path.get().then((x) => setStore("path", x.data!)),
+            sdk.client.pty.list().then((x) => setStore("pty", x.data ?? [])),
             // fetch permission bypass status
             sdk.client.permission.bypass
               .get()

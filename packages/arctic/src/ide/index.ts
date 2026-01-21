@@ -1,6 +1,6 @@
 import { BusEvent } from "@/bus/bus-event"
 import { Bus } from "@/bus"
-import { spawn } from "bun"
+import { spawn, spawnSync } from "bun"
 import z from "zod"
 import { NamedError } from "@arctic-cli/util/error"
 import { Log } from "../util/log"
@@ -42,6 +42,32 @@ export namespace Ide {
       }
     }
     return "unknown"
+  }
+
+  export function cmd() {
+    const name = ide()
+    return SUPPORTED_IDES.find((i) => i.name === name)?.cmd
+  }
+
+  function findAvailableCmd() {
+    const detected = cmd()
+    if (detected) return detected
+    for (const ide of SUPPORTED_IDES) {
+      const result = spawnSync(["which", ide.cmd], { stdout: "pipe", stderr: "pipe" })
+      if (result.exitCode === 0) return ide.cmd
+    }
+    return undefined
+  }
+
+  export function openFile(filePath: string, line?: number) {
+    const command = findAvailableCmd()
+    if (!command) return false
+    const args = line ? [`--goto`, `${filePath}:${line}`] : [filePath]
+    spawn([command, ...args], {
+      stdout: "ignore",
+      stderr: "ignore",
+    })
+    return true
   }
 
   export function alreadyInstalled() {

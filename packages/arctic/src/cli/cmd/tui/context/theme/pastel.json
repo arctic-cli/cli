@@ -217,6 +217,10 @@
     "syntaxPunctuation": {
       "dark": "#e0e0f0",
       "light": "#404058"
+    },
+    "selectedListItemText": {
+      "dark": "#252535",
+      "light": "#f0f0f8"
     }
   }
 }

@@ -15,6 +15,7 @@ import { fileURLToPath } from "url"
 import { Flag } from "@/flag/flag.ts"
 import path from "path"
 import { Shell } from "@/shell/shell"
+import { Pty } from "@/pty"
 
 const MAX_OUTPUT_LENGTH = Flag.ARCTIC_EXPERIMENTAL_BASH_MAX_OUTPUT_LENGTH || 30_000
 const DEFAULT_TIMEOUT = Flag.ARCTIC_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS || 2 * 60 * 1000
@@ -71,6 +72,12 @@ export const BashTool = Tool.define("bash", async () => {
         .describe(
           "Clear, concise description of what this command does in 5-10 words. Examples:\nInput: ls\nOutput: Lists files in current directory\n\nInput: git status\nOutput: Shows working tree status\n\nInput: npm install\nOutput: Installs package dependencies\n\nInput: mkdir foo\nOutput: Creates directory 'foo'",
         ),
+      run_in_background: z
+        .boolean()
+        .describe(
+          "Run the command in background mode. Use this for long-running processes like dev servers (npm run dev, next dev, etc.). The process will be tracked and can be stopped by the user. Returns immediately with the process ID.",
+        )
+        .optional(),
     }),
     async execute(params, ctx) {
       const cwd = params.workdir || Instance.directory
@@ -198,6 +205,30 @@ export const BashTool = Tool.define("bash", async () => {
         })
       }
 
+      // background mode: spawn via PTY and return immediately
+      if (params.run_in_background) {
+        const ptyInfo = await Pty.create({
+          command: shell,
+          args: ["-c", params.command],
+          cwd,
+          title: params.description,
+        })
+
+        const output = `Started background process (PID: ${ptyInfo.pid}). The process is now running and can be monitored or stopped via the /processes command.`
+        return {
+          title: params.description,
+          metadata: {
+            output,
+            exit: null as number | null,
+            description: params.description,
+            ptyID: ptyInfo.id,
+            pid: ptyInfo.pid,
+            background: true,
+          },
+          output,
+        }
+      }
+
       const proc = spawn(params.command, {
         shell,
         cwd,
@@ -301,6 +332,9 @@ export const BashTool = Tool.define("bash", async () => {
           output,
           exit: proc.exitCode,
           description: params.description,
+          ptyID: undefined as string | undefined,
+          pid: undefined as number | undefined,
+          background: false,
         },
         output,
       }

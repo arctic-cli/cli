@@ -1,4 +1,4 @@
-import { TextAttributes } from "@opentui/core"
+import { RGBA, TextAttributes } from "@opentui/core"
 import { useTheme } from "../context/theme"
 import { useDialog, type DialogContext } from "./dialog"
 import { createStore } from "solid-js/store"
@@ -39,8 +39,8 @@ export function DialogConfirm(props: DialogConfirmProps) {
         </text>
         <text fg={theme.textMuted}>esc</text>
       </box>
-      <box paddingBottom={1}>
-        <text fg={theme.textMuted}>{props.message}</text>
+      <box paddingBottom={1} minHeight={2} backgroundColor={theme.backgroundPanel}>
+        <text fg={theme.text}>{props.message}</text>
       </box>
       <box flexDirection="row" justifyContent="flex-end" paddingBottom={1}>
         <For each={["cancel", "confirm"]}>

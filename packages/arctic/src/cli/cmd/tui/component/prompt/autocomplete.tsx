@@ -401,6 +401,12 @@ export function Autocomplete(props: {
         onSelect: () => command.trigger("arctic.status"),
       },
       {
+        display: "/processes",
+        aliases: ["/ps", "/servers"],
+        description: "manage running processes",
+        onSelect: () => command.trigger("pty.list"),
+      },
+      {
         display: "/usage",
         description: "show usage summary",
         onSelect: () => command.trigger("arctic.usage"),

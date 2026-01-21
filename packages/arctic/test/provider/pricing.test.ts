@@ -101,3 +101,89 @@ describe("Pricing with models.dev", () => {
     expect(Pricing.formatCost(5)).toBe("$5.00")
   })
 })
+
+describe("GitHub Copilot multipliers", () => {
+  test("detects free plan", () => {
+    expect(Pricing.detectCopilotPlanType("copilot_free")).toBe("free")
+    expect(Pricing.detectCopilotPlanType("copilot_for_free")).toBe("free")
+    expect(Pricing.detectCopilotPlanType("Copilot Free")).toBe("free")
+  })
+
+  test("detects paid plan", () => {
+    expect(Pricing.detectCopilotPlanType("copilot_business")).toBe("paid")
+    expect(Pricing.detectCopilotPlanType("copilot_enterprise")).toBe("paid")
+    expect(Pricing.detectCopilotPlanType("copilot_individual")).toBe("paid")
+    expect(Pricing.detectCopilotPlanType("copilot_pro")).toBe("paid")
+  })
+
+  test("returns correct multipliers for paid plan", () => {
+    expect(Pricing.getCopilotMultiplier("claude-haiku-4.5", "paid")).toBe(0.33)
+    expect(Pricing.getCopilotMultiplier("claude-opus-41", "paid")).toBe(10)
+    expect(Pricing.getCopilotMultiplier("claude-sonnet-4", "paid")).toBe(1)
+    expect(Pricing.getCopilotMultiplier("gpt-4.1", "paid")).toBe(0)
+    expect(Pricing.getCopilotMultiplier("gpt-5", "paid")).toBe(1)
+    expect(Pricing.getCopilotMultiplier("grok-code-fast-1", "paid")).toBe(0.25)
+  })
+
+  test("handles -thinking suffix", () => {
+    // Should strip -thinking and match claude-sonnet-4.5
+    expect(Pricing.getCopilotMultiplier("claude-sonnet-4.5-thinking", "paid")).toBe(1)
+    // Should strip -thinking and match claude-opus-4.5
+    expect(Pricing.getCopilotMultiplier("claude-opus-4.5-thinking", "paid")).toBe(3)
+    // Should handle opus 4 variants (without minor version)
+    expect(Pricing.getCopilotMultiplier("claude-opus-4-thinking", "paid")).toBe(10)
+    expect(Pricing.getCopilotMultiplier("claude-opus-4.1-thinking", "paid")).toBe(10)
+  })
+
+  test("handles normalization with -thinking suffix", () => {
+    // Should normalize 4-5 to 4.5 and strip -thinking
+    expect(Pricing.getCopilotMultiplier("claude-sonnet-4-5-thinking", "paid")).toBe(1)
+  })
+
+  test("returns correct multipliers for free plan", () => {
+    expect(Pricing.getCopilotMultiplier("claude-haiku-4.5", "free")).toBe(1)
+    expect(Pricing.getCopilotMultiplier("gpt-4.1", "free")).toBe(1)
+    expect(Pricing.getCopilotMultiplier("gpt-4o", "free")).toBe(1)
+    expect(Pricing.getCopilotMultiplier("gpt-5-mini", "free")).toBe(1)
+  })
+
+  test("returns null for models not available on free plan", () => {
+    expect(Pricing.getCopilotMultiplier("claude-opus-41", "free")).toBeNull()
+    expect(Pricing.getCopilotMultiplier("claude-sonnet-4", "free")).toBeNull()
+    expect(Pricing.getCopilotMultiplier("gpt-5", "free")).toBeNull()
+    expect(Pricing.getCopilotMultiplier("gemini-2.5-pro", "free")).toBeNull()
+  })
+
+  test("returns null for unknown models", () => {
+    expect(Pricing.getCopilotMultiplier("unknown-model", "paid")).toBeNull()
+    expect(Pricing.getCopilotMultiplier("unknown-model", "free")).toBeNull()
+  })
+
+  test("strips provider prefix from model ID", () => {
+    expect(Pricing.getCopilotMultiplier("github-copilot/claude-haiku-4.5", "paid")).toBe(0.33)
+    expect(Pricing.getCopilotMultiplier("github-copilot/gpt-5", "paid")).toBe(1)
+  })
+
+  test("checks model availability", () => {
+    expect(Pricing.isCopilotModelAvailable("claude-haiku-4.5", "free")).toBe(true)
+    expect(Pricing.isCopilotModelAvailable("claude-opus-41", "free")).toBe(false)
+    expect(Pricing.isCopilotModelAvailable("claude-opus-41", "paid")).toBe(true)
+  })
+
+  test("lists multipliers for paid plan", () => {
+    const multipliers = Pricing.listCopilotMultipliers("paid")
+    expect(multipliers["claude-haiku-4.5"]).toBe(0.33)
+    expect(multipliers["claude-opus-41"]).toBe(10)
+    expect(multipliers["gpt-4.1"]).toBe(0)
+    expect(Object.keys(multipliers).length).toBeGreaterThan(10)
+  })
+
+  test("lists multipliers for free plan", () => {
+    const multipliers = Pricing.listCopilotMultipliers("free")
+    expect(multipliers["claude-haiku-4.5"]).toBe(1)
+    expect(multipliers["gpt-4.1"]).toBe(1)
+    expect(multipliers["claude-opus-41"]).toBeUndefined()
+    // Free plan has fewer available models
+    expect(Object.keys(multipliers).length).toBeLessThan(10)
+  })
+})

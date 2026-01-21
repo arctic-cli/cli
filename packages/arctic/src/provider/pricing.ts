@@ -34,6 +34,33 @@ const FALLBACK_PRICING: Record<string, ModelPricing> = {
   "claude-haiku-4-5-thinking": { input: 1, output: 5, cacheWrite: 1.25, cacheRead: 0.1 },
 }
 
+type CopilotMultiplier = { paid: number; free: number | null }
+const COPILOT_MULTIPLIERS: Record<string, CopilotMultiplier> = {
+  "claude-haiku-4.5": { paid: 0.33, free: 1 },
+  "claude-opus-4": { paid: 10, free: null },
+  "claude-opus-4.1": { paid: 10, free: null },
+  "claude-opus-41": { paid: 10, free: null },
+  "claude-opus-4.5": { paid: 3, free: null },
+  "claude-sonnet-4": { paid: 1, free: null },
+  "claude-sonnet-4.5": { paid: 1, free: null },
+  "gemini-2.5-pro": { paid: 1, free: null },
+  "gemini-3-flash-preview": { paid: 0.33, free: null },
+  "gemini-3-pro-preview": { paid: 1, free: null },
+  "gpt-4.1": { paid: 0, free: 1 },
+  "gpt-4o": { paid: 0, free: 1 },
+  "gpt-5": { paid: 1, free: null },
+  "gpt-5-mini": { paid: 0, free: 1 },
+  "gpt-5-codex": { paid: 1, free: null },
+  "gpt-5.1": { paid: 1, free: null },
+  "gpt-5.1-codex": { paid: 1, free: null },
+  "gpt-5.1-codex-mini": { paid: 0.33, free: null },
+  "gpt-5.1-codex-max": { paid: 1, free: null },
+  "gpt-5.2": { paid: 1, free: null },
+  "gpt-5.2-codex": { paid: 1, free: null },
+  "grok-code-fast-1": { paid: 0.25, free: null },
+  "raptor-mini": { paid: 0, free: null },
+}
+
 /**
  * Initialize models.dev pricing cache (call early to populate cache for sync access)
  */
@@ -106,6 +133,35 @@ export namespace Pricing {
    */
   function normalizeModelId(modelId: string): string {
     return modelId.replace(/\./g, "-") // Convert 4.5 to 4-5
+  }
+
+  function stripThinkingSuffix(modelId: string): string {
+    return modelId.replace(/-thinking$/i, "")
+  }
+
+  function stripReasoningEffort(modelId: string): string {
+    return modelId.replace(/-(none|low|medium|high|xhigh|minimal)$/i, "")
+  }
+
+  function copilotModelCandidates(modelId: string): string[] {
+    const base = extractModelId(modelId).toLowerCase()
+    const candidates = new Set([base])
+    const queue = [base]
+    const transforms = [stripThinkingSuffix, stripReasoningEffort]
+
+    while (queue.length > 0) {
+      const current = queue.pop()
+      if (!current) continue
+      for (const transform of transforms) {
+        const next = transform(current)
+        if (!candidates.has(next)) {
+          candidates.add(next)
+          queue.push(next)
+        }
+      }
+    }
+
+    return Array.from(candidates)
   }
 
   /**
@@ -347,6 +403,57 @@ export namespace Pricing {
       models.push(...Object.keys(provider.models))
     }
     return models
+  }
+
+  export type CopilotPlanType = "free" | "paid"
+
+  export function detectCopilotPlanType(copilotPlan: string): CopilotPlanType {
+    const lower = copilotPlan.toLowerCase()
+    if (lower.includes("free") || lower === "copilot_for_free") {
+      return "free"
+    }
+    return "paid"
+  }
+
+  export function getCopilotMultiplier(modelId: string, plan: CopilotPlanType): number | null {
+    const candidates = copilotModelCandidates(modelId)
+    let entry: CopilotMultiplier | undefined
+
+    for (const candidate of candidates) {
+      entry = COPILOT_MULTIPLIERS[candidate]
+      if (entry) break
+    }
+
+    if (!entry) {
+      const normalizedCandidates = new Set(candidates.map((candidate) => normalizeModelId(candidate)))
+
+      for (const [key, value] of Object.entries(COPILOT_MULTIPLIERS)) {
+        const normalizedKey = normalizeModelId(key)
+        if (normalizedCandidates.has(normalizedKey)) {
+          entry = value
+          break
+        }
+      }
+    }
+
+    if (!entry) return null
+    return plan === "free" ? entry.free : entry.paid
+  }
+
+  export function isCopilotModelAvailable(modelId: string, plan: CopilotPlanType): boolean {
+    const multiplier = getCopilotMultiplier(modelId, plan)
+    return multiplier !== null
+  }
+
+  export function listCopilotMultipliers(plan: CopilotPlanType): Record<string, number> {
+    const result: Record<string, number> = {}
+    for (const [model, entry] of Object.entries(COPILOT_MULTIPLIERS)) {
+      const multiplier = plan === "free" ? entry.free : entry.paid
+      if (multiplier !== null) {
+        result[model] = multiplier
+      }
+    }
+    return result
   }
 }
 

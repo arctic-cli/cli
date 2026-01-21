@@ -14,6 +14,7 @@ import { DialogConnections } from "@tui/component/dialog-connections"
 import { DialogSessionList } from "@tui/component/dialog-session-list"
 import { DialogStatus } from "@tui/component/dialog-status"
 import { DialogStats } from "@tui/component/dialog-stats"
+import { DialogPty } from "@tui/component/dialog-pty"
 import { DialogThemeList } from "@tui/component/dialog-theme-list"
 import { DialogUsage } from "@tui/component/dialog-usage"
 import { KeybindProvider, useKeybind } from "@tui/context/keybind"
@@ -567,6 +568,14 @@ function App() {
       value: "arctic.stats",
       onSelect: () => {
         dialog.replace(() => <DialogStats />)
+      },
+      category: "System",
+    },
+    {
+      title: "Manage processes",
+      value: "pty.list",
+      onSelect: () => {
+        dialog.replace(() => <DialogPty />)
       },
       category: "System",
     },

@@ -392,7 +392,15 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
           if (!m) return false
           const provider = sync.data.provider.find((x) => x.id === m.providerID)
           const info = provider?.models[m.modelID]
-          return info?.capabilities.reasoning ?? false
+          if (info?.capabilities.reasoning) return true
+          if (m.providerID === "github-copilot" || m.providerID === "github-copilot-enterprise") {
+            const id = (info?.api?.id ?? info?.id ?? m.modelID).toLowerCase()
+            if (id.includes("gpt-5") && !id.includes("gpt-5-chat")) return true
+            if (id.includes("thinking")) return true
+            if (id.includes("gemini-3")) return true
+            if (id.includes("opus")) return true
+          }
+          return false
         },
       }
     })

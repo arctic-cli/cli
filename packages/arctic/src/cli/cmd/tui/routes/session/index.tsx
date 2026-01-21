@@ -1,3 +1,4 @@
+import { Ide } from "@/ide"
 import { Identifier } from "@/id/id"
 import { LANGUAGE_EXTENSIONS } from "@/lsp/language"
 import { BashTool } from "@/tool/bash"
@@ -1577,7 +1578,7 @@ function ReasoningPart(props: { last: boolean; part: ReasoningPart; message: Ass
             </box>
           </Match>
           <Match when={true}>
-            <box paddingLeft={2} marginTop={1}>
+            <box paddingLeft={0} marginTop={1}>
               <Show
                 when={isThinking()}
                 fallback={
@@ -1815,11 +1816,46 @@ const ToolRegistry = (() => {
   }
 })()
 
-function ToolTitle(props: { fallback: string; when: any; icon?: string; children: JSX.Element; summary?: string }) {
+function ToolTitle(props: {
+  fallback: string
+  when: any
+  icon?: string
+  children: JSX.Element
+  summary?: string
+  filePath?: string
+}) {
   const { theme } = useTheme()
+  const [hoverWithCtrl, setHoverWithCtrl] = createSignal(false)
+
+  const handleClick = (evt: import("@opentui/core").MouseEvent) => {
+    if (!props.filePath) return
+    if (!evt.modifiers.ctrl) return
+    Ide.openFile(props.filePath)
+  }
+
+  const handleMouseOver = (evt: import("@opentui/core").MouseEvent) => {
+    if (props.filePath && evt.modifiers.ctrl) setHoverWithCtrl(true)
+  }
+
+  const handleMouseOut = () => {
+    setHoverWithCtrl(false)
+  }
+
+  const handleMouseMove = (evt: import("@opentui/core").MouseEvent) => {
+    if (!props.filePath) return
+    setHoverWithCtrl(evt.modifiers.ctrl)
+  }
+
   return (
     <box flexDirection="column" gap={0}>
-      <text fg={props.when ? theme.text : theme.textMuted}>
+      <text
+        fg={props.when ? theme.text : theme.textMuted}
+        attributes={hoverWithCtrl() ? TextAttributes.UNDERLINE : undefined}
+        onMouseUp={handleClick}
+        onMouseOver={handleMouseOver}
+        onMouseOut={handleMouseOut}
+        onMouseMove={handleMouseMove}
+      >
         <Show fallback={<>~ {props.fallback}</>} when={props.when}>
           <span style={{ fg: theme.primary }}>●</span> {props.children}
         </Show>
@@ -1868,7 +1904,7 @@ ToolRegistry.register<typeof ReadTool>({
     })
     return (
       <>
-        <ToolTitle fallback="Reading file..." when={props.input.filePath} summary={summary()}>
+        <ToolTitle fallback="Reading file..." when={props.input.filePath} summary={summary()} filePath={props.input.filePath}>
           Read({normalizePath(props.input.filePath!)})
         </ToolTitle>
       </>
@@ -1896,7 +1932,7 @@ ToolRegistry.register<typeof WriteTool>({
 
     return (
       <>
-        <ToolTitle fallback="Preparing write..." when={props.input.filePath} summary={summary()}>
+        <ToolTitle fallback="Preparing write..." when={props.input.filePath} summary={summary()} filePath={props.input.filePath}>
           Write({normalizePath(props.input.filePath!)})
         </ToolTitle>
         <line_number fg={theme.textMuted} bg={theme.backgroundPanel} minWidth={3} paddingRight={1}>
@@ -1969,7 +2005,7 @@ ToolRegistry.register<typeof ListTool>({
     })
     return (
       <>
-        <ToolTitle fallback="Listing directory..." when={props.input.path !== undefined}>
+        <ToolTitle fallback="Listing directory..." when={props.input.path !== undefined} filePath={props.input.path}>
           List({dir()})
         </ToolTitle>
       </>
@@ -2097,7 +2133,7 @@ ToolRegistry.register<typeof EditTool>({
 
     return (
       <>
-        <ToolTitle fallback="Preparing edit..." when={props.input.filePath} summary={summary()}>
+        <ToolTitle fallback="Preparing edit..." when={props.input.filePath} summary={summary()} filePath={props.input.filePath}>
           Update({normalizePath(props.input.filePath!)})
         </ToolTitle>
         <Show when={diffContent()}>

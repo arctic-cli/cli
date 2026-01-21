@@ -58,6 +58,7 @@ export function Footer() {
     if (parent.benchmark.children.length <= 1) return undefined
     return `Switch ${keybind.print("benchmark_prev")} / ${keybind.print("benchmark_next")}`
   })
+  const runningProcesses = createMemo(() => sync.data.pty.filter((p) => p.status === "running"))
   const directory = useDirectory()
   const connected = useConnected()
 
@@ -94,6 +95,13 @@ export function Footer() {
         <Show when={sync.data.permission_bypass_enabled}>
           <text fg={theme.textMuted}>·</text>
           <text fg={theme.error}>⏵⏵ permission bypass enabled</text>
+        </Show>
+        <Show when={runningProcesses().length > 0}>
+          <text fg={theme.textMuted}>·</text>
+          <text fg={theme.success}>
+            ◉ {runningProcesses().length} process{runningProcesses().length > 1 ? "es" : ""}{" "}
+            <span style={{ fg: theme.textMuted }}>(/processes)</span>
+          </text>
         </Show>
       </box>
       <box gap={2} flexDirection="row" flexShrink={0} paddingRight={1}>

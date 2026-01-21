@@ -38,6 +38,7 @@ import { DialogConfirm } from "../../ui/dialog-confirm"
 import { DialogPrompt } from "../../ui/dialog-prompt"
 import { DialogSelect } from "../../ui/dialog-select"
 import { useToast } from "../../ui/toast"
+import { DialogAgent } from "../dialog-agent"
 import { DialogModel } from "../dialog-model"
 import { DialogPrompts } from "../dialog-prompts"
 import { DialogProvider as DialogProviderConnect } from "../dialog-provider"
@@ -210,6 +211,12 @@ export function Prompt(props: PromptProps) {
     | undefined
   >(undefined)
 
+  const isCopilotModel = createMemo(() => {
+    const model = local.model.current()
+    if (!model) return false
+    return model.providerID === "github-copilot" || model.providerID === "github-copilot-enterprise"
+  })
+
   // Calculate session cost
   createEffect(() => {
     const msgs = messages()
@@ -328,6 +335,7 @@ export function Prompt(props: PromptProps) {
       }).catch(() => undefined)
 
       if (cancelled) return
+
       if (!record?.limits?.primary) {
         setUsageLimits(undefined)
         return
@@ -1599,7 +1607,7 @@ export function Prompt(props: PromptProps) {
           </box>
         </box>
         <box flexDirection="row" flexShrink={0} paddingTop={1} gap={1}>
-          <text fg={highlight()}>
+          <text fg={highlight()} onMouseUp={() => dialog.replace(() => <DialogAgent />)}>
             {store.mode === "shell" ? "Shell" : Locale.titlecase(local.agent.current().name)}
           </text>
           <Show when={store.mode === "normal"}>
@@ -1608,14 +1616,40 @@ export function Prompt(props: PromptProps) {
               <text flexShrink={0} fg={keybind.leader ? theme.textMuted : theme.text}>
                 {displayModel().model}
               </text>
-              <Show when={local.thinking.supportsReasoning()}>
-                <text
-                  fg={{ low: theme.textMuted, medium: theme.warning, high: theme.primary }[local.thinking.current()]}
-                  onMouseUp={(e) => { e.stopPropagation(); local.thinking.cycle() }}
-                >
-                  ({local.thinking.current()})
-                </text>
-              </Show>
+              {(() => {
+                const model = local.model.current()
+                const supportsReasoning = local.thinking.supportsReasoning()
+                const isGitHubCopilot = model?.providerID === "github-copilot" || model?.providerID === "github-copilot-enterprise"
+                const multiplier = isGitHubCopilot && model ? Pricing.getCopilotMultiplier(model.modelID, "paid") : null
+                
+                const showBadge = supportsReasoning || (isGitHubCopilot && multiplier !== null)
+                if (!showBadge) return null
+                
+                const parts: string[] = []
+                if (supportsReasoning) {
+                  parts.push(local.thinking.current())
+                }
+                if (isGitHubCopilot && multiplier !== null) {
+                  parts.push(`x${multiplier}`)
+                }
+                
+                return (
+                  <text
+                    fg={
+                      supportsReasoning
+                        ? { low: theme.textMuted, medium: theme.warning, high: theme.primary }[local.thinking.current()] ??
+                          theme.textMuted
+                        : theme.textMuted
+                    }
+                    onMouseUp={(e) => {
+                      e.stopPropagation()
+                      supportsReasoning && local.thinking.cycle()
+                    }}
+                  >
+                    ({parts.join(", ")})
+                  </text>
+                )
+              })()}
               <text fg={theme.textMuted}>{displayModel().provider}</text>
             </box>
             <Show when={usageLimits() !== undefined}>
@@ -1656,74 +1690,69 @@ export function Prompt(props: PromptProps) {
           </text>
         </Show>
         <Show when={status().type !== "idle"}>
-          <box flexDirection="row" justifyContent="space-between" gap={1}>
-            <box flexShrink={0} flexDirection="row" gap={1}>
-              <spinner color={spinnerDef().color} frames={spinnerDef().frames} interval={40} />
-              <text fg={theme.textMuted}>Working...</text>
-              <box flexDirection="row" gap={1} flexShrink={0}>
-                {(() => {
-                  const retry = createMemo(() => {
-                    const s = status()
-                    if (s.type !== "retry") return
-                    return s
-                  })
-                  const message = createMemo(() => {
-                    const r = retry()
-                    if (!r) return
-                    if (r.message.includes("exceeded your current quota") && r.message.includes("gemini"))
-                      return "gemini is way too hot right now"
-                    if (r.message.length > 80) return r.message.slice(0, 80) + "..."
-                    return r.message
-                  })
-                  const isTruncated = createMemo(() => {
-                    const r = retry()
-                    if (!r) return false
-                    return r.message.length > 120
-                  })
-                  const [seconds, setSeconds] = createSignal(0)
-                  onMount(() => {
-                    const timer = setInterval(() => {
-                      const next = retry()?.next
-                      if (next) setSeconds(Math.round((next - Date.now()) / 1000))
-                    }, 1000)
-
-                    onCleanup(() => {
-                      clearInterval(timer)
-                    })
-                  })
-                  const handleMessageClick = () => {
-                    const r = retry()
-                    if (!r) return
-                    if (isTruncated()) {
-                      DialogAlert.show(dialog, "Retry Error", r.message)
-                    }
-                  }
-
-                  const retryText = () => {
-                    const r = retry()
-                    if (!r) return ""
-                    const baseMessage = message()
-                    const truncatedHint = isTruncated() ? " (click to expand)" : ""
-                    const retryInfo = ` [retrying ${seconds() > 0 ? `in ${seconds()}s ` : ""}attempt #${r.attempt}]`
-                    return baseMessage + truncatedHint + retryInfo
-                  }
-
-                  return (
-                    <Show when={retry()}>
-                      <box onMouseUp={handleMessageClick}>
-                        <text fg={theme.error}>{retryText()}</text>
-                      </box>
-                    </Show>
-                  )
-                })()}
-              </box>
-            </box>
-            <text fg={store.interrupt > 0 ? theme.primary : theme.text}>
-              esc{" "}
+          <box flexDirection="row" gap={1}>
+            <spinner color={spinnerDef().color} frames={spinnerDef().frames} interval={40} />
+            <text fg={theme.textMuted}>
+              Working...{" "}
               <span style={{ fg: store.interrupt > 0 ? theme.primary : theme.textMuted }}>
-                {store.interrupt > 0 ? "again to interrupt" : "interrupt"}
+                ({store.interrupt > 0 ? "esc again to interrupt" : "esc to interrupt"})
               </span>
             </text>
+            {(() => {
+              const retry = createMemo(() => {
+                const s = status()
+                if (s.type !== "retry") return
+                return s
+              })
+              const message = createMemo(() => {
+                const r = retry()
+                if (!r) return
+                if (r.message.includes("exceeded your current quota") && r.message.includes("gemini"))
+                  return "gemini is way too hot right now"
+                if (r.message.length > 80) return r.message.slice(0, 80) + "..."
+                return r.message
+              })
+              const isTruncated = createMemo(() => {
+                const r = retry()
+                if (!r) return false
+                return r.message.length > 120
+              })
+              const [seconds, setSeconds] = createSignal(0)
+              onMount(() => {
+                const timer = setInterval(() => {
+                  const next = retry()?.next
+                  if (next) setSeconds(Math.round((next - Date.now()) / 1000))
+                }, 1000)
+
+                onCleanup(() => {
+                  clearInterval(timer)
+                })
+              })
+              const handleMessageClick = () => {
+                const r = retry()
+                if (!r) return
+                if (isTruncated()) {
+                  DialogAlert.show(dialog, "Retry Error", r.message)
+                }
+              }
+
+              const retryText = () => {
+                const r = retry()
+                if (!r) return ""
+                const baseMessage = message()
+                const truncatedHint = isTruncated() ? " (click to expand)" : ""
+                const retryInfo = ` [retrying ${seconds() > 0 ? `in ${seconds()}s ` : ""}attempt #${r.attempt}]`
+                return baseMessage + truncatedHint + retryInfo
+              }
+
+              return (
+                <Show when={retry()}>
+                  <box onMouseUp={handleMessageClick}>
+                    <text fg={theme.error}>{retryText()}</text>
+                  </box>
+                </Show>
+              )
+            })()}
           </box>
         </Show>
       </box>
