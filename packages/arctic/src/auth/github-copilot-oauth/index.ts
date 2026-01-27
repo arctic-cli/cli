@@ -1,0 +1,1 @@
+export { ArcticGithubCopilotAuth } from "./plugin"

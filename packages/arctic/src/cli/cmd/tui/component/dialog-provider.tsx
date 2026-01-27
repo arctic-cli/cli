@@ -195,29 +195,28 @@ export function createDialogProviderOptions() {
             if (index == null) return
             const method = methods[index]
             if (method.type === "oauth") {
+              const targetProviderID = connectionName ? Auth.formatKey(provider.id, connectionName) : provider.id
               const result = await sdk.client.provider.oauth.authorize({
-                providerID: provider.id,
+                providerID: targetProviderID,
                 method: index,
               })
               if (result.data?.method === "code") {
                 dialog.replace(() => (
                   <CodeMethod
-                    providerID={provider.id}
+                    providerID={targetProviderID}
                     title={method.label}
                     index={index}
                     authorization={result.data!}
-                    connectionName={connectionName}
                   />
                 ))
               }
               if (result.data?.method === "auto") {
                 dialog.replace(() => (
                   <AutoMethod
-                    providerID={provider.id}
+                    providerID={targetProviderID}
                     title={method.label}
                     index={index}
                     authorization={result.data!}
-                    connectionName={connectionName}
                   />
                 ))
               }
@@ -258,7 +257,6 @@ interface AutoMethodProps {
   providerID: string
   title: string
   authorization: ProviderAuthAuthorization
-  connectionName?: string
 }
 function AutoMethod(props: AutoMethodProps) {
   const { theme } = useTheme()
@@ -267,7 +265,6 @@ function AutoMethod(props: AutoMethodProps) {
   const sync = useSync()
 
   onMount(async () => {
-    const previousAuth = props.connectionName ? await Auth.get(props.providerID) : undefined
     const result = await sdk.client.provider.oauth.callback({
       providerID: props.providerID,
       method: props.index,
@@ -277,27 +274,9 @@ function AutoMethod(props: AutoMethodProps) {
       return
     }
 
-    // if connectionName provided, move auth to connection key
-    if (props.connectionName) {
-      const newAuth = await Auth.get(props.providerID)
-      if (newAuth) {
-        const connectionKey = Auth.formatKey(props.providerID, props.connectionName)
-        await Auth.set(connectionKey, newAuth)
-        if (previousAuth) {
-          await Auth.set(props.providerID, previousAuth)
-        } else {
-          await Auth.remove(props.providerID)
-        }
-      }
-    }
-
     await sdk.client.instance.dispose()
     await sync.bootstrap()
-    dialog.replace(() => (
-      <DialogModel
-        providerID={props.connectionName ? Auth.formatKey(props.providerID, props.connectionName) : props.providerID}
-      />
-    ))
+    dialog.replace(() => <DialogModel providerID={props.providerID} />)
   })
 
   return (
@@ -325,7 +304,6 @@ interface CodeMethodProps {
   title: string
   providerID: string
   authorization: ProviderAuthAuthorization
-  connectionName?: string
 }
 function CodeMethod(props: CodeMethodProps) {
   const { theme } = useTheme()
@@ -339,36 +317,15 @@ function CodeMethod(props: CodeMethodProps) {
       title={props.title}
       placeholder="Authorization code"
       onConfirm={async (value) => {
-        const previousAuth = props.connectionName ? await Auth.get(props.providerID) : undefined
         const { error } = await sdk.client.provider.oauth.callback({
           providerID: props.providerID,
           method: props.index,
           code: value,
         })
         if (!error) {
-          // if connectionName provided, move auth to connection key
-          if (props.connectionName) {
-            const newAuth = await Auth.get(props.providerID)
-            if (newAuth) {
-              const connectionKey = Auth.formatKey(props.providerID, props.connectionName)
-              await Auth.set(connectionKey, newAuth)
-              if (previousAuth) {
-                await Auth.set(props.providerID, previousAuth)
-              } else {
-                await Auth.remove(props.providerID)
-              }
-            }
-          }
-
           await sdk.client.instance.dispose()
           await sync.bootstrap()
-          dialog.replace(() => (
-            <DialogModel
-              providerID={
-                props.connectionName ? Auth.formatKey(props.providerID, props.connectionName) : props.providerID
-              }
-            />
-          ))
+          dialog.replace(() => <DialogModel providerID={props.providerID} />)
           return
         }
         setError(true)

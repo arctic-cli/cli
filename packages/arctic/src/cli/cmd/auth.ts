@@ -663,7 +663,8 @@ export const AuthLoginCommand = cmd({
           provider = selected as string
         }
 
-        const plugin = await Plugin.list().then((x) => x.find((x) => x.auth?.provider === provider))
+        const parsed = Auth.parseKey(provider!)
+        const plugin = await Plugin.list().then((x) => x.find((x) => x.auth?.provider === parsed.provider))
         if (plugin && plugin.auth) {
           const handled = await handlePluginAuth({ auth: plugin.auth }, provider!)
           if (handled) return
@@ -679,7 +680,8 @@ export const AuthLoginCommand = cmd({
           if (prompts.isCancel(provider)) throw new UI.CancelledError()
 
           // Check if a plugin provides auth for this custom provider
-          const customPlugin = await Plugin.list().then((x) => x.find((x) => x.auth?.provider === provider))
+          const customParsed = Auth.parseKey(provider)
+          const customPlugin = await Plugin.list().then((x) => x.find((x) => x.auth?.provider === customParsed.provider))
           if (customPlugin && customPlugin.auth) {
             const handled = await handlePluginAuth({ auth: customPlugin.auth }, provider)
             if (handled) return

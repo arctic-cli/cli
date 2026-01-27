@@ -10,6 +10,7 @@ import { SessionPrompt } from "../session/prompt"
 import { iife } from "@/util/iife"
 import { defer } from "@/util/defer"
 import { Config } from "../config/config"
+import { Telemetry } from "../telemetry"
 
 export const TaskTool = Tool.define("task", async () => {
   const agents = await Agent.list().then((x) => x.filter((a) => a.mode !== "primary"))
@@ -30,6 +31,9 @@ export const TaskTool = Tool.define("task", async () => {
     async execute(params, ctx) {
       const agent = await Agent.get(params.subagent_type)
       if (!agent) throw new Error(`Unknown agent type: ${params.subagent_type} is not a valid agent type`)
+
+      Telemetry.agentSpawned(agent.name)
+
       const session = await iife(async () => {
         if (params.session_id) {
           const found = await Session.get(params.session_id).catch(() => {})

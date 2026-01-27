@@ -103,9 +103,16 @@ export namespace ProviderUsage {
   ): Promise<Record[]> {
     const providers = await Provider.list()
     const normalizedTargets = normalizeTargetProviders(targetProviders)
-    const providerIDs = (
-      normalizedTargets && normalizedTargets.length > 0 ? normalizedTargets : Object.keys(usageFetchers)
-    ).filter((id) => id in providers)
+    
+    // when no targets specified, include all providers that have a usage fetcher
+    // this includes provider connections (e.g. github-copilot:indo)
+    const providerIDs = normalizedTargets && normalizedTargets.length > 0 
+      ? normalizedTargets.filter((id) => id in providers)
+      : Object.keys(providers).filter((id) => {
+          const provider = providers[id]
+          const baseProviderID = provider?.baseProvider ?? id
+          return usageFetchers[id] || usageFetchers[baseProviderID]
+        })
 
     const timestamp = Date.now()
     const results: Record[] = []

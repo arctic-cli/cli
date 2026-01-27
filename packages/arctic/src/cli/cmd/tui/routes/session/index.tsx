@@ -1482,7 +1482,15 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
     return !next || next.role === "user"
   })
 
-  const isPending = createMemo(() => !props.message.time.completed && props.parts.length === 0)
+  const isPending = createMemo(() => {
+    // only show loader if message is incomplete AND session is still working
+    // this prevents the loader from staying visible after cancel/error
+    if (props.message.time.completed) return false
+    if (props.parts.length > 0) return false
+    if (props.message.error) return false
+    const status = sync.data.session_status[props.message.sessionID]
+    return status?.type !== "idle"
+  })
 
   return (
     <>

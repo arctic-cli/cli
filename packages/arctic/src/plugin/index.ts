@@ -1,18 +1,18 @@
 import type { Hooks, PluginInput, Plugin as PluginInstance } from "@arctic-cli/plugin"
-import { Config } from "../config/config"
-import { Bus } from "../bus"
-import { Log } from "../util/log"
 import { createArcticClient } from "@arctic-cli/sdk"
-import { Server } from "../server/server"
-import { BunProc } from "../bun"
-import { Instance } from "../project/instance"
-import { Flag } from "../flag/flag"
-import { ArcticCodexAuth } from "../auth/codex-oauth/index"
-import { ArcticGoogleAuth } from "../auth/google-oauth/index"
-import { ArcticAntigravityAuth } from "../auth/antigravity-oauth/index"
 import { ArcticAmpAuth } from "../auth/amp-auth/index"
-import { ArcticQwenAuth } from "../auth/qwen-oauth/index"
 import { ArcticAnthropicAuth } from "../auth/anthropic-oauth/index"
+import { ArcticAntigravityAuth } from "../auth/antigravity-oauth/index"
+import { ArcticCodexAuth } from "../auth/codex-oauth/index"
+import { ArcticGithubCopilotAuth } from "../auth/github-copilot-oauth/index"
+import { ArcticGoogleAuth } from "../auth/google-oauth/index"
+import { ArcticQwenAuth } from "../auth/qwen-oauth/index"
+import { BunProc } from "../bun"
+import { Bus } from "../bus"
+import { Config } from "../config/config"
+import { Instance } from "../project/instance"
+import { Server } from "../server/server"
+import { Log } from "../util/log"
 
 export namespace Plugin {
   const log = Log.create({ service: "plugin" })
@@ -33,10 +33,6 @@ export namespace Plugin {
       $: Bun.$,
     }
     const plugins = [...(config.plugin ?? [])]
-    if (!Flag.ARCTIC_DISABLE_DEFAULT_PLUGINS) {
-      plugins.push("opencode-copilot-auth@0.0.9")
-      // Note: Anthropic auth is now handled by ArcticAnthropicAuth internal plugin
-    }
 
     hooks.push(await ArcticCodexAuth(input))
     hooks.push(await ArcticGoogleAuth(input))
@@ -44,6 +40,7 @@ export namespace Plugin {
     hooks.push(await ArcticAmpAuth(input))
     hooks.push(await ArcticQwenAuth(input))
     hooks.push(await ArcticAnthropicAuth(input))
+    hooks.push(await ArcticGithubCopilotAuth(input))
 
     for (let plugin of plugins) {
       log.info("loading plugin", { path: plugin })

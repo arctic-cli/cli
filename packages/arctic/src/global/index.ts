@@ -2,6 +2,7 @@ import fs from "fs/promises"
 import { xdgData, xdgCache, xdgConfig, xdgState } from "xdg-basedir"
 import path from "path"
 import os from "os"
+import { ulid } from "ulid"
 
 const app = "arctic"
 
@@ -26,6 +27,8 @@ export namespace Global {
   interface Settings {
     permissionBypassEnabled?: boolean
     telemetryEnabled?: boolean
+    deviceId?: string
+    lastHeartbeatDate?: string
   }
 
   let settingsCache: Settings | undefined
@@ -60,12 +63,32 @@ export namespace Global {
 
   export async function getTelemetryEnabled(): Promise<boolean> {
     const settings = await loadSettings()
-    return settings.telemetryEnabled ?? true // enabled by default
+    return settings.telemetryEnabled ?? true
   }
 
   export async function setTelemetryEnabled(enabled: boolean): Promise<void> {
     const settings = await loadSettings()
     settings.telemetryEnabled = enabled
+    await saveSettings(settings)
+  }
+
+  export async function getDeviceId(): Promise<string> {
+    const settings = await loadSettings()
+    if (settings.deviceId) return settings.deviceId
+    const id = ulid()
+    settings.deviceId = id
+    await saveSettings(settings)
+    return id
+  }
+
+  export async function getLastHeartbeatDate(): Promise<string | undefined> {
+    const settings = await loadSettings()
+    return settings.lastHeartbeatDate
+  }
+
+  export async function setLastHeartbeatDate(date: string): Promise<void> {
+    const settings = await loadSettings()
+    settings.lastHeartbeatDate = date
     await saveSettings(settings)
   }
 }

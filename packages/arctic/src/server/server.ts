@@ -2,6 +2,7 @@ import { Bus } from "@/bus"
 import { BusEvent } from "@/bus/bus-event"
 import { GlobalBus } from "@/bus/global"
 import { TuiEvent } from "@/cli/cmd/tui/event"
+import { ConfigExport } from "@/config/export"
 import { Pty } from "@/pty"
 import { SessionBenchmark } from "@/session/benchmark"
 import { BenchmarkSchema } from "@/session/benchmark-schema"
@@ -9,7 +10,6 @@ import { SessionStatus } from "@/session/status"
 import { SessionSummary } from "@/session/summary"
 import { Snapshot } from "@/snapshot"
 import { NamedError } from "@arctic-cli/util/error"
-import { ConfigExport } from "@/config/export"
 import { Hono } from "hono"
 import { describeRoute, generateSpecs, openAPIRouteHandler, resolver, validator } from "hono-openapi"
 import { upgradeWebSocket, websocket } from "hono/bun"
@@ -2721,7 +2721,20 @@ export namespace Server {
         async (c) => {
           const providerID = c.req.valid("param").providerID
           const info = c.req.valid("json")
-          await Auth.set(providerID, info)
+          let actualProviderID = providerID
+          if (!providerID.includes(":")) {
+            const connections = await Auth.listConnections(providerID)
+            for (const conn of connections) {
+              const matches =
+                (info.type === "oauth" && conn.info.type === "oauth" && conn.info.refresh === info.refresh) ||
+                (info.type === "api" && conn.info.type === "api" && conn.info.key === info.key)
+              if (matches) {
+                actualProviderID = conn.key
+                break
+              }
+            }
+          }
+          await Auth.set(actualProviderID, info)
           return c.json(true)
         },
       )

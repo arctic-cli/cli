@@ -1,11 +1,11 @@
-import { Instance } from "@/project/instance"
-import { Plugin } from "../plugin"
-import { map, filter, pipe, fromEntries, mapValues } from "remeda"
-import z from "zod"
-import { fn } from "@/util/fn"
-import type { AuthOuathResult, Hooks } from "@arctic-cli/plugin"
-import { NamedError } from "@arctic-cli/util/error"
 import { Auth } from "@/auth"
+import { Instance } from "@/project/instance"
+import { fn } from "@/util/fn"
+import type { AuthOuathResult } from "@arctic-cli/plugin"
+import { NamedError } from "@arctic-cli/util/error"
+import { filter, fromEntries, map, mapValues, pipe } from "remeda"
+import z from "zod"
+import { Plugin } from "../plugin"
 
 export namespace ProviderAuth {
   const state = Instance.state(async () => {
@@ -77,10 +77,16 @@ export namespace ProviderAuth {
       method: z.number(),
     }),
     async (input): Promise<Authorization | undefined> => {
-      const auth = await state().then((s) => s.methods[input.providerID])
+      const parsed = Auth.parseKey(input.providerID)
+      const baseProviderID = parsed.provider
+
+      const auth = await state().then((s) => s.methods[baseProviderID])
+      if (!auth) return undefined
+
       const method = auth.methods[input.method]
       if (method.type === "oauth") {
         const result = await method.authorize()
+        // store pending auth using the FULL provider ID (including connection name)
         await state().then((s) => (s.pending[input.providerID] = result))
         return {
           url: result.url,

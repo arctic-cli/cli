@@ -1,30 +1,30 @@
+import { NamedError } from "@arctic-cli/util/error"
+import { EOL } from "os"
 import yargs from "yargs"
 import { hideBin } from "yargs/helpers"
-import { RunCommand } from "./cli/cmd/run"
-import { GenerateCommand } from "./cli/cmd/generate"
-import { Log } from "./util/log"
-import { AuthCommand } from "./cli/cmd/auth"
-import { AgentCommand } from "./cli/cmd/agent"
-import { UpgradeCommand } from "./cli/cmd/upgrade"
-import { UninstallCommand } from "./cli/cmd/uninstall"
-import { ModelsCommand } from "./cli/cmd/models"
-import { UI } from "./cli/ui"
-import { Installation } from "./installation"
-import { NamedError } from "@arctic-cli/util/error"
-import { FormatError } from "./cli/error"
-import { DebugCommand } from "./cli/cmd/debug"
-import { StatsCommand } from "./cli/cmd/stats"
-import { McpCommand } from "./cli/cmd/mcp"
-import { ExportCommand } from "./cli/cmd/export"
-import { ImportCommand } from "./cli/cmd/import"
-import { TuiThreadCommand } from "./cli/cmd/tui/thread"
-import { EOL } from "os"
-import { SessionCommand } from "./cli/cmd/session"
 import { maybeImportClaudeAgents, maybeImportClaudeCommands, maybeImportClaudeMcp } from "./cli/claude-import"
+import { AgentCommand } from "./cli/cmd/agent"
+import { AuthCommand } from "./cli/cmd/auth"
+import { DebugCommand } from "./cli/cmd/debug"
+import { ExportCommand } from "./cli/cmd/export"
+import { GenerateCommand } from "./cli/cmd/generate"
+import { ImportCommand } from "./cli/cmd/import"
+import { McpCommand } from "./cli/cmd/mcp"
+import { ModelsCommand } from "./cli/cmd/models"
+import { RunCommand } from "./cli/cmd/run"
+import { SessionCommand } from "./cli/cmd/session"
+import { StatsCommand } from "./cli/cmd/stats"
+import { TelemetryCommand } from "./cli/cmd/telemetry"
+import { TuiThreadCommand } from "./cli/cmd/tui/thread"
+import { UninstallCommand } from "./cli/cmd/uninstall"
+import { UpgradeCommand } from "./cli/cmd/upgrade"
+import { FormatError } from "./cli/error"
 import { maybeImportExternalAuth } from "./cli/external-auth-import"
 import { maybeImportOpenCodeConfig } from "./cli/opencode-config-import"
-import { TelemetryCommand } from "./cli/cmd/telemetry"
+import { UI } from "./cli/ui"
+import { Installation } from "./installation"
 import { Telemetry } from "./telemetry"
+import { Log } from "./util/log"
 
 process.on("unhandledRejection", (e) => {
   Log.Default.error("rejection", {
@@ -86,6 +86,10 @@ const cli = yargs(hideBin(process.argv))
     await maybeImportClaudeMcp()
     await maybeImportExternalAuth()
     await maybeImportOpenCodeConfig()
+
+    const command = process.argv[2] || "default"
+    await Telemetry.dailyHeartbeat()
+    Telemetry.appStarted(command)
   })
   .usage("\n" + UI.logo())
   .command(McpCommand)
@@ -133,6 +137,7 @@ try {
       cause: e.cause?.toString(),
       stack: e.stack,
     })
+    Telemetry.errorOccurred(e.name)
   }
 
   if (e instanceof ResolveMessage) {

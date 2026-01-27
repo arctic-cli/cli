@@ -11,7 +11,19 @@ const ratelimit = new Ratelimit({
   prefix: "ratelimit:usage",
 })
 
-const VALID_EVENTS = ["session.started", "message.sent", "tool.invoked", "command.used"]
+const VALID_EVENTS = [
+  "daily.active",
+  "app.started",
+  "session.started",
+  "session.ended",
+  "message.sent",
+  "tool.invoked",
+  "command.used",
+  "provider.authed",
+  "agent.spawned",
+  "mcp.connected",
+  "error.occurred",
+]
 const VALID_OS = ["linux", "darwin", "win32", "freebsd", "openbsd", "sunos", "aix"]
 const VALID_ARCH = ["x64", "arm64", "arm", "ia32", "ppc64", "s390x"]
 
@@ -24,9 +36,12 @@ interface TelemetryEvent {
 interface TelemetryPayload {
   events: TelemetryEvent[]
   context: {
+    deviceId: string
     os: string
     arch: string
     version: string
+    channel: string
+    date: string
   }
 }
 
@@ -45,39 +60,87 @@ export async function POST(request: NextRequest) {
       return new Response(null, { status: 400 })
     }
 
-    const date = new Date().toISOString().split("T")[0]
-    const pipeline = redis.pipeline()
-
+    const date = payload.context?.date || new Date().toISOString().split("T")[0]
+    const deviceId = payload.context?.deviceId
     const os = VALID_OS.includes(payload.context?.os) ? payload.context.os : "unknown"
     const arch = VALID_ARCH.includes(payload.context?.arch) ? payload.context.arch : "unknown"
+    const version = sanitize(payload.context?.version) || "unknown"
+    const channel = sanitize(payload.context?.channel) || "unknown"
+
+    const pipeline = redis.pipeline()
+
+    if (deviceId) {
+      pipeline.sadd(`dau:${date}`, deviceId)
+    }
+
+    pipeline.hincrby(`os:${date}`, os, 1)
+    pipeline.hincrby(`arch:${date}`, arch, 1)
+    pipeline.hincrby(`versions:${date}`, version, 1)
+    pipeline.hincrby(`channels:${date}`, channel, 1)
 
     for (const event of payload.events) {
       if (!VALID_EVENTS.includes(event.event)) continue
 
-      // total event count
-      pipeline.incr(`usage:${event.event}:total`)
-      pipeline.incr(`usage:daily:${date}:${event.event}`)
-
-      // os/arch breakdown
-      pipeline.incr(`usage:os:${os}`)
-      pipeline.incr(`usage:arch:${arch}`)
-
-      // event-specific properties
-      if (event.event === "session.started" || event.event === "message.sent") {
-        const provider = sanitize(event.properties?.provider as string)
-        const model = sanitize(event.properties?.model as string)
-        if (provider) pipeline.incr(`usage:provider:${provider}`)
-        if (model) pipeline.incr(`usage:model:${model}`)
-      }
-
-      if (event.event === "tool.invoked") {
-        const tool = sanitize(event.properties?.tool as string)
-        if (tool) pipeline.incr(`usage:tool:${tool}`)
-      }
-
-      if (event.event === "command.used") {
-        const command = sanitize(event.properties?.command as string)
-        if (command) pipeline.incr(`usage:command:${command}`)
+      switch (event.event) {
+        case "app.started": {
+          const command = sanitize(event.properties?.command as string) || "unknown"
+          pipeline.hincrby(`app:${date}`, command, 1)
+          break
+        }
+        case "session.started": {
+          pipeline.incr(`sessions:${date}`)
+          break
+        }
+        case "session.ended": {
+          const provider = sanitize(event.properties?.provider as string)
+          const model = sanitize(event.properties?.model as string)
+          const duration = event.properties?.duration as number
+          const messages = event.properties?.messages as number
+          const tools = event.properties?.tools as number
+          if (provider) pipeline.hincrby(`session_providers:${date}`, provider, 1)
+          if (model) pipeline.hincrby(`session_models:${date}`, model, 1)
+          if (duration) pipeline.incrby(`session_duration:${date}`, Math.round(duration))
+          if (messages) pipeline.incrby(`session_messages:${date}`, messages)
+          if (tools) pipeline.incrby(`session_tools:${date}`, tools)
+          break
+        }
+        case "message.sent": {
+          const provider = sanitize(event.properties?.provider as string)
+          const model = sanitize(event.properties?.model as string)
+          if (provider) pipeline.hincrby(`messages:${date}`, provider, 1)
+          if (model) pipeline.hincrby(`models:${date}`, model, 1)
+          break
+        }
+        case "tool.invoked": {
+          const tool = sanitize(event.properties?.tool as string)
+          if (tool) pipeline.hincrby(`tools:${date}`, tool, 1)
+          break
+        }
+        case "command.used": {
+          const command = sanitize(event.properties?.command as string)
+          if (command) pipeline.hincrby(`commands:${date}`, command, 1)
+          break
+        }
+        case "provider.authed": {
+          const provider = sanitize(event.properties?.provider as string)
+          if (provider) pipeline.hincrby(`auths:${date}`, provider, 1)
+          break
+        }
+        case "agent.spawned": {
+          const agent = sanitize(event.properties?.agent as string)
+          if (agent) pipeline.hincrby(`agents:${date}`, agent, 1)
+          break
+        }
+        case "mcp.connected": {
+          const server = sanitize(event.properties?.server as string)
+          if (server) pipeline.hincrby(`mcp:${date}`, server, 1)
+          break
+        }
+        case "error.occurred": {
+          const type = sanitize(event.properties?.type as string)
+          if (type) pipeline.hincrby(`errors:${date}`, type, 1)
+          break
+        }
       }
     }
 

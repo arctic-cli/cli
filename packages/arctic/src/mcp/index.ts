@@ -13,6 +13,7 @@ import { withTimeout } from "@/util/timeout"
 import { McpOAuthProvider } from "./oauth-provider"
 import { McpOAuthCallback } from "./oauth-callback"
 import { McpAuth } from "./auth"
+import { Telemetry } from "../telemetry"
 import open from "open"
 
 export namespace MCP {
@@ -210,6 +211,7 @@ export namespace MCP {
           })
           log.info("connected", { key, transport: name })
           status = { status: "connected" }
+          Telemetry.mcpConnected(key)
           break
         } catch (error) {
           lastError = error instanceof Error ? error : new Error(String(error))
@@ -267,6 +269,7 @@ export namespace MCP {
           status = {
             status: "connected",
           }
+          Telemetry.mcpConnected(key)
         })
         .catch((error) => {
           log.error("local mcp startup failed", {
