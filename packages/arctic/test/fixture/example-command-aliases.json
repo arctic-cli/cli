@@ -1,0 +1,14 @@
+{
+  "command": {
+    "auth": {
+      "template": "Please help me authenticate with a provider. Guide me through the process.",
+      "aliases": ["connect", "login"],
+      "description": "Authenticate with a provider"
+    },
+    "deploy": {
+      "template": "Help me deploy this application to production. Check the deployment configuration and guide me through the process.",
+      "aliases": ["ship", "release"],
+      "description": "Deploy application to production"
+    }
+  }
+}

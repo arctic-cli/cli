@@ -54,10 +54,7 @@
       "dark": "fog2",
       "light": "#5d5d5d"
     },
-    "background": {
-      "dark": "ink0",
-      "light": "#f6f3ef"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "ink1",
       "light": "#efe9e2"
@@ -221,6 +218,10 @@
     "syntaxPunctuation": {
       "dark": "fog0",
       "light": "#1b1b1b"
+    },
+    "selectedListItemText": {
+      "dark": "ink1",
+      "light": "#efe9e2"
     }
   }
 }

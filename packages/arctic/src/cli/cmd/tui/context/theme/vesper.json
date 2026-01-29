@@ -50,10 +50,7 @@
       "dark": "vesperMuted",
       "light": "vesperMuted"
     },
-    "background": {
-      "dark": "vesperBg",
-      "light": "#FFF"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "vesperBg",
       "light": "#F0F0F0"
@@ -213,6 +210,10 @@
     "syntaxPunctuation": {
       "dark": "vesperFg",
       "light": "vesperBg"
+    },
+    "selectedListItemText": {
+      "dark": "vesperBg",
+      "light": "#F0F0F0"
     }
   }
 }

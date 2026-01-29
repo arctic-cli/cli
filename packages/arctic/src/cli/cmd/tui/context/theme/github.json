@@ -65,10 +65,7 @@
       "dark": "darkFgMuted",
       "light": "lightFgMuted"
     },
-    "background": {
-      "dark": "darkBg",
-      "light": "lightBg"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "darkBgAlt",
       "light": "lightBgAlt"
@@ -228,6 +225,10 @@
     "syntaxPunctuation": {
       "dark": "darkFg",
       "light": "lightFg"
+    },
+    "selectedListItemText": {
+      "dark": "darkBgAlt",
+      "light": "lightBgAlt"
     }
   }
 }

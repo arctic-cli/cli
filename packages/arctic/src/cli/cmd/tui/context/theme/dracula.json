@@ -51,10 +51,7 @@
       "dark": "comment",
       "light": "#6272a4"
     },
-    "background": {
-      "dark": "#282a36",
-      "light": "#f8f8f2"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "#21222c",
       "light": "#e8e8e2"
@@ -214,6 +211,10 @@
     "syntaxPunctuation": {
       "dark": "foreground",
       "light": "#282a36"
+    },
+    "selectedListItemText": {
+      "dark": "#21222c",
+      "light": "#e8e8e2"
     }
   }
 }

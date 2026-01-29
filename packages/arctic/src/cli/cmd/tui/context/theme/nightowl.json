@@ -53,10 +53,7 @@
       "dark": "nightOwlMuted",
       "light": "nightOwlMuted"
     },
-    "background": {
-      "dark": "nightOwlBg",
-      "light": "nightOwlBg"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "nightOwlPanel",
       "light": "nightOwlPanel"
@@ -216,6 +213,10 @@
     "syntaxPunctuation": {
       "dark": "nightOwlFg",
       "light": "nightOwlFg"
+    },
+    "selectedListItemText": {
+      "dark": "nightOwlPanel",
+      "light": "nightOwlPanel"
     }
   }
 }

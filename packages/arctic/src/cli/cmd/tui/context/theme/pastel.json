@@ -50,10 +50,7 @@
       "dark": "#c0c0d0",
       "light": "#6a6a80"
     },
-    "background": {
-      "dark": "none",
-      "light": "none"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "bgPanel",
       "light": "#f0f0f8"

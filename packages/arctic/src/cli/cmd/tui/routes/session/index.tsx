@@ -1223,7 +1223,7 @@ export function Session() {
                 paddingRight: 1,
               }}
               verticalScrollbarOptions={{
-                visible: true,
+                visible: showScrollbar(),
                 width: 1,
                 trackOptions: {
                   backgroundColor: RGBA.fromInts(0, 0, 0, 0),

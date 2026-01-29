@@ -1592,6 +1592,9 @@ export namespace SessionPrompt {
     }
 
     const command = await Command.get(input.command)
+    if (!command) {
+      throw new Error(`Command not found: ${input.command}`)
+    }
     const agentName = command.agent ?? input.agent ?? "build"
 
     const raw = input.arguments.match(argsRegex) ?? []

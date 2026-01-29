@@ -66,10 +66,7 @@
       "dark": "muted",
       "light": "dawnMuted"
     },
-    "background": {
-      "dark": "base",
-      "light": "dawnBase"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "surface",
       "light": "dawnSurface"
@@ -229,6 +226,10 @@
     "syntaxPunctuation": {
       "dark": "subtle",
       "light": "dawnSubtle"
+    },
+    "selectedListItemText": {
+      "dark": "surface",
+      "light": "dawnSurface"
     }
   }
 }

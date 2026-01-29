@@ -73,10 +73,7 @@
       "dark": "darkStep11",
       "light": "lightStep11"
     },
-    "background": {
-      "dark": "darkStep1",
-      "light": "lightStep1"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "darkStep2",
       "light": "lightStep2"
@@ -236,6 +233,10 @@
     "syntaxPunctuation": {
       "dark": "darkStep12",
       "light": "lightStep12"
+    },
+    "selectedListItemText": {
+      "dark": "darkStep2",
+      "light": "lightStep2"
     }
   }
 }

@@ -57,10 +57,7 @@
       "dark": "#9ca3af",
       "light": "#5d5d5d"
     },
-    "background": {
-      "dark": "none",
-      "light": "none"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "frost2",
       "light": "#efe9e2"

@@ -77,10 +77,7 @@
       "dark": "gray600",
       "light": "lightGray600"
     },
-    "background": {
-      "dark": "background200",
-      "light": "lightBackground"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "gray100",
       "light": "lightGray100"
@@ -240,6 +237,10 @@
     "syntaxPunctuation": {
       "dark": "gray1000",
       "light": "lightGray1000"
+    },
+    "selectedListItemText": {
+      "dark": "gray100",
+      "light": "lightGray100"
     }
   }
 }

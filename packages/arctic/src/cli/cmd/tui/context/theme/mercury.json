@@ -6,22 +6,17 @@
     "purple-600": "#5266eb",
     "purple-400": "#8da4f5",
     "purple-300": "#a7b6f8",
-
     "red-700": "#b0175f",
     "red-600": "#d03275",
     "red-400": "#fc92b4",
-
     "green-700": "#036e43",
     "green-600": "#188554",
     "green-400": "#77c599",
-
     "orange-700": "#a44200",
     "orange-600": "#c45000",
     "orange-400": "#fc9b6f",
-
     "blue-600": "#007f95",
     "blue-400": "#77becf",
-
     "neutral-1000": "#10101a",
     "neutral-950": "#171721",
     "neutral-900": "#1e1e2a",
@@ -36,12 +31,10 @@
     "neutral-050": "#fbfcfd",
     "neutral-000": "#ffffff",
     "neutral-150": "#ededf3",
-
     "border-light": "#7073931a",
     "border-light-subtle": "#7073930f",
     "border-dark": "#b4b7c81f",
     "border-dark-subtle": "#b4b7c814",
-
     "diff-added-light": "#1885541a",
     "diff-removed-light": "#d032751a",
     "diff-added-dark": "#77c59933",
@@ -84,10 +77,7 @@
       "light": "neutral-500",
       "dark": "neutral-400"
     },
-    "background": {
-      "light": "neutral-000",
-      "dark": "neutral-950"
-    },
+    "background": "none",
     "backgroundPanel": {
       "light": "neutral-050",
       "dark": "neutral-1000"
@@ -247,6 +237,10 @@
     "syntaxPunctuation": {
       "light": "neutral-700",
       "dark": "neutral-200"
+    },
+    "selectedListItemText": {
+      "light": "neutral-050",
+      "dark": "neutral-1000"
     }
   }
 }

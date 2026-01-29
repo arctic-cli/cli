@@ -35,7 +35,7 @@
     "info": "darkTag",
     "text": "darkFg",
     "textMuted": "darkFgMuted",
-    "background": "darkBg",
+    "background": "none",
     "backgroundPanel": "darkPanel",
     "backgroundElement": "darkBgAlt",
     "border": "darkGutter",
@@ -75,6 +75,7 @@
     "syntaxNumber": "darkConstant",
     "syntaxType": "darkSpecial",
     "syntaxOperator": "darkOperator",
-    "syntaxPunctuation": "darkFg"
+    "syntaxPunctuation": "darkFg",
+    "selectedListItemText": "darkPanel"
   }
 }

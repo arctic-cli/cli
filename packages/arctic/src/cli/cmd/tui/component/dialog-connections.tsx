@@ -127,7 +127,7 @@ export function DialogConnections() {
       },
     },
     {
-      keybind: Keybind.parse("D")[0],
+      keybind: Keybind.parse("shift+d")[0],
       title: "delete all",
       onTrigger: async () => {
         await removeAllConnections()

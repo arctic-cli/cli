@@ -69,10 +69,7 @@
       "dark": "base600",
       "light": "base600"
     },
-    "background": {
-      "dark": "black",
-      "light": "paper"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "base950",
       "light": "base50"
@@ -232,6 +229,10 @@
     "syntaxPunctuation": {
       "dark": "base300",
       "light": "base600"
+    },
+    "selectedListItemText": {
+      "dark": "base950",
+      "light": "base50"
     }
   }
 }

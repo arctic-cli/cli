@@ -24,7 +24,7 @@
     "info": "purple",
     "text": "darkFg",
     "textMuted": "darkFgMuted",
-    "background": "darkBg",
+    "background": "none",
     "backgroundPanel": "darkBgPanel",
     "backgroundElement": "darkBgPanel",
     "border": "darkBorder",
@@ -64,6 +64,7 @@
     "syntaxNumber": "green",
     "syntaxType": "purple",
     "syntaxOperator": "pink",
-    "syntaxPunctuation": "darkFg"
+    "syntaxPunctuation": "darkFg",
+    "selectedListItemText": "darkBgPanel"
   }
 }

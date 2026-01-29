@@ -228,6 +228,8 @@ export function Autocomplete(props: {
       "mcp",
       "theme",
       "connect",
+      "auth",
+      "login",
       "help",
       "commands",
       "exit",
@@ -239,6 +241,7 @@ export function Autocomplete(props: {
       if (manual.has(command.name)) continue
       results.push({
         display: "/" + command.name,
+        aliases: command.aliases?.map((a) => "/" + a),
         description: command.description,
         onSelect: () => {
           const newText = "/" + command.name + " "
@@ -248,6 +251,20 @@ export function Autocomplete(props: {
           props.input().cursorOffset = Bun.stringWidth(newText)
         },
       })
+      for (const alias of command.aliases ?? []) {
+        if (manual.has(alias)) continue
+        results.push({
+          display: "/" + alias,
+          description: `${command.description} (alias for /${command.name})`,
+          onSelect: () => {
+            const newText = "/" + alias + " "
+            const cursor = props.input().logicalCursor
+            props.input().deleteRange(0, 0, cursor.row, cursor.col)
+            props.input().insertText(newText)
+            props.input().cursorOffset = Bun.stringWidth(newText)
+          },
+        })
+      }
     }
     if (s) {
       results.push(
@@ -430,6 +447,7 @@ export function Autocomplete(props: {
       },
       {
         display: "/connect",
+        aliases: ["/auth", "/login"],
         description: "connect to a provider",
         onSelect: () => command.trigger("provider.connect"),
       },
@@ -471,9 +489,24 @@ export function Autocomplete(props: {
         onSelect: () => command.trigger("arctic.bug"),
       },
     )
-    const max = firstBy(results, [(x) => x.display.length, "desc"])?.display.length
-    if (!max) return results
-    return results.map((item) => ({
+
+    const withExpandedAliases: AutocompleteOption[] = []
+    for (const item of results) {
+      withExpandedAliases.push(item)
+      if (item.aliases) {
+        for (const alias of item.aliases) {
+          withExpandedAliases.push({
+            display: alias,
+            description: `${item.description} (alias for ${item.display})`,
+            onSelect: item.onSelect,
+          })
+        }
+      }
+    }
+
+    const max = firstBy(withExpandedAliases, [(x) => x.display.length, "desc"])?.display.length
+    if (!max) return withExpandedAliases
+    return withExpandedAliases.map((item) => ({
       ...item,
       display: item.display.padEnd(max + 2),
     }))

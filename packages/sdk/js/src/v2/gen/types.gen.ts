@@ -773,6 +773,13 @@ export type EventGlobalDisposed = {
   }
 }
 
+export type EventIdeInstalled = {
+  type: "ide.installed"
+  properties: {
+    ide: string
+  }
+}
+
 export type Event =
   | EventInstallationUpdated
   | EventInstallationUpdateAvailable
@@ -809,6 +816,7 @@ export type Event =
   | EventVcsBranchUpdated
   | EventServerConnected
   | EventGlobalDisposed
+  | EventIdeInstalled
 
 export type GlobalEvent = {
   directory: string
@@ -1679,6 +1687,7 @@ export type SubtaskPartInput = {
 
 export type Command = {
   name: string
+  aliases?: Array<string>
   description?: string
   agent?: string
   model?: string
@@ -3591,6 +3600,8 @@ export type UsageProvidersResponses = {
     }
     fetchedAt: number
     error?: string
+    accountId?: string
+    accountUsername?: string
   }>
 }
 
@@ -3652,6 +3663,8 @@ export type UsageProviderResponses = {
     }
     fetchedAt: number
     error?: string
+    accountId?: string
+    accountUsername?: string
   }
 }
 

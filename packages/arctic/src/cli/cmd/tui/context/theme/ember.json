@@ -49,10 +49,7 @@
       "dark": "textMuted",
       "light": "#666666"
     },
-    "background": {
-      "dark": "none",
-      "light": "none"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "#1a1a1a",
       "light": "#f5f5f5"

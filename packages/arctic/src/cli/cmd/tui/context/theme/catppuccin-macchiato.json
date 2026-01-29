@@ -65,10 +65,7 @@
       "dark": "macSubtext1",
       "light": "macSubtext1"
     },
-    "background": {
-      "dark": "macBase",
-      "light": "macBase"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "macMantle",
       "light": "macMantle"
@@ -228,6 +225,10 @@
     "syntaxPunctuation": {
       "dark": "macText",
       "light": "macText"
+    },
+    "selectedListItemText": {
+      "dark": "macMantle",
+      "light": "macMantle"
     }
   }
 }

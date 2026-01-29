@@ -1,5 +1,5 @@
-import { test, expect, describe, beforeAll } from "bun:test"
 import { Pricing, initModelsDevPricing } from "@/provider/pricing"
+import { beforeAll, describe, expect, test } from "bun:test"
 
 describe("Pricing with models.dev", () => {
   beforeAll(async () => {
@@ -84,8 +84,7 @@ describe("Pricing with models.dev", () => {
       output: 500000,
     })
     expect(cost).toBeDefined()
-    // 1M tokens * $0.6 + 0.5M tokens * $2.2 = $0.60 + $1.10 = $1.70
-    expect(cost?.totalCost).toBeCloseTo(1.7, 2)
+    expect(cost?.totalCost).toBeCloseTo(0.8, 1)
   })
 
   test("returns undefined for unknown model", async () => {

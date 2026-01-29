@@ -60,10 +60,7 @@
       "dark": "foregroundMuted",
       "light": "#5c6b7d"
     },
-    "background": {
-      "dark": "#193549",
-      "light": "#ffffff"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "#122738",
       "light": "#f5f7fa"
@@ -223,6 +220,10 @@
     "syntaxPunctuation": {
       "dark": "foreground",
       "light": "#193549"
+    },
+    "selectedListItemText": {
+      "dark": "#122738",
+      "light": "#f5f7fa"
     }
   }
 }

@@ -55,10 +55,7 @@
       "dark": "#8B95A7",
       "light": "nord1"
     },
-    "background": {
-      "dark": "nord0",
-      "light": "nord6"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "nord1",
       "light": "nord5"
@@ -218,6 +215,10 @@
     "syntaxPunctuation": {
       "dark": "nord4",
       "light": "nord0"
+    },
+    "selectedListItemText": {
+      "dark": "nord1",
+      "light": "nord5"
     }
   }
 }

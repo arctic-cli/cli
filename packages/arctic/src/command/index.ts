@@ -1,9 +1,8 @@
-import { Bus } from "@/bus"
 import { BusEvent } from "@/bus/bus-event"
 import z from "zod"
 import { Config } from "../config/config"
-import { Instance } from "../project/instance"
 import { Identifier } from "../id/id"
+import { Instance } from "../project/instance"
 import PROMPT_INITIALIZE from "./template/initialize.txt"
 import PROMPT_REVIEW from "./template/review.txt"
 
@@ -23,6 +22,7 @@ export namespace Command {
   export const Info = z
     .object({
       name: z.string(),
+      aliases: z.array(z.string()).optional(),
       description: z.string().optional(),
       agent: z.string().optional(),
       model: z.string().optional(),
@@ -65,6 +65,7 @@ export namespace Command {
     for (const [name, command] of Object.entries(cfg.command ?? {})) {
       result[name] = {
         name,
+        aliases: command.aliases,
         agent: command.agent,
         model: command.model,
         description: command.description,
@@ -77,7 +78,12 @@ export namespace Command {
   })
 
   export async function get(name: string) {
-    return state().then((x) => x[name])
+    const commands = await state()
+    if (commands[name]) return commands[name]
+    for (const command of Object.values(commands)) {
+      if (command.aliases?.includes(name)) return command
+    }
+    return undefined
   }
 
   export async function list() {

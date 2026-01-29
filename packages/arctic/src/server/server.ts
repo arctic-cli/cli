@@ -1328,14 +1328,21 @@ export namespace Server {
         ),
         validator("json", SessionPrompt.PromptInput.omit({ sessionID: true })),
         async (c) => {
-          c.status(200)
-          c.header("Content-Type", "application/json")
-          return stream(c, async (stream) => {
-            const sessionID = c.req.valid("param").sessionID
-            const body = c.req.valid("json")
+          const sessionID = c.req.valid("param").sessionID
+          const body = c.req.valid("json")
+          log.info("prompt start", { sessionID, body })
+          try {
             const msg = await SessionPrompt.prompt({ ...body, sessionID })
-            stream.write(JSON.stringify(msg))
-          })
+            log.info("prompt complete", { sessionID, msg })
+            if (!msg) {
+              log.error("prompt returned empty", { sessionID })
+              return c.json({ error: "Empty response" }, 500)
+            }
+            return c.json(msg)
+          } catch (err) {
+            log.error("prompt failed", { error: err, sessionID })
+            throw err
+          }
         },
       )
       .post(
@@ -1638,7 +1645,9 @@ export namespace Server {
           return c.json({
             providers: Object.values(providers),
             default: mapValues(providers, (item) => {
-              const models = Object.values(item.models)
+              const models = Object.values(item.models).filter((m) => {
+                return m.capabilities.input.text && m.capabilities.output.text
+              })
               if (models.length === 0) return ""
               return Provider.sort(models)[0].id
             }),
@@ -1735,7 +1744,9 @@ export namespace Server {
           return c.json({
             all: Object.values(providers),
             default: mapValues(providers, (item) => {
-              const models = Object.values(item.models)
+              const models = Object.values(item.models).filter((m) => {
+                return m.capabilities.input.text && m.capabilities.output.text
+              })
               if (models.length === 0) return ""
               return Provider.sort(models)[0].id
             }),

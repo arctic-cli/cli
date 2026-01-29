@@ -49,10 +49,7 @@
       "dark": "textDim",
       "light": "#7d4edd"
     },
-    "background": {
-      "dark": "none",
-      "light": "none"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "#240046",
       "light": "#f5e6ff"

@@ -55,10 +55,7 @@
       "dark": "fgMuted",
       "light": "#6f6f6f"
     },
-    "background": {
-      "dark": "bg",
-      "light": "#ffffef"
-    },
+    "background": "none",
     "backgroundPanel": {
       "dark": "bgAlt",
       "light": "#f5f5e5"
@@ -218,6 +215,10 @@
     "syntaxPunctuation": {
       "dark": "fg",
       "light": "#3f3f3f"
+    },
+    "selectedListItemText": {
+      "dark": "bgAlt",
+      "light": "#f5f5e5"
     }
   }
 }

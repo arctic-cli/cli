@@ -877,11 +877,16 @@ export function Prompt(props: PromptProps) {
         command: inputText,
       })
       setStore("mode", "normal")
-    } else if (slashToken && sync.data.command.some((x) => x.name === slashToken.slice(1))) {
+    } else if (
+      slashToken &&
+      sync.data.command.some((x) => x.name === slashToken.slice(1) || x.aliases?.includes(slashToken.slice(1)))
+    ) {
       let [commandText, ...args] = inputText.split(" ")
+      const commandName = commandText.slice(1)
+      const actualCommand = sync.data.command.find((x) => x.name === commandName || x.aliases?.includes(commandName))
       sdk.client.session.command({
         sessionID: currentSessionID,
-        command: commandText.slice(1),
+        command: actualCommand?.name ?? commandName,
         arguments: args.join(" "),
         agent: local.agent.current().name,
         model: `${selectedModel.providerID}/${selectedModel.modelID}`,
@@ -1683,6 +1688,10 @@ export function Prompt(props: PromptProps) {
                     </text>
                   )
                 })()}
+              </Show>
+              <Show when={sync.data.permission_bypass_enabled && !props.sessionID}>
+                <text fg={theme.textMuted}>·</text>
+                <text fg={theme.error}>⏵⏵ permission bypass enabled</text>
               </Show>
             </box>
           </Show>
