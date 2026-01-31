@@ -488,6 +488,11 @@ export function Autocomplete(props: {
         description: "report a bug to the Arctic team",
         onSelect: () => command.trigger("arctic.bug"),
       },
+      {
+        display: "/discuss",
+        description: "join GitHub Discussions",
+        onSelect: () => command.trigger("arctic.discuss"),
+      },
     )
 
     const withExpandedAliases: AutocompleteOption[] = []

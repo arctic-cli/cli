@@ -2,10 +2,12 @@ import { Global } from "@/global"
 import { Installation } from "@/installation"
 import { Provider } from "@/provider/provider"
 import { Session as SessionApi } from "@/session"
+import { SessionCounter } from "@/session/counter"
 import { TextAttributes } from "@opentui/core"
 import { render, useKeyboard, useRenderer, useSelectionHandler, useTerminalDimensions } from "@opentui/solid"
 import { DoubleClick } from "@tui/util/double-click"
 import { DialogAgent } from "@tui/component/dialog-agent"
+import { FeedbackDialog } from "@tui/component/dialog-feedback"
 import { CommandProvider, useCommandDialog } from "@tui/component/dialog-command"
 import { DialogMcp } from "@tui/component/dialog-mcp"
 import { DialogModel, useConnected } from "@tui/component/dialog-model"
@@ -423,6 +425,22 @@ function App() {
     ),
   )
 
+  createEffect(
+    on(
+      () => sync.status === "complete" && !kv.get("feedback_shown", false),
+      async (shouldCheck, wasChecking) => {
+        if (!shouldCheck || wasChecking) return
+        const shouldShow = await SessionCounter.shouldShowFeedback(sync.data.session.length)
+        if (!shouldShow) return
+        setTimeout(async () => {
+          await FeedbackDialog.show(dialog)
+          kv.set("feedback_shown", true)
+          await SessionCounter.markFeedbackShown()
+        }, 1000)
+      },
+    ),
+  )
+
   const connected = useConnected()
   command.register(() => [
     {
@@ -690,6 +708,15 @@ function App() {
       onSelect: () => {
         const issueURL = new URL("https://github.com/arctic-cli/interface/issues/new?template=bug-report.yml")
         open(issueURL.toString()).catch(() => {})
+        dialog.clear()
+      },
+      category: "System",
+    },
+    {
+      title: "Join discussions",
+      value: "arctic.discuss",
+      onSelect: () => {
+        open("https://github.com/arctic-cli/interface/discussions").catch(() => {})
         dialog.clear()
       },
       category: "System",

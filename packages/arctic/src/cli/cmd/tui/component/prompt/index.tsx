@@ -859,6 +859,7 @@ export function Prompt(props: PromptProps) {
       "/stats": () => command.trigger("arctic.stats", "prompt"),
       "/feedback": () => command.trigger("arctic.feedback"),
       "/bug": () => command.trigger("arctic.bug"),
+      "/discuss": () => command.trigger("arctic.discuss"),
     }
 
     let handledLocally = false

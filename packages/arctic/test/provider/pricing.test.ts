@@ -78,6 +78,22 @@ describe("Pricing with models.dev", () => {
     expect(pricing2?.output).toBe(25)
   })
 
+  test("uses fallback pricing for K2P5 model", async () => {
+    const pricing = await Pricing.getModelPricingAsync("K2P5")
+    expect(pricing).toBeDefined()
+    expect(pricing?.input).toBe(0.6)
+    expect(pricing?.output).toBe(3)
+    expect(pricing?.cacheRead).toBe(0.1)
+  })
+
+  test("uses fallback pricing for K2P5 model with provider prefix", async () => {
+    const pricing = await Pricing.getModelPricingAsync("some-provider/K2P5")
+    expect(pricing).toBeDefined()
+    expect(pricing?.input).toBe(0.6)
+    expect(pricing?.output).toBe(3)
+    expect(pricing?.cacheRead).toBe(0.1)
+  })
+
   test("calculates cost for fallback models", async () => {
     const cost = await Pricing.calculateCostAsync("zai-coding-plan/glm-4.7", {
       input: 1000000,
