@@ -9,7 +9,6 @@ const SUPPORTED_IDES = [
   { name: "Windsurf" as const, cmd: "windsurf" },
   { name: "Visual Studio Code - Insiders" as const, cmd: "code-insiders" },
   { name: "Visual Studio Code" as const, cmd: "code" },
-  { name: "Cursor" as const, cmd: "cursor" },
   { name: "VSCodium" as const, cmd: "codium" },
 ]
 

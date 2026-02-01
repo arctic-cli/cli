@@ -5,8 +5,8 @@ import fuzzysort from "fuzzysort"
 import { mapValues, mergeDeep, sortBy } from "remeda"
 import z from "zod"
 import { Auth } from "../auth"
-import { CodexClient } from "../auth/codex"
 import { ensureAnthropicTokenValid } from "../auth/anthropic-oauth"
+import { CodexClient } from "../auth/codex"
 import { BunProc } from "../bun"
 import { Config } from "../config/config"
 import { Env } from "../env"
@@ -1991,7 +1991,6 @@ export namespace Provider {
     const key = `${model.providerID}/${model.id}`
     if (s.models.has(key)) return s.models.get(key)!
 
-
     if (model.providerID === "anthropic") {
       await ensureAnthropicTokenValid().catch(() => {
         // ignore errors, let plugin handle it
@@ -1999,12 +1998,29 @@ export namespace Provider {
     }
 
     const provider = s.providers[model.providerID]
+
     const sdk = await getSDK(model)
 
+    if (s.modelLoaders[model.providerID]) {
+      try {
+        const language = await s.modelLoaders[model.providerID](sdk, model.api.id, provider.options)
+        s.models.set(key, language)
+        return language
+      } catch (e) {
+        if (e instanceof NoSuchModelError)
+          throw new ModelNotFoundError(
+            {
+              modelID: model.id,
+              providerID: model.providerID,
+            },
+            { cause: e },
+          )
+        throw e
+      }
+    }
+
     try {
-      const language = s.modelLoaders[model.providerID]
-        ? await s.modelLoaders[model.providerID](sdk, model.api.id, provider.options)
-        : sdk.languageModel(model.api.id)
+      const language = sdk.languageModel(model.api.id) as LanguageModelV2
       s.models.set(key, language)
       return language
     } catch (e) {

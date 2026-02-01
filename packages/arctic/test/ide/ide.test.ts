@@ -26,13 +26,6 @@ describe("ide", () => {
     expect(Ide.ide()).toBe("Visual Studio Code - Insiders")
   })
 
-  test("should detect Cursor", () => {
-    process.env["TERM_PROGRAM"] = "vscode"
-    process.env["GIT_ASKPASS"] = "/path/to/Cursor.app/Contents/Resources/app/extensions/git/dist/askpass.sh"
-
-    expect(Ide.ide()).toBe("Cursor")
-  })
-
   test("should detect VSCodium", () => {
     process.env["TERM_PROGRAM"] = "vscode"
     process.env["GIT_ASKPASS"] = "/path/to/VSCodium.app/Contents/Resources/app/extensions/git/dist/askpass.sh"

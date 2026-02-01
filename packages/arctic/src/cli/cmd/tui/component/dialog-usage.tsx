@@ -165,7 +165,8 @@ export function DialogUsage() {
   const sessionID = createMemo(() => (route.data.type === "session" ? route.data.sessionID : undefined))
 
   const providerById = createMemo(() => {
-    return Object.fromEntries(sync.data.provider.map((provider) => [provider.id, provider]))
+    const map = Object.fromEntries(sync.data.provider.map((provider) => [provider.id, provider]))
+    return map
   })
 
   const baseNameCounts = createMemo(() => {
