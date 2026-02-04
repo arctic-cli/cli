@@ -71,7 +71,7 @@ export namespace Config {
       Global.Path.config,
       ...(await Array.fromAsync(
         Filesystem.up({
-          targets: [".arctic", ".opencode"],
+          targets: [".arctic", ".opencode", ".agent"],
           start: Instance.directory,
           stop: Instance.worktree,
         }),
@@ -87,7 +87,7 @@ export namespace Config {
     for (const dir of directories) {
       await assertValid(dir)
 
-      if (dir.endsWith(".arctic") || dir.endsWith(".opencode") || dir === Flag.ARCTIC_CONFIG_DIR) {
+      if (dir.endsWith(".arctic") || dir.endsWith(".opencode") || dir.endsWith(".agent") || dir === Flag.ARCTIC_CONFIG_DIR) {
         for (const file of ["arctic.jsonc", "arctic.json"]) {
           log.debug(`loading config from ${path.join(dir, file)}`)
           result = mergeConfigWithPlugins(result, await loadFile(path.join(dir, file)))

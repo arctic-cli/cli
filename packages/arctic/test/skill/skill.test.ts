@@ -195,5 +195,53 @@ describe("Skill", () => {
         },
       })
     })
+
+    test("discovers skills from .agent/skills directory", async () => {
+      await using tmp = await tmpdir({
+        git: true,
+        async init(dir) {
+          const agentDir = path.join(dir, ".agent", "skills")
+          await fs.mkdir(agentDir, { recursive: true })
+          await fs.writeFile(path.join(agentDir, "agent-skill.md"), VALID_SKILL)
+        },
+      })
+
+      await Instance.provide({
+        directory: tmp.path,
+        fn: async () => {
+          const { SkillRegistry } = await import("@/skill/registry")
+          const skills = await SkillRegistry.all()
+
+          expect(skills.length).toBe(1)
+          expect(skills[0].name).toBe("git-release")
+        },
+      })
+    })
+
+    test("discovers skills from both .arctic/skills and .agent/skills", async () => {
+      await using tmp = await tmpdir({
+        git: true,
+        async init(dir) {
+          const arcticDir = path.join(dir, ".arctic", "skills")
+          await fs.mkdir(arcticDir, { recursive: true })
+          await fs.writeFile(path.join(arcticDir, "arctic-skill.md"), MINIMAL_SKILL)
+
+          const agentDir = path.join(dir, ".agent", "skills")
+          await fs.mkdir(agentDir, { recursive: true })
+          await fs.writeFile(path.join(agentDir, "agent-skill.md"), VALID_SKILL)
+        },
+      })
+
+      await Instance.provide({
+        directory: tmp.path,
+        fn: async () => {
+          const { SkillRegistry } = await import("@/skill/registry")
+          const skills = await SkillRegistry.all()
+
+          expect(skills.length).toBe(2)
+          expect(skills.map((s) => s.name).sort()).toEqual(["git-release", "minimal-skill"])
+        },
+      })
+    })
   })
 })
