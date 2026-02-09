@@ -5,18 +5,17 @@ import { Session as SessionApi } from "@/session"
 import { SessionCounter } from "@/session/counter"
 import { TextAttributes } from "@opentui/core"
 import { render, useKeyboard, useRenderer, useSelectionHandler, useTerminalDimensions } from "@opentui/solid"
-import { DoubleClick } from "@tui/util/double-click"
 import { DialogAgent } from "@tui/component/dialog-agent"
-import { FeedbackDialog } from "@tui/component/dialog-feedback"
 import { CommandProvider, useCommandDialog } from "@tui/component/dialog-command"
+import { DialogConnections } from "@tui/component/dialog-connections"
+import { FeedbackDialog } from "@tui/component/dialog-feedback"
 import { DialogMcp } from "@tui/component/dialog-mcp"
 import { DialogModel, useConnected } from "@tui/component/dialog-model"
 import { DialogProvider as DialogProviderList } from "@tui/component/dialog-provider"
-import { DialogConnections } from "@tui/component/dialog-connections"
-import { DialogSessionList } from "@tui/component/dialog-session-list"
-import { DialogStatus } from "@tui/component/dialog-status"
-import { DialogStats } from "@tui/component/dialog-stats"
 import { DialogPty } from "@tui/component/dialog-pty"
+import { DialogSessionList } from "@tui/component/dialog-session-list"
+import { DialogStats } from "@tui/component/dialog-stats"
+import { DialogStatus } from "@tui/component/dialog-status"
 import { DialogThemeList } from "@tui/component/dialog-theme-list"
 import { DialogUsage } from "@tui/component/dialog-usage"
 import { KeybindProvider, useKeybind } from "@tui/context/keybind"
@@ -26,10 +25,11 @@ import { SDKProvider, useSDK } from "@tui/context/sdk"
 import { SyncProvider, useSync } from "@tui/context/sync"
 import { ThemeProvider, useTheme } from "@tui/context/theme"
 import { Home } from "@tui/routes/home"
-import { Session } from "@tui/routes/session"
 import { Onboarding } from "@tui/routes/onboarding"
+import { Session } from "@tui/routes/session"
 import { DialogProvider, useDialog } from "@tui/ui/dialog"
 import { Clipboard } from "@tui/util/clipboard"
+import { DoubleClick } from "@tui/util/double-click"
 import fs from "fs/promises"
 import open from "open"
 import path from "path"
@@ -230,12 +230,37 @@ function App() {
 
     // Handle terminal focus events (e.g., switching tabs)
     // Focus-in events trigger a repaint to fix rendering issues
+    let savedFocus: any = null
     const handleStdinData = (data: Buffer) => {
       const str = data.toString()
+      // Check for focus-out escape sequence (\x1b[O)
+      if (str.includes("\x1b[O")) {
+        savedFocus = renderer.currentFocusedRenderable
+      }
       // Check for focus-in escape sequence (\x1b[I)
       if (str.includes("\x1b[I")) {
         renderer.currentRenderBuffer.clear()
         renderer.requestRender()
+        // restore focus to the previously focused element after render completes
+        // try multiple times with increasing delays to work around opentui 0.1.77 focus tracking bug
+        const restoreFocus = () => {
+          const target = savedFocus || promptRef.current
+          if (target && typeof target.focus === "function") {
+            try {
+              if (typeof target.blur === "function") {
+                target.blur()
+              }
+              target.focus()
+            } catch {}
+          }
+        }
+        restoreFocus()
+        // retry after one frame
+        setTimeout(restoreFocus, 16)
+        // retry after renderer has settled
+        setTimeout(restoreFocus, 50)
+        // final retry with longer delay
+        setTimeout(restoreFocus, 150)
       }
     }
 
