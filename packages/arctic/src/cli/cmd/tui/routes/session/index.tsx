@@ -1235,6 +1235,9 @@ export function Session() {
               stickyStart="bottom"
               flexGrow={1}
               scrollAcceleration={scrollAcceleration()}
+              onMouseDown={() => {
+                setTimeout(() => prompt?.focus(), 1)
+              }}
             >
               <For each={messages()}>
                 {(message, index) => (
@@ -1426,11 +1429,7 @@ function UserMessage(props: {
                         if (file.filename) return `[${file.filename}]`
                         return "[File]"
                       })
-                      return (
-                        <text fg={theme.textMuted}>
-                          {label()}
-                        </text>
-                      )
+                      return <text fg={theme.textMuted}>{label()}</text>
                     }}
                   </For>
                 </Show>

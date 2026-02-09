@@ -65,7 +65,14 @@ export function Home() {
   return (
     <>
       <box flexGrow={1} flexDirection="column" alignItems="flex-start" justifyContent="flex-end" gap={1}>
-        <scrollbox flexGrow={1} flexShrink={1} width="100%">
+        <scrollbox
+          flexGrow={1}
+          flexShrink={1}
+          width="100%"
+          onMouseDown={() => {
+            setTimeout(() => prompt?.focus(), 1)
+          }}
+        >
           <Logo
             onConnectProvider={() => command.trigger("provider.connect")}
             onChangeModel={() => command.trigger("model.list")}
