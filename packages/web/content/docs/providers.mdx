@@ -444,6 +444,28 @@ Set in config:
 2. Check model whitelist/blacklist
 3. Ensure model is supported by provider
 4. Check for experimental model flag
+5. Refresh models: `arctic models --refresh`
+
+### Refreshing Models
+
+When providers release new models, refresh your local model list:
+
+```bash
+arctic models --refresh
+```
+
+This fetches the latest available models from all configured providers. Run this after:
+- New model releases from your provider
+- Provider adds new model tiers
+- Configuration changes to custom providers
+
+You can also refresh models for a specific provider:
+
+```bash
+arctic models --refresh --provider anthropic
+```
+
+In the TUI, use `/models` and press `r` to refresh.
 
 ### Rate Limits
 
