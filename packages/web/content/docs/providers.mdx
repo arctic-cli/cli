@@ -34,176 +34,39 @@ For detailed credential management, see [Authentication](/docs/authentication).
 
 Premium coding-focused subscriptions with OAuth authentication:
 
-#### **Codex (ChatGPT)**
-- **Models**: gpt-5.3-codex, gpt-5.2-codex, gpt-5.1-codex-max, gpt-5.1-codex, gpt-5.1-codex-mini
-- **Features**: Latest GPT-5 series, interleaved thinking, 200k context
-- **Auth**: OAuth via ChatGPT account
-- **Cost**: Free with subscription
-
-#### **Gemini CLI (Google)**
-- **Models**: Gemini 2.0 Flash, Gemini 2.5 Pro, Gemini 2.5 Flash
-- **Features**: Code Assist integration, 1M+ context, thinking mode
-- **Auth**: OAuth with Google Cloud project (optional)
-- **Cost**: Free tier available, paid tiers require GCP project
-
-#### **Antigravity**
-- **Models**: Gemini 3 Pro High/Low, Gemini 3 Flash, Claude Sonnet 4.5, Claude Opus 4.5
-- **Features**: Access to both Gemini 3 and Claude 4.5 models
-- **Auth**: OAuth
-- **Cost**: Free with subscription
-
-#### **GitHub Copilot**
-- **Models**: GPT-4o, Claude Sonnet, o1-preview, o1-mini
-- **Features**: Enterprise support, multiple model access
-- **Auth**: OAuth via GitHub
-- **Cost**: $10/month individual, $19/month business
-
-#### **GitHub Copilot Enterprise**
-- **Models**: Same as Copilot plus enterprise features
-- **Features**: Organization-wide policies, audit logs
-- **Auth**: OAuth via GitHub Enterprise
-- **Cost**: $39/user/month
-
-#### **Claude Code (Anthropic)**
-- **Models**: Claude Sonnet 4.5, Claude Opus 4.5
-- **Features**: Extended thinking, prompt caching
-- **Auth**: OAuth
-- **Cost**: Free tier + paid plans
-
-#### **Z.AI**
-- **Models**: Specialized coding models
-- **Features**: Coding-optimized inference
-- **Auth**: OAuth
-- **Cost**: Subscription-based
-
-#### **Kimi for Coding**
-- **Models**: Long-context coding models
-- **Features**: Extended context windows
-- **Auth**: OAuth
-- **Cost**: Subscription-based
-
-#### **Amp Code**
-- **Models**: GPT-5, GPT-5.1, GPT-5.2
-- **Features**: Latest GPT-5 series access
-- **Auth**: API key
-- **Cost**: Free tier available
-
-#### **Qwen Code (Alibaba)**
-- **Models**: Coder Model (mainline), Vision Model (mainline)
-- **Features**: 1M context, multimodal support (text, image, audio, video, PDF)
-- **Auth**: OAuth
-- **Cost**: Free with subscription
-
-#### **MiniMax Coding Plan**
-- **Models**: MiniMax-M2.1
-- **Features**: Competitive pricing
-- **Auth**: API key
-- **Cost**: $0.30/M input, $1.20/M output
+- **Codex (ChatGPT)**
+- **Gemini CLI (Google)**
+- **Antigravity**
+- **GitHub Copilot**
+- **GitHub Copilot Enterprise**
+- **Claude Code (Anthropic)**
+- **Z.AI**
+- **Kimi for Coding**
+- **Amp Code**
+- **Qwen Code (Alibaba)**
+- **MiniMax Coding Plan**
 
 ### API Providers
 
 Pay-per-use API access with flexible authentication:
 
-#### **OpenAI**
-- **Models**: GPT-4o, o1, o3-mini, GPT-4 Turbo, GPT-3.5 Turbo
-- **Env**: `OPENAI_API_KEY`
-- **Pricing**: Variable by model
-
-#### **Anthropic**
-- **Models**: Claude Sonnet 4.5, Claude Opus 4, Claude Haiku 3.5
-- **Env**: `ANTHROPIC_API_KEY`
-- **Features**: Prompt caching, extended thinking
-- **Pricing**: Variable by model
-
-#### **Google (Gemini API)**
-- **Models**: Gemini 2.0 Flash, Gemini 1.5 Pro, Gemini 1.5 Flash
-- **Env**: `GOOGLE_API_KEY`
-- **Features**: Free tier, multimodal
-- **Pricing**: Free tier + paid
-
-#### **Amazon Bedrock**
-- **Models**: Nova (Micro/Lite/Pro/Premier), Claude, Llama, Mistral
-- **Env**: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`
-- **Features**: Regional model access, auto-region prefixing
-- **Pricing**: Variable by model and region
-
-#### **Azure OpenAI**
-- **Models**: GPT-4o, GPT-4, GPT-3.5
-- **Env**: `AZURE_API_KEY`, `AZURE_RESOURCE_NAME`
-- **Features**: Enterprise compliance
-- **Pricing**: Enterprise pricing
-
-#### **Google Vertex AI**
-- **Models**: Gemini models via Vertex
-- **Env**: `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`
-- **Features**: Enterprise features, regional deployment
-- **Pricing**: Enterprise pricing
-
-#### **Google Vertex Anthropic**
-- **Models**: Claude via Vertex AI
-- **Env**: `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`
-- **Features**: Claude models through GCP
-- **Pricing**: Enterprise pricing
-
-#### **Perplexity**
-- **Models**: Sonar models
-- **Env**: `PERPLEXITY_API_KEY`
-- **Features**: Search-augmented generation
-- **Pricing**: Variable by model
-
-#### **OpenRouter**
-- **Models**: 200+ models aggregated
-- **Env**: `OPENROUTER_API_KEY`
-- **Features**: Access to many providers through one API
-- **Pricing**: Variable by model
-
-#### **Ollama**
-- **Models**: Local models (Llama, Mistral, Mixtral, etc.)
-- **Auth**: Configure host and port
-- **Features**: Fully local, no API costs
-- **Pricing**: Free (local compute)
-
-#### **Groq**
-- **Models**: Llama, Mixtral, Gemma
-- **Env**: `GROQ_API_KEY`
-- **Features**: Ultra-fast inference
-- **Pricing**: Competitive rates
-
-#### **Together AI**
-- **Models**: Open source models
-- **Env**: `TOGETHER_API_KEY`
-- **Features**: Fast inference for open models
-- **Pricing**: Competitive rates
-
-#### **DeepSeek**
-- **Models**: DeepSeek Coder, DeepSeek Chat
-- **Env**: `DEEPSEEK_API_KEY`
-- **Features**: Reasoning models
-- **Pricing**: Competitive rates
-
-#### **Cerebras**
-- **Models**: Llama models
-- **Env**: `CEREBRAS_API_KEY`
-- **Features**: Extremely fast inference
-- **Pricing**: Competitive rates
-
-#### **Mistral AI**
-- **Models**: Mistral Large, Medium, Small
-- **Env**: `MISTRAL_API_KEY`
-- **Features**: European AI provider
-- **Pricing**: Variable by model
-
-#### **Cohere**
-- **Models**: Command, Command R+
-- **Env**: `COHERE_API_KEY`
-- **Features**: Enterprise features
-- **Pricing**: Variable by model
-
-#### **xAI (Grok)**
-- **Models**: Grok models
-- **Env**: `XAI_API_KEY`
-- **Features**: Real-time information
-- **Pricing**: Variable by model
+- **OpenAI** — `OPENAI_API_KEY`
+- **Anthropic** — `ANTHROPIC_API_KEY`
+- **Google (Gemini API)** — `GOOGLE_API_KEY`
+- **Amazon Bedrock** — `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`
+- **Azure OpenAI** — `AZURE_API_KEY`, `AZURE_RESOURCE_NAME`
+- **Google Vertex AI** — `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`
+- **Google Vertex Anthropic** — `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`
+- **Perplexity** — `PERPLEXITY_API_KEY`
+- **OpenRouter** — `OPENROUTER_API_KEY`
+- **Ollama** — Configure host and port
+- **Groq** — `GROQ_API_KEY`
+- **Together AI** — `TOGETHER_API_KEY`
+- **DeepSeek** — `DEEPSEEK_API_KEY`
+- **Cerebras** — `CEREBRAS_API_KEY`
+- **Mistral AI** — `MISTRAL_API_KEY`
+- **Cohere** — `COHERE_API_KEY`
+- **xAI (Grok)** — `XAI_API_KEY`
 
 ## Multiple Accounts Per Provider
 
@@ -380,54 +243,6 @@ Set in config:
   "small_model": "openai/gpt-4o-mini"
 }
 ```
-
-## Provider-Specific Features
-
-### Codex (ChatGPT)
-
-**Token Refresh**: Automatic token refresh for long sessions
-
-**Model Selection**: Access to latest GPT-5 series
-
-**Interleaved Thinking**: See reasoning in real-time
-
-### Gemini CLI (Google)
-
-**Code Assist**: Integrated with Google Cloud Code Assist
-
-**Project Context**: Automatic project detection
-
-**Managed Projects**: Free tier with managed GCP projects
-
-### Antigravity
-
-**Multi-Model**: Access both Gemini 3 and Claude 4.5
-
-**No Setup**: No API keys or GCP projects needed
-
-### GitHub Copilot
-
-**Enterprise Support**: Separate enterprise provider
-
-**Multiple Models**: GPT-4o, Claude, o1 series
-
-**Organization Policies**: Enterprise-wide settings
-
-### Amazon Bedrock
-
-**Auto-Region Prefixing**: Automatic region prefix for models (us., eu., apac., au.)
-
-**Multi-Region**: Support for all AWS regions including GovCloud
-
-**Credential Providers**: Support for AWS profiles and credential chains
-
-### Ollama
-
-**Dynamic Model Discovery**: Automatically detects installed models
-
-**Local Inference**: No API costs, full privacy
-
-**Custom Host**: Configure host and port
 
 ## Troubleshooting
 
